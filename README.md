@@ -62,6 +62,6 @@ In the `<body></body>`:
 
 Then use the element wherever you would like:
 
-```
+```HTML
 <prendus-view-question question-id="cj3ytnhdl7wz80112o9ebshi3"></prendus-view-question>
 ```

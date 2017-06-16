@@ -22,7 +22,7 @@ npm run test
 
 ## Use
 
-Import the polyfill for HTML Web Components inside of the `<head></head>` element or anywhere in the `<body></body>` element before you place the custom element (eventually this will not be necessary, but it is necessary now to support non-compliant browsers):
+Import the polyfill for HTML Web Components inside of the `<head></head>` element or anywhere in the `<body></body>` element before you place any of the Prendus custom elements (eventually this will not be necessary, but it is necessary now to support non-compliant browsers):
 
 In the `<head></head>`:
 ```HTML

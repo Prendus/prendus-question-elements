@@ -59,3 +59,9 @@ In the `<body></body>`:
   <script src="node_modules/prendus-question-elements/prendus-view-question.html"></script>
 </body>
 ```
+
+Then use the element wherever you would like:
+
+```
+<prendus-view-question question-id="cj3ytnhdl7wz80112o9ebshi3"></prendus-view-question>
+```

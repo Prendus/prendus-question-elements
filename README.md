@@ -6,7 +6,7 @@ Fully embeddable custom HTML elements for Prendus questions.
 
 To use in your own project:
 
-```
+```bash
 npm install prendus-question-elements
 ```
 

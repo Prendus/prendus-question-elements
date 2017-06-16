@@ -28,7 +28,7 @@ In the `<head></head>`:
 ```HTML
 ...
 <head>
-  <script src="node_modules/webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="node_modules/@npm-polymer/webcomponentsjs/webcomponents-lite.js"></script>
 </head>
 ...
 ```
@@ -37,6 +37,6 @@ In the `<body></body>`:
 
 ```HTML
 <body>
-  <script src="node_modules/webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="node_modules/@npm-polymer/webcomponentsjs/webcomponents-lite.js"></script>
 </body>
 ```

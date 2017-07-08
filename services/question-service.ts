@@ -1,4 +1,4 @@
-import {parse, compileToHTML} from '../node_modules/assessml/assessml';
+import {parse, compileToHTML} from '../../assessml/assessml';
 import {asyncMap} from '../services/utilities-service';
 import {secureEval} from '../services/secure-eval-service';
 

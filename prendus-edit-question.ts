@@ -3,6 +3,8 @@ import {Question} from './typings/question';
 import {SetComponentPropertyAction} from './typings/actions';
 import {GQLMutate, GQLQuery, escapeString} from './services/graphql-service';
 import {User} from './typings/user';
+import {RootReducer} from './redux/reducers';
+import {Reducer} from './typings/reducer';
 
 class PrendusEditQuestion extends Polymer.Element {
     componentId: string;
@@ -13,6 +15,7 @@ class PrendusEditQuestion extends Polymer.Element {
     user: User;
     loaded: boolean;
     selected: number;
+    rootReducer: Reducer;
 
     static get is() { return 'prendus-edit-question'; }
     static get properties() {
@@ -33,6 +36,7 @@ class PrendusEditQuestion extends Polymer.Element {
         super();
 
         this.componentId = createUUID();
+        this.rootReducer = RootReducer;
     }
 
     connectedCallback() {

@@ -1,6 +1,6 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../redux-store-element/redux-store.html">
-<link rel="import" href="prendus-view-question/prendus-view-question.html">
+<link rel="import" href="prendus-view-question.html">
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="../../bower_components/wysiwyg-e/wysiwyg-e.html">
@@ -56,7 +56,7 @@
             }
         </style>
 
-        <redux-store id="reduxStoreElement" action="[[action]]" on-statechange="stateChange"></redux-store>
+        <redux-store id="reduxStoreElement" root-reducer="[[rootReducer]]" action="[[action]]" on-statechange="stateChange" store-name="PRENDUS_QUESTION_ELEMENTS"></redux-store>
 
         <dom-if if="[[loaded]]">
             <template>

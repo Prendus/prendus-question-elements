@@ -1,0 +1,106 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
+<link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../bower_components/paper-tabs/paper-tab.html">
+<link rel="import" href="../redux-store-element/redux-store.html">
+
+<!--TODO ensure that this script does not do a network request for each instance of a question-->
+<script src="../dompurify/dist/purify.min.js"></script>
+
+<script>
+    if (module) {
+        window.DOMPurify = require('dompurify');
+    }
+</script>
+
+<!--TODO ensure that this script does not do a network request for each instance of a question-->
+<script src="../esprima/dist/esprima.js"></script>
+
+<!--TODO ensure that this script does not do a network request for each instance of a question-->
+<script src="../escodegen-temp/escodegen.browser.js"></script>
+
+<dom-module id="prendus-view-question">
+    <template>
+        <style>
+            :host {
+                position: relative;
+            }
+
+            * {
+                font-size: calc(40px - 1vw);
+                font-family: Ubuntu;
+            }
+
+            /*TODO see https://github.com/Prendus/assessml/issues/21 for why this comment is here, do not remove it
+            input[type="radio"] {
+                width: calc(40px - 1vw);
+                height: calc(40px - 1vw);
+            }
+
+            input[type="checkbox"] {
+                width: calc(40px - 1vw);
+                height: calc(40px - 1vw);
+            }
+
+            textarea {
+                width: 100%;
+                height: 50vh;
+            }
+
+            span[contenteditable="true"] {
+                display: inline-block;
+                min-width: 25px;
+                min-height: 25px;
+                padding: 5px;
+                box-shadow: 0px 0px 1px black;
+            }*/
+
+            .bottomButtons {
+                /*position: absolute;*/
+                /*width: 100%;*/
+                display: flex;
+                flex-direction: row;
+                text-align: center;
+                cursor: pointer;
+                color: grey;
+            }
+
+            .checkButton {
+                flex: 1;
+            }
+
+            .embedButton {
+                flex: 1;
+            }
+        </style>
+
+        <redux-store id="reduxStoreElement" root-reducer="[[rootReducer]]" action="[[action]]" on-statechange="stateChange" store-name="PRENDUS_VIEW_QUESTION"></redux-store>
+
+        <dom-if if="[[loaded]]">
+            <template>
+                <div inner-h-t-m-l="[[getSanitizedHTML(builtQuestion.html)]]"></div>
+
+                <!-- <div style="width: 100%; position: relative"> -->
+                <div class="bottomButtons">
+                    <div on-click="checkAnswer" class="checkButton">Check</div>
+                    <!-- <div on-click="showEmbedCodeClick" class="embedButton">Embed</div> -->
+                </div>
+                <!-- </div> -->
+
+                <dom-if if="[[showEmbedCode]]">
+                    <template>
+                        <input id="embedInput" type="text" value='<iframe src="http://localhost:8000/question/[[questionId]]/view" frameborder="0" onload="window.addEventListener(`message`, (event) => { this.style.height = `${event.data.height + 125}px`; this.style.width = `${event.data.width}px`; });"></iframe>'>
+                    </template>
+                </dom-if>
+            </template>
+        </dom-if>
+
+        <dom-if if="[[!loaded]]">
+            <template>
+                Loading...
+            </template>
+        </dom-if>
+    </template>
+
+    <script src="prendus-view-question.ts"></script>
+</dom-module>

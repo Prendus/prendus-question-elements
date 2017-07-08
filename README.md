@@ -8,6 +8,8 @@ To use in your own project:
 
 ```bash
 npm install prendus-question-elements
+bower install polymer --save
+bower install paper-tabs --save
 ```
 
 To work on locally:
@@ -17,6 +19,7 @@ git clone https://github.com/Prendus/prendus-question-elements
 cd prendus-question-elements
 bower install
 npm install
+npm link
 npm run test
 ```
 

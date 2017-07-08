@@ -1,0 +1,31 @@
+{
+  "name": "prendus-question-elements",
+  "version": "0.0.0",
+  "description": "Fully embeddable custom HTML elements for Prendus questions.",
+  "main": "index.js",
+  "scripts": {
+    "test": "electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --auto-run",
+    "test-window": "electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --window",
+    "link": "npm link && npm link prendus-question-elements"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Prendus/prendus-question-elements.git"
+  },
+  "author": "Jordan Last <jordan.michael.last@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Prendus/prendus-question-elements/issues"
+  },
+  "homepage": "https://github.com/Prendus/prendus-question-elements#readme",
+  "dependencies": {
+    "assessml": "0.0.6",
+    "dompurify": "^0.9.0",
+    "escodegen-temp": "git+https://github.com/Prendus/escodegen-temp.git",
+    "esprima": "^4.0.0",
+    "redux-store-element": "^1.2.6"
+  },
+  "devDependencies": {
+    "scram-engine": "^0.6.1"
+  }
+}

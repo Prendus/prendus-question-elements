@@ -1,0 +1,21 @@
+{
+  "name": "prendus-question-elements",
+  "description": "Fully embeddable custom HTML elements for Prendus questions.",
+  "main": "index.js",
+  "authors": [
+    "Jordan Last <jordan.michael.last@gmail.com>"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/Prendus/prendus-question-elements",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "^2.0.1",
+    "paper-tabs": "^2.0.0"
+  }
+}

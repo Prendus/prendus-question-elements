@@ -3,16 +3,13 @@
 <link rel="import" href="prendus-view-question.html">
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../../bower_components/wysiwyg-e/wysiwyg-e.html">
 <link rel="import" href="../../bower_components/juicy-ace-editor/juicy-ace-editor.html">
 
 <dom-module id="prendus-edit-question">
     <template>
         <style>
-            .pages {
-                margin-top: 10px;
-            }
-
             .editor {
                 width: calc(1000px - 10vw);
                 height: 50vh;
@@ -25,12 +22,19 @@
             }
 
             #paperTabs {
+                width: calc(1000px - 10vw);
+                margin: 0 auto;
                 font-size: calc(50px - 1vw);
                 --paper-tabs-selection-bar-color: #2a9af2;
                 --paper-tab-ink: grey;
                 --paper-tab-content: {
                     font-family: Ubuntu;
                 }
+            }
+
+            paper-tab.iron-selected {
+                border: 1px solid rgba(0, 0, 0, .2500);
+                box-shadow: 0px 0px 3px grey;
             }
 
             #textEditor {
@@ -65,7 +69,7 @@
                     <paper-tab>Answer</paper-tab>
                 </paper-tabs>
 
-                <iron-pages id="ironPages" selected="[[selected]]" class="pages">
+                <iron-pages id="ironPages" selected="[[selected]]">
                     <div class="editorContainer">
                         <wysiwyg-e id="textEditor" class="editor" value="[[question.text]]" on-value-changed="textEditorChanged"></wysiwyg-e>
                         <div class="savingText">[[getSavingText(saving)]]</div>

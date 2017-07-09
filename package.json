@@ -12,6 +12,7 @@
     "type": "git",
     "url": "git+https://github.com/Prendus/prendus-question-elements.git"
   },
+  "typings": "prendus-question-elements.d.ts",
   "author": "Jordan Last <jordan.michael.last@gmail.com>",
   "license": "MIT",
   "bugs": {
@@ -19,7 +20,8 @@
   },
   "homepage": "https://github.com/Prendus/prendus-question-elements#readme",
   "dependencies": {
-    "assessml": "0.0.8",
+    "@types/esprima": "^2.1.33",
+    "assessml": "0.0.10",
     "dompurify": "^0.9.0",
     "escodegen-temp": "git+https://github.com/Prendus/escodegen-temp.git",
     "esprima": "^4.0.0",

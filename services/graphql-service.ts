@@ -1,7 +1,7 @@
-import {GQLQueryDataCallback} from '../typings/gql-query-data-callback';
-import {GQLQueryErrorCallback} from '../typings/gql-query-error-callback';
-import {GQLSubscribeCallback} from '../typings/gql-subscribe-callback';
-import {GQLMutateErrorCallback} from '../typings/gql-mutate-error-callback';
+import {GQLQueryDataCallback} from '../prendus-question-elements.d';
+import {GQLQueryErrorCallback} from '../prendus-question-elements.d';
+import {GQLSubscribeCallback} from '../prendus-question-elements.d';
+import {GQLMutateErrorCallback} from '../prendus-question-elements.d';
 import {getGraphcoolHTTPEndpoint, getGraphcoolWebSocketEndpoint} from '../services/utilities-service';
 
 const httpEndpoint = getGraphcoolHTTPEndpoint();

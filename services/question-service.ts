@@ -1,18 +1,21 @@
 import {parse, compileToHTML} from '../../assessml/assessml';
 import {asyncMap} from '../services/utilities-service';
 import {secureEval} from '../services/secure-eval-service';
+import {AST, ASTObject, Variable, Input, Essay, Check, Radio} from 'assessml';
+import {Program, ExpressionStatement, MemberExpression, Identifier, AssignmentExpression} from 'estree';
+import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay} from '../prendus-question-elements.d';
 
 export async function buildQuestion(text: string, code: string): Promise<{
     html: string;
-    ast: AST
+    ast: AST;
 }> {
     try {
         const originalAmlAst = parse(text);
-        const jsAst = esprima.parseScript(code);
+        const jsAst: Program = esprima.parseScript(code);
 
         const newAmlAst = {
             ...originalAmlAst,
-            ast: await asyncMap(originalAmlAst.ast, async (astObject) => {
+            ast: await asyncMap(originalAmlAst.ast, async (astObject: ASTObject) => {
                 if (astObject.type === 'VARIABLE') {
                     const newMin = await newPropertyValue(jsAst, astObject.varName, 'min', 0);
                     const newMax = await newPropertyValue(jsAst, astObject.varName, 'max', 100);
@@ -46,15 +49,15 @@ export async function buildQuestion(text: string, code: string): Promise<{
     }
 }
 
-async function newPropertyValue(jsAst, varName: string, propertyName: string, defaultValue: number): Promise<number> {
+async function newPropertyValue(jsAst: Program, varName: string, propertyName: string, defaultValue: number): Promise<number> {
     const objectsWithProperty = jsAst.body.filter((bodyObj) => {
-        return bodyObj.type === 'ExpressionStatement' && bodyObj.expression.type === 'AssignmentExpression' && bodyObj.expression.left.object && bodyObj.expression.left.object.name === varName && bodyObj.expression.left.property.name === propertyName;
+        return bodyObj.type === 'ExpressionStatement' && bodyObj.expression.type === 'AssignmentExpression' && (<MemberExpression> bodyObj.expression.left).object && (<Identifier> (<MemberExpression> bodyObj.expression.left).object).name === varName && (<Identifier> (<MemberExpression> bodyObj.expression.left).property).name === propertyName;
     });
 
     if (objectsWithProperty.length > 0) {
         return (await secureEval(`
             postMessage({
-                result: ${escodegen.generate(objectsWithProperty[0].expression.right)}
+                result: ${escodegen.generate((<AssignmentExpression> (<ExpressionStatement> objectsWithProperty[0]).expression).right)}
             });
         `)).result;
     }
@@ -63,7 +66,7 @@ async function newPropertyValue(jsAst, varName: string, propertyName: string, de
     }
 }
 
-export async function checkAnswer(code: string, userVariables, userInputs, userEssays, userChecks, userRadios) {
+export async function checkAnswer(code: string, userVariables: UserVariable[], userInputs: UserInput[], userEssays: UserEssay[], userChecks: UserCheck[], userRadios: UserRadio[]) {
     const defineUserVariablesString = userVariables.reduce((result: string, userVariable) => {
         return `${result}let ${userVariable.varName} = new Number(${userVariable.value});`;
     }, '');

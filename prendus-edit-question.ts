@@ -1,10 +1,10 @@
 import {createUUID, navigate} from './services/utilities-service';
-import {Question} from './typings/question';
-import {SetComponentPropertyAction} from './typings/actions';
+import {Question} from './prendus-question-elements.d';
+import {SetComponentPropertyAction} from './prendus-question-elements.d';
 import {GQLMutate, GQLQuery, escapeString} from './services/graphql-service';
-import {User} from './typings/user';
+import {User} from './prendus-question-elements.d';
 import {RootReducer} from './redux/reducers';
-import {Reducer} from './typings/reducer';
+import {Reducer} from './prendus-question-elements.d';
 
 class PrendusEditQuestion extends Polymer.Element {
     componentId: string;
@@ -16,6 +16,7 @@ class PrendusEditQuestion extends Polymer.Element {
     loaded: boolean;
     selected: number;
     rootReducer: Reducer;
+    saving: boolean;
 
     static get is() { return 'prendus-edit-question'; }
     static get properties() {

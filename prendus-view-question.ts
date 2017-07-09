@@ -1,13 +1,10 @@
 import {GQLQuery} from './services/graphql-service';
-import {SetComponentPropertyAction} from './typings/actions';
-import {Question} from './typings/question';
-import {BuiltQuestion} from './typings/built-question';
+import {SetComponentPropertyAction, Question, BuiltQuestion, Reducer, UserInput, UserVariable, UserCheck, UserRadio, UserEssay} from './prendus-question-elements.d';
 import {buildQuestion, checkAnswer} from './services/question-service';
 import {createUUID} from './services/utilities-service';
 import {compileToHTML, parse, getAstObjects} from '../assessml/assessml';
 import {RootReducer} from './redux/reducers';
-import {Reducer} from './typings/reducer';
-import {AST} from 'assessml';
+import {AST, Variable, Input, Essay, Radio, Check, Drag, Drop} from 'assessml';
 
 class PrendusViewQuestion extends Polymer.Element {
     componentId: string;
@@ -60,7 +57,7 @@ class PrendusViewQuestion extends Polymer.Element {
         //allow the template with the input to be stamped
         setTimeout(() => {
             this.shadowRoot.querySelector('#embedInput').select();
-        });
+        }, 0);
     }
 
     async questionChanged() {
@@ -161,34 +158,34 @@ class PrendusViewQuestion extends Polymer.Element {
     }
 
     async checkAnswer() {
-        const astVariables = getAstObjects(this.builtQuestion.ast, 'VARIABLE');
-        const astInputs = getAstObjects(this.builtQuestion.ast, 'INPUT');
-        const astEssays = getAstObjects(this.builtQuestion.ast, 'ESSAY');
-        const astChecks = getAstObjects(this.builtQuestion.ast, 'CHECK');
-        const astRadios = getAstObjects(this.builtQuestion.ast, 'RADIO');
-        const astDrags = getAstObjects(this.builtQuestion.ast, 'DRAG');
-        const astDrops = getAstObjects(this.builtQuestion.ast, 'DROP');
+        const astVariables: Variable[] = getAstObjects(this.builtQuestion.ast, 'VARIABLE');
+        const astInputs: Input[] = getAstObjects(this.builtQuestion.ast, 'INPUT');
+        const astEssays: Essay[] = getAstObjects(this.builtQuestion.ast, 'ESSAY');
+        const astChecks: Check[] = getAstObjects(this.builtQuestion.ast, 'CHECK');
+        const astRadios: Radio[] = getAstObjects(this.builtQuestion.ast, 'RADIO');
+        const astDrags: Drag[] = getAstObjects(this.builtQuestion.ast, 'DRAG');
+        const astDrops: Drop[] = getAstObjects(this.builtQuestion.ast, 'DROP');
 
-        const userVariables = astVariables;
-        const userInputs = astInputs.map((astInput) => {
+        const userVariables: UserVariable[] = astVariables;
+        const userInputs: UserInput[] = astInputs.map((astInput) => {
             return {
                 varName: astInput.varName,
                 value: this.shadowRoot.querySelector(`#${astInput.varName}`).textContent
             };
         });
-        const userEssays = astEssays.map((astEssay) => {
+        const userEssays: UserEssay[] = astEssays.map((astEssay) => {
             return {
                 varName: astEssay.varName,
                 value: this.shadowRoot.querySelector(`#${astEssay.varName}`).value
             };
         });
-        const userChecks = astChecks.map((astCheck) => {
+        const userChecks: UserCheck[] = astChecks.map((astCheck) => {
             return {
                 varName: astCheck.varName,
                 checked: this.shadowRoot.querySelector(`#${astCheck.varName}`).checked
             };
         });
-        const userRadios = astRadios.map((astRadio) => {
+        const userRadios: UserRadio[] = astRadios.map((astRadio) => {
             return {
                 varName: astRadio.varName,
                 checked: this.shadowRoot.querySelector(`#${astRadio.varName}`).checked

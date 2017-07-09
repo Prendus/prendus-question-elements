@@ -1,5 +1,5 @@
-import {QuestionScaffold} from '../typings/question-scaffold';
-import {QuestionScaffoldAnswer} from '../typings/question-scaffold-answer';
+import {QuestionScaffold} from '../prendus-question-elements.d';
+import {QuestionScaffoldAnswer} from '../prendus-question-elements.d';
 
 export function getGraphcoolHTTPEndpoint() {
     if (process.env.NODE_ENV === 'production') {

@@ -1,6 +1,6 @@
 {
   "name": "prendus-question-elements",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Fully embeddable custom HTML elements for Prendus questions.",
   "main": "index.js",
   "scripts": {

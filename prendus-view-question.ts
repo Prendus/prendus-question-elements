@@ -7,6 +7,7 @@ import {createUUID} from './services/utilities-service';
 import {compileToHTML, parse, getAstObjects} from '../assessml/assessml';
 import {RootReducer} from './redux/reducers';
 import {Reducer} from './typings/reducer';
+import {AST} from 'assessml';
 
 class PrendusViewQuestion extends Polymer.Element {
     componentId: string;

@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/Prendus/prendus-question-elements#readme",
   "dependencies": {
-    "assessml": "0.0.6",
+    "assessml": "0.0.8",
     "dompurify": "^0.9.0",
     "escodegen-temp": "git+https://github.com/Prendus/escodegen-temp.git",
     "esprima": "^4.0.0",

@@ -32,15 +32,7 @@ To work on locally:
 git clone https://github.com/Prendus/prendus-question-elements
 cd prendus-question-elements
 npm install
-
-# Eventually the bower commands below will disappear, but until we can fully support npm, sorry
-
-bower install polymer --save
-bower install paper-tabs --save
-bower install iron-pages --save
-bower install juicy-ace-editor --save
-bower install wysiwyg-e --save
-
+bower install
 npm run link
 npm run test
 

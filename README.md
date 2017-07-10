@@ -8,6 +8,9 @@ To use in your own project:
 
 ```bash
 npm install prendus-question-elements
+
+# Eventually the bower commands below will disappear, but until we can fully support npm, sorry
+
 bower install polymer --save
 bower install paper-tabs --save
 bower install iron-pages --save

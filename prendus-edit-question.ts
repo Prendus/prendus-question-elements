@@ -17,6 +17,7 @@ class PrendusEditQuestion extends Polymer.Element {
     selected: number;
     rootReducer: Reducer;
     saving: boolean;
+    noSave: boolean;
 
     static get is() { return 'prendus-edit-question'; }
     static get properties() {
@@ -28,8 +29,11 @@ class PrendusEditQuestion extends Polymer.Element {
             questionId: {
                 type: String,
                 observer: 'questionIdChanged'
+            },
+            noSave: {
+                type: Boolean,
+                observer: 'noSaveChanged'
             }
-
         };
     }
 
@@ -191,6 +195,15 @@ class PrendusEditQuestion extends Polymer.Element {
         };
     }
 
+    noSaveChanged() {
+        this.action = {
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'noSave',
+            value: this.noSave
+        };
+    }
+
     async loadData() {
         if (!this.question || this.question.id !== this.questionId) {
             await GQLQuery(`
@@ -215,6 +228,10 @@ class PrendusEditQuestion extends Polymer.Element {
     }
 
     async save() {
+        if (this.noSave) {
+            return;
+        }
+
         if (!this.questionId) {
             const data = await GQLMutate(`
                 mutation {
@@ -270,6 +287,7 @@ class PrendusEditQuestion extends Polymer.Element {
         if (Object.keys(state.components[this.componentId] || {}).includes('questionId')) this.questionId = state.components[this.componentId].questionId;
         if (Object.keys(state.components[this.componentId] || {}).includes('selected')) this.selected = state.components[this.componentId].selected;
         if (Object.keys(state.components[this.componentId] || {}).includes('saving')) this.saving = state.components[this.componentId].saving;
+        if (Object.keys(state.components[this.componentId] || {}).includes('noSave')) this.noSave = state.components[this.componentId].noSave;
 
         this.userToken = state.userToken;
         this.user = state.user;

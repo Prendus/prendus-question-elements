@@ -1,6 +1,6 @@
 # Prendus Question Elements
 
-Fully embeddable custom HTML elements for questions made with [AssessML](https://github.com/Prendus/assessml). Use these elements in any web platform project [Web Components](https://www.webcomponents.org/), [Polymer](https://www.polymer-project.org/), [SkateJS](https://github.com/skatejs/skatejs), [React](https://facebook.github.io/react/), (Vue)[https://vuejs.org/], [Angular](https://angular.io/), [Ember](https://www.emberjs.com/), Vanilla).
+Fully embeddable custom HTML elements for questions made with [AssessML](https://github.com/Prendus/assessml). Use these elements in any web platform project [Web Components](https://www.webcomponents.org/), [Polymer](https://www.polymer-project.org/), [SkateJS](https://github.com/skatejs/skatejs), [React](https://facebook.github.io/react/), [Vue](https://vuejs.org/), [Angular](https://angular.io/), [Ember](https://www.emberjs.com/), Vanilla).
 
 ## Installation
 

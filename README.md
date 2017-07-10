@@ -1,6 +1,22 @@
 # Prendus Question Elements
 
-Fully embeddable custom HTML elements for Prendus questions.
+Fully embeddable custom HTML elements for questions made with [AssessML](https://github.com/Prendus/assessml). Use these elements in any web platform project, including [Web Components](https://www.webcomponents.org/), [Polymer](https://www.polymer-project.org/), [SkateJS](https://github.com/skatejs/skatejs), [React](https://facebook.github.io/react/), [Vue.js](https://vuejs.org/), [Angular](https://angular.io/), [Ember.js](https://www.emberjs.com/), and Vanilla.
+
+## Demo
+
+<!--
+```
+<custom-element-demo>
+  <template>
+    <link rel="import" href="prendus-view-question.html">
+    <prendus-view-question></prendus-view-question>
+  </template>
+</custom-element-demo>
+```
+-->
+```html
+<prendus-view-question></prendus-view-question>
+```
 
 ## Installation
 
@@ -8,8 +24,14 @@ To use in your own project:
 
 ```bash
 npm install prendus-question-elements
+
+# Eventually the bower commands below will disappear, but until we can fully support npm, sorry
+
 bower install polymer --save
 bower install paper-tabs --save
+bower install iron-pages --save
+bower install juicy-ace-editor --save
+bower install wysiwyg-e --save
 ```
 
 To work on locally:
@@ -17,56 +39,46 @@ To work on locally:
 ```bash
 git clone https://github.com/Prendus/prendus-question-elements
 cd prendus-question-elements
-bower install
 npm install
-npm link
+
+# Eventually the bower commands below will disappear, but until we can fully support npm, sorry
+
+bower install polymer --save
+bower install paper-tabs --save
+bower install iron-pages --save
+bower install juicy-ace-editor --save
+bower install wysiwyg-e --save
+
+npm run link
 npm run test
+
+# or to open a debug window for the tests
+
+npm run test-window
 ```
 
 ## Use
 
-Make sure to explain how to use the TypeScript types
+Import the Web Components polyfill for cross-browser compatibility:
 
-First import the polyfill for HTML Web Components inside of the `<head></head>` element or anywhere in the `<body></body>` element before you place any of the Prendus custom elements (eventually this will not be necessary, but it is necessary now to support non-compliant browsers):
-
-In the `<head></head>`:
 ```HTML
 ...
 <head>
-  <script src="node_modules/@npm-polymer/webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="[path to bower_components]/webcomponentsjs/webcomponents-lite.js"></script>
 </head>
 ...
 ```
 
-In the `<body></body>`:
+Import the element that you would like to use:
 
 ```HTML
-<body>
-  <script src="node_modules/@npm-polymer/webcomponentsjs/webcomponents-lite.js"></script>
-</body>
-```
-
-Now import the custom element you would like to use, either inside of the `<head></head>` element or anywhere in the `<body></body>` element before you place the custom element:
-
-In the `<head></head>`:
-```HTML
-...
-<head>
-  <script src="node_modules/prendus-question-elements/prendus-view-question.html"></script>
-</head>
-...
-```
-
-In the `<body></body>`:
-
-```HTML
-<body>
-  <script src="node_modules/prendus-question-elements/prendus-view-question.html"></script>
-</body>
+<link rel="import" href="[path to node_modules]/prendus-question-elements/prendus-view-question.html">
+<link rel="import" href="[path to node_modules]/prendus-question-elements/prendus-edit-question.html">
 ```
 
 Then use the element wherever you would like:
 
 ```HTML
-<prendus-view-question question-id="cj3ytnhdl7wz80112o9ebshi3"></prendus-view-question>
+<prendus-view-question question-id="cj4os7mld6kq4017073x00cjt"></prendus-view-question>
+<prendus-edit-question question-id="cj4os7mld6kq4017073x00cjt"></prendus-edit-question>
 ```

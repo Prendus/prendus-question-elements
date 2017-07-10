@@ -56,30 +56,13 @@ Import the Web Components polyfill for cross-browser compatibility:
 Import the element that you would like to use:
 
 ```HTML
-<link rel="import" href="[path to node_modules]/">
-```
-
-Now import the custom element you would like to use, either inside of the `<head></head>` element or anywhere in the `<body></body>` element before you place the custom element:
-
-In the `<head></head>`:
-```HTML
-...
-<head>
-  <script src="node_modules/prendus-question-elements/prendus-view-question.html"></script>
-</head>
-...
-```
-
-In the `<body></body>`:
-
-```HTML
-<body>
-  <script src="node_modules/prendus-question-elements/prendus-view-question.html"></script>
-</body>
+<link rel="import" href="[path to node_modules]/prendus-question-elements/prendus-view-question.html">
+<link rel="import" href="[path to node_modules]/prendus-question-elements/prendus-edit-question.html">
 ```
 
 Then use the element wherever you would like:
 
 ```HTML
-<prendus-view-question question-id="cj3ytnhdl7wz80112o9ebshi3"></prendus-view-question>
+<prendus-view-question question-id="cj4os7mld6kq4017073x00cjt"></prendus-view-question>
+<prendus-edit-question question-id="cj4os7mld6kq4017073x00cjt"></prendus-edit-question>
 ```

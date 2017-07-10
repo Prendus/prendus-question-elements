@@ -23,10 +23,22 @@ To work on locally:
 ```bash
 git clone https://github.com/Prendus/prendus-question-elements
 cd prendus-question-elements
-bower install
 npm install
-npm link
+
+# Eventually the bower commands below will disappear, but until we can fully support npm, sorry
+
+bower install polymer --save
+bower install paper-tabs --save
+bower install iron-pages --save
+bower install juicy-ace-editor --save
+bower install wysiwyg-e --save
+
+npm run link
 npm run test
+
+# or to open a debug window for the tests
+
+npm run test-window
 ```
 
 ## Use

@@ -10,6 +10,9 @@ To use in your own project:
 npm install prendus-question-elements
 bower install polymer --save
 bower install paper-tabs --save
+bower install iron-pages --save
+bower install juicy-ace-editor --save
+bower install wysiwyg-e --save
 ```
 
 To work on locally:

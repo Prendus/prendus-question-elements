@@ -4,19 +4,9 @@ Fully embeddable custom HTML elements for questions made with [AssessML](https:/
 
 ## Demo
 
-<!--
-```
-<custom-element-demo>
-  <template>
-    <link rel="import" href="prendus-view-question.html">
-    <prendus-view-question></prendus-view-question>
-  </template>
-</custom-element-demo>
-```
--->
-```html
-<prendus-view-question></prendus-view-question>
-```
+[Click to see live question editor](https://prendus.com/question/cj4yhatlcphu20137xdwhb3pu/demo)
+[Click to see live question](https://prendus.com/question/cj4yhatlcphu20137xdwhb3pu/view)
+Click to see many more examples
 
 ## Installation
 

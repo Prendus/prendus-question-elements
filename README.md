@@ -1,5 +1,7 @@
 # Prendus Question Elements
 
+[![npm version](https://img.shields.io/npm/v/prendus-question-elements.svg?style=flat)](https://www.npmjs.com/package/prendus-question-elements) [![dependency Status](https://david-dm.org/prendus/prendus-question-elements/status.svg)](https://david-dm.org/prendus/prendus-question-elements) [![devDependency Status](https://david-dm.org/prendus/prendus-question-elements/dev-status.svg)](https://david-dm.org/prendus/prendus-question-elements?type=dev) [![Published on webcomponents.org](https://img.shields.io/badge/webcomponents.org-published-blue.svg)](https://www.webcomponents.org/element/prendus/prendus-question-elements)
+
 ![Question demo](https://github.com/prendus/prendus-question-elements/raw/master/readme-demo.gif)
 
 Fully embeddable custom HTML elements for questions made with [AssessML](https://github.com/Prendus/assessml). Use these elements in any web platform project, including [Web Components](https://www.webcomponents.org/), [Polymer](https://www.polymer-project.org/), [SkateJS](https://github.com/skatejs/skatejs), [React](https://facebook.github.io/react/), [Vue.js](https://vuejs.org/), [Angular](https://angular.io/), [Ember.js](https://www.emberjs.com/), and Vanilla.

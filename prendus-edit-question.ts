@@ -33,6 +33,14 @@ class PrendusEditQuestion extends Polymer.Element {
             noSave: {
                 type: Boolean,
                 observer: 'noSaveChanged'
+            },
+            user: {
+                type: Object,
+                observer: 'userChanged'
+            },
+            userToken: {
+                type: String,
+                observer: 'userTokenChanged'
             }
         };
     }
@@ -204,6 +212,24 @@ class PrendusEditQuestion extends Polymer.Element {
         };
     }
 
+    userChanged() {
+        this.action = {
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'user',
+            value: this.user
+        };
+    }
+
+    userTokenChanged() {
+        this.action = {
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'userToken',
+            value: this.userToken
+        };
+    }
+
     async loadData() {
         if (!this.question || this.question.id !== this.questionId) {
             await GQLQuery(`
@@ -288,9 +314,8 @@ class PrendusEditQuestion extends Polymer.Element {
         if (Object.keys(state.components[this.componentId] || {}).includes('selected')) this.selected = state.components[this.componentId].selected;
         if (Object.keys(state.components[this.componentId] || {}).includes('saving')) this.saving = state.components[this.componentId].saving;
         if (Object.keys(state.components[this.componentId] || {}).includes('noSave')) this.noSave = state.components[this.componentId].noSave;
-
-        this.userToken = state.userToken;
-        this.user = state.user;
+        if (Object.keys(state.components[this.componentId] || {}).includes('user')) this.user = state.components[this.componentId].user;
+        if (Object.keys(state.components[this.componentId] || {}).includes('userToken')) this.userToken = state.components[this.componentId].userToken;
     }
 }
 

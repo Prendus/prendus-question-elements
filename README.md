@@ -2,6 +2,22 @@
 
 Fully embeddable custom HTML elements for questions made with [AssessML](https://github.com/Prendus/assessml). Use these elements in any web platform project, including [Web Components](https://www.webcomponents.org/), [Polymer](https://www.polymer-project.org/), [SkateJS](https://github.com/skatejs/skatejs), [React](https://facebook.github.io/react/), [Vue.js](https://vuejs.org/), [Angular](https://angular.io/), [Ember.js](https://www.emberjs.com/), and Vanilla.
 
+## Demo
+
+<!--
+```
+<custom-element-demo>
+  <template>
+    <link rel="import" href="prendus-view-question.html">
+    <prendus-view-question></prendus-view-question>
+  </template>
+</custom-element-demo>
+```
+-->
+```html
+<prendus-view-question></prendus-view-question>
+```
+
 ## Installation
 
 To use in your own project:

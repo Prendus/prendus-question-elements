@@ -43,25 +43,20 @@ npm run test-window
 
 ## Use
 
-Make sure to explain how to use the TypeScript types
+Import the Web Components polyfill for cross-browser compatibility:
 
-First import the polyfill for HTML Web Components inside of the `<head></head>` element or anywhere in the `<body></body>` element before you place any of the Prendus custom elements (eventually this will not be necessary, but it is necessary now to support non-compliant browsers):
-
-In the `<head></head>`:
 ```HTML
 ...
 <head>
-  <script src="node_modules/@npm-polymer/webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="[path to bower_components]/webcomponentsjs/webcomponents-lite.js"></script>
 </head>
 ...
 ```
 
-In the `<body></body>`:
+Import the element that you would like to use:
 
 ```HTML
-<body>
-  <script src="node_modules/@npm-polymer/webcomponentsjs/webcomponents-lite.js"></script>
-</body>
+<link rel="import" href="[path to node_modules]/">
 ```
 
 Now import the custom element you would like to use, either inside of the `<head></head>` element or anywhere in the `<body></body>` element before you place the custom element:

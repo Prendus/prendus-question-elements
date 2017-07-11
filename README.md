@@ -35,7 +35,6 @@ git clone https://github.com/Prendus/prendus-question-elements
 cd prendus-question-elements
 npm install
 bower install
-npm run link
 npm run test
 
 # or to open a debug window for the tests

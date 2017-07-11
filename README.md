@@ -92,3 +92,38 @@ interface Question {
   readonly code: string;
 }
 ```
+
+### prendus-edit-question
+
+#### Properties
+
+```typescript
+questionId: string
+```
+
+The Prendus question ID for this question. Providing this property will automatically load the question from the Prendus database.
+
+```typescript
+question: string
+```
+
+A question object can be used to provide the text and code of a question directly instead of loading it from the Prendus database. Any Question passed in must have the following interface:
+
+```typescript
+interface Question {
+  readonly text: string;
+  readonly code: string;
+}
+```
+
+```typescript
+user: User
+```
+
+```typescript
+userToken: string
+```
+
+```typescript
+noSave: boolean
+```

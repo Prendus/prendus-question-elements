@@ -1,12 +1,14 @@
 {
   "name": "prendus-question-elements",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Fully embeddable custom HTML elements for Prendus questions.",
   "main": "index.js",
   "scripts": {
-    "test": "electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --auto-run",
-    "test-window": "electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --window",
-    "link": "npm link && npm link prendus-question-elements"
+    "test": "npm run link && electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --auto-run",
+    "test-window": "npm run link && electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --window",
+    "link": "rm -rf node_modules/prendus-question-elements && npm link && npm link prendus-question-elements",
+    "build-for-production": "tsc --module ES2015 --target ES2015 || echo done && webpack prendus-view-question.js prendus-view-question.js && webpack prendus-edit-question.js prendus-edit-question.js && node rewrite-ts-to-js.js",
+    "publish": "npm run build-for-production"
   },
   "repository": {
     "type": "git",
@@ -25,7 +27,10 @@
     "dompurify": "^0.9.0",
     "escodegen-temp": "git+https://github.com/Prendus/escodegen-temp.git",
     "esprima": "^4.0.0",
-    "redux-store-element": "^1.2.6"
+    "redux-store-element": "^1.2.6",
+    "rollup": "^0.45.1",
+    "typescript": "^2.4.1",
+    "webpack": "^3.1.0"
   },
   "devDependencies": {
     "scram-engine": "^0.6.1"

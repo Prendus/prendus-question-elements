@@ -73,16 +73,6 @@
             .embedButton {
                 flex: 1;
             }
-
-            .logoLink {
-                position: absolute;
-                top: -20px;
-                right: -20px;
-            }
-
-            .logoImage {
-                width: 100px;
-            }
         </style>
 
         <redux-store id="reduxStoreElement" root-reducer="[[rootReducer]]" action="[[action]]" on-statechange="stateChange" store-name="PRENDUS_QUESTION_ELEMENTS"></redux-store>
@@ -90,10 +80,6 @@
         <dom-if if="[[loaded]]">
             <template>
                 <div class="mainContainer">
-                    <a href="https://prendus.com" target="_blank" class="logoLink">
-                        <img src="navbar-logo-black.png" class="logoImage">
-                    </a>
-
                     <div inner-h-t-m-l="[[getSanitizedHTML(builtQuestion.html)]]"></div>
 
                     <!-- <div style="width: 100%; position: relative"> -->

@@ -23,10 +23,6 @@
 <dom-module id="prendus-view-question">
     <template>
         <style>
-            :host {
-                position: relative;
-            }
-
             * {
                 font-size: calc(40px - 1vw);
                 font-family: Ubuntu;
@@ -56,6 +52,10 @@
                 box-shadow: 0px 0px 1px black;
             }*/
 
+            .mainContainer {
+                position: relative;
+            }
+
             .bottomButtons {
                 /*position: absolute;*/
                 /*width: 100%;*/
@@ -73,26 +73,42 @@
             .embedButton {
                 flex: 1;
             }
+
+            .logoLink {
+                position: absolute;
+                top: -20px;
+                right: -20px;
+            }
+
+            .logoImage {
+                width: 100px;
+            }
         </style>
 
         <redux-store id="reduxStoreElement" root-reducer="[[rootReducer]]" action="[[action]]" on-statechange="stateChange" store-name="PRENDUS_QUESTION_ELEMENTS"></redux-store>
 
         <dom-if if="[[loaded]]">
             <template>
-                <div inner-h-t-m-l="[[getSanitizedHTML(builtQuestion.html)]]"></div>
+                <div class="mainContainer">
+                    <a href="https://prendus.com" class="logoLink">
+                        <img src="navbar-logo-black.png" class="logoImage">
+                    </a>
 
-                <!-- <div style="width: 100%; position: relative"> -->
-                <div class="bottomButtons">
-                    <div on-click="checkAnswer" class="checkButton">Check</div>
-                    <!-- <div on-click="showEmbedCodeClick" class="embedButton">Embed</div> -->
+                    <div inner-h-t-m-l="[[getSanitizedHTML(builtQuestion.html)]]"></div>
+
+                    <!-- <div style="width: 100%; position: relative"> -->
+                    <div class="bottomButtons">
+                        <div on-click="checkAnswer" class="checkButton">Check</div>
+                        <!-- <div on-click="showEmbedCodeClick" class="embedButton">Embed</div> -->
+                    </div>
+                    <!-- </div> -->
+
+                    <dom-if if="[[showEmbedCode]]">
+                        <template>
+                            <input id="embedInput" type="text" value='<iframe src="http://localhost:8000/question/[[questionId]]/view" frameborder="0" onload="window.addEventListener(`message`, (event) => { this.style.height = `${event.data.height + 125}px`; this.style.width = `${event.data.width}px`; });"></iframe>'>
+                        </template>
+                    </dom-if>
                 </div>
-                <!-- </div> -->
-
-                <dom-if if="[[showEmbedCode]]">
-                    <template>
-                        <input id="embedInput" type="text" value='<iframe src="http://localhost:8000/question/[[questionId]]/view" frameborder="0" onload="window.addEventListener(`message`, (event) => { this.style.height = `${event.data.height + 125}px`; this.style.width = `${event.data.width}px`; });"></iframe>'>
-                    </template>
-                </dom-if>
             </template>
         </dom-if>
 

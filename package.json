@@ -7,8 +7,8 @@
     "test": "npm run link && electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --auto-run",
     "test-window": "npm run link && electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --window",
     "link": "rm -rf node_modules/prendus-question-elements && npm link && npm link prendus-question-elements",
-    "build-for-production": "tsc --module ES2015 --target ES2015 || echo done && webpack prendus-view-question.js prendus-view-question.js && webpack prendus-edit-question.js prendus-edit-question.js && node rewrite-ts-to-js.js",
-    "publish": "npm run build-for-production"
+    "build-for-production": "tsc --module ES2015 --target ES2015 --outDir dist || echo done && webpack dist/prendus-question-elements/prendus-view-question.js dist/prendus-view-question.js && webpack dist/prendus-question-elements/prendus-edit-question.js dist/prendus-edit-question.js && node rewrite-ts-to-js.js",
+    "postinstall": "npm run build-for-production"
   },
   "repository": {
     "type": "git",

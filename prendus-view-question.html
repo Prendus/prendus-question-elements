@@ -1,11 +1,11 @@
-<link rel="import" href="../../bower_components/polymer/polymer.html">
-<link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
-<link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
-<link rel="import" href="../../bower_components/paper-tabs/paper-tab.html">
-<link rel="import" href="../redux-store-element/redux-store.html">
+<link rel="import" href="../../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../../bower_components/polymer/lib/elements/dom-if.html">
+<link rel="import" href="../../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../../bower_components/paper-tabs/paper-tab.html">
+<link rel="import" href="../../redux-store-element/redux-store.html">
 
 <!--TODO ensure that this script does not do a network request for each instance of a question-->
-<script src="../dompurify/dist/purify.min.js"></script>
+<script src="../../dompurify/dist/purify.min.js"></script>
 
 <script>
     // this is so that DOMPurify loads onto the window object even if it is run inside of Electron, which also has a Node.js runtime, which was messing up the module export because it was confused about being in the browser and Node.js
@@ -15,10 +15,10 @@
 </script>
 
 <!--TODO ensure that this script does not do a network request for each instance of a question-->
-<script src="../esprima/dist/esprima.js"></script>
+<script src="../../esprima/dist/esprima.js"></script>
 
 <!--TODO ensure that this script does not do a network request for each instance of a question-->
-<script src="../escodegen-temp/escodegen.browser.js"></script>
+<script src="../../escodegen-temp/escodegen.browser.js"></script>
 
 <dom-module id="prendus-view-question">
     <template>

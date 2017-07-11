@@ -111,8 +111,8 @@ A question object can be used to provide the text and code of a question directl
 
 ```typescript
 interface Question {
-  readonly text: string;
-  readonly code: string;
+  text: string;
+  code: string;
 }
 ```
 
@@ -120,10 +120,22 @@ interface Question {
 user: User
 ```
 
+A Prendus user. This user (along with the userToken) is necessary to enforce many of the permissions on the questions. Any user passed in must have the following interface:
+
+```typescript
+interface User {
+  id: string;
+}
+```
+
 ```typescript
 userToken: string
 ```
 
+The [Graphcool](https://www.graph.cool/) JSON Web Token associated with a user. This token (along with the user) is necessary to enforce many of the permissions on the questions.
+
 ```typescript
 noSave: boolean
 ```
+
+Whether or not to execute API calls to save the question to the database on changes to the question text or code.

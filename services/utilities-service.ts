@@ -2,7 +2,7 @@ import {QuestionScaffold} from '../prendus-question-elements.d';
 import {QuestionScaffoldAnswer} from '../prendus-question-elements.d';
 
 export function getGraphcoolHTTPEndpoint() {
-    if (process.env.NODE_ENV === 'production') {
+    if (window.process.env.NODE_ENV === 'production') {
         return 'https://api.graph.cool/simple/v1/cj48qaw2u6uyd01411y8gj8fr';
     }
     else {
@@ -11,7 +11,7 @@ export function getGraphcoolHTTPEndpoint() {
 }
 
 export function getGraphcoolWebSocketEndpoint() {
-    if (process.env.NODE_ENV === 'production') {
+    if (window.process.env.NODE_ENV === 'production') {
         return 'wss://subscriptions.us-west-2.graph.cool/v1/cj48qaw2u6uyd01411y8gj8fr';
     }
     else {
@@ -20,7 +20,7 @@ export function getGraphcoolWebSocketEndpoint() {
 }
 
 export function getPrendusLTIServerOrigin() {
-    if (process.env.NODE_ENV === 'production') {
+    if (window.process.env.NODE_ENV === 'production') {
         return 'https://api.prendus.com';
     }
     else {
@@ -29,7 +29,7 @@ export function getPrendusLTIServerOrigin() {
 }
 
 export function getPrendusClientOrigin() {
-    if (process.env.NODE_ENV === 'production') {
+    if (window.process.env.NODE_ENV === 'production') {
         return 'https://prendus.com';
     }
     else {

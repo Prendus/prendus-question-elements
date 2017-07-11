@@ -67,3 +67,28 @@ Then use the element wherever you would like:
 <prendus-view-question question-id="cj4os7mld6kq4017073x00cjt"></prendus-view-question>
 <prendus-edit-question question-id="cj4os7mld6kq4017073x00cjt"></prendus-edit-question>
 ```
+
+## API
+
+### prendus-view-question
+
+#### Properties
+
+```typescript
+questionId: string
+```
+
+The Prendus question ID for this question. Providing this property will automatically load the question from the Prendus database.
+
+```typescript
+question: Question
+```
+
+A question object can be used to provide the text and code of a question directly instead of loading it from the Prendus database. Any Question passed in must have the following interface:
+
+```typescript
+interface Question {
+  readonly text: string;
+  readonly code: string;
+}
+```

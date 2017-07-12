@@ -8,9 +8,9 @@ Fully embeddable custom HTML elements for questions made with [AssessML](https:/
 
 ## Demo
 
-* [Click to see live question editor](https://prendus.com/question/cj4yhatlcphu20137xdwhb3pu/demo)
-* [Click to see live question](https://prendus.com/question/cj4yhatlcphu20137xdwhb3pu/view)
-* Click to see many more examples
+* [Click to see a live question editor](https://prendus.com/question/cj4yhatlcphu20137xdwhb3pu/demo)
+* [Click to see a live question](https://prendus.com/question/cj4yhatlcphu20137xdwhb3pu/view)
+* [Click to see many more examples](https://prendus.com/question/examples)
 
 ## Installation
 

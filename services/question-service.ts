@@ -71,10 +71,10 @@ export async function checkAnswer(code: string, userVariables: UserVariable[], u
         return `${result}let ${userVariable.varName} = new Number(${userVariable.value});`;
     }, '');
     const defineUserInputsString = userInputs.reduce((result: string, userInput) => {
-        return `${result}let ${userInput.varName} = '${userInput.value.replace(/'/g, '\\\'')}';`;
+        return `${result}let ${userInput.varName} = '${userInput.value.replace(/'/g, '\\\'').replace(/\n/g, '\\n')}';`;
     }, '');
     const defineUserEssaysString = userEssays.reduce((result: string, userEssay) => {
-        return `${result}let ${userEssay.varName} = '${userEssay.value.replace(/'/g, '\\\'')}';`;
+        return `${result}let ${userEssay.varName} = '${userEssay.value.replace(/'/g, '\\\'').replace(/\n/g, '\\n')}';`;
     }, '');
     const defineUserChecksString = userChecks.reduce((result: string, userCheck) => {
         return `${result}let ${userCheck.varName} = ${userCheck.checked};`;

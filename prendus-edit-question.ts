@@ -251,6 +251,14 @@ class PrendusEditQuestion extends Polymer.Element {
                         }
                     };
                 }
+                else {
+                    this.action = {
+                        type: 'SET_COMPONENT_PROPERTY',
+                        componentId: this.componentId,
+                        key,
+                        value
+                    };
+                }
             }, (error: any) => {
                 console.log(error);
             });

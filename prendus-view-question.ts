@@ -93,8 +93,6 @@ class PrendusViewQuestion extends Polymer.Element {
     }
 
     async questionIdChanged() {
-        //TODO should I check to see if questionId is defined?
-
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
             componentId: this.componentId,
@@ -129,12 +127,18 @@ class PrendusViewQuestion extends Polymer.Element {
                     }
                 }
             `, this.userToken, (key: string, value: any) => {
-                this.action = {
-                    type: 'SET_COMPONENT_PROPERTY',
-                    componentId: this.componentId,
-                    key,
-                    value
-                };
+                if (key === 'question' && !value) {
+                    this.action = {
+                        type: 'SET_COMPONENT_PROPERTY',
+                        componentId: this.componentId,
+                        key,
+                        value: {
+                            id: this.questionId,
+                            text: 'This question does not exist',
+                            code: 'answer = false;'
+                        }
+                    };
+                }
             }, (error: any) => {
                 console.log(error);
             });

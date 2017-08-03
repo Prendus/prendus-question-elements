@@ -4,7 +4,7 @@ import {buildQuestion, checkAnswer} from './services/question-service';
 import {createUUID} from './services/utilities-service';
 import {compileToHTML, parse, getAstObjects} from '../assessml/assessml';
 import {RootReducer} from './redux/reducers';
-import {AST, Variable, Input, Essay, Radio, Check, Drag, Drop} from 'assessml';
+import {AST, Variable, Input, Essay, Radio, Check, Drag, Drop} from '../assessml/assessml.d';
 
 class PrendusViewQuestion extends Polymer.Element {
     componentId: string;

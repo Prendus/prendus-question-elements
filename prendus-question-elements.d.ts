@@ -93,3 +93,11 @@ export interface UserRadio {
     varName: string;
     checked: boolean;
 }
+
+export interface QuestionScaffold {
+
+}
+
+export interface QuestionScaffoldAnswer {
+    
+}

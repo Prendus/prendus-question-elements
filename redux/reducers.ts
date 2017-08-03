@@ -1,7 +1,7 @@
-import {State} from '../typings/state';
+import {State} from '../prendus-question-elements.d';
 import {InitialState} from './initial-state';
-import {Action, SetPropertyAction, SetComponentPropertyAction} from '../typings/actions';
-import {Reducer} from '../typings/reducer';
+import {Action, SetPropertyAction, SetComponentPropertyAction} from '../prendus-question-elements.d';
+import {Reducer} from '../prendus-question-elements.d';
 
 export const RootReducer: Reducer = (state: State = InitialState, action: Action): State => {
     switch(action.type) {

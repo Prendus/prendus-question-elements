@@ -1,4 +1,4 @@
-import {State} from '../typings/state';
+import {State} from '../prendus-question-elements.d';
 
 export const InitialState: State = {
     components: {}

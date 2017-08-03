@@ -4,11 +4,8 @@
   "description": "Fully embeddable custom HTML elements for Prendus questions.",
   "main": "index.js",
   "scripts": {
-    "test": "npm run link && electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --auto-run",
-    "test-window": "npm run link && electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --window",
-    "link": "rm -rf node_modules/prendus-question-elements && npm link && npm link prendus-question-elements",
-    "build-for-production": "tsc --module ES2015 --target ES2015 --outDir dist || echo done && webpack dist/prendus-question-elements/prendus-view-question.js dist/prendus-view-question.js && webpack dist/prendus-question-elements/prendus-edit-question.js dist/prendus-edit-question.js && node rewrite-ts-to-js.js && cp navbar-logo-black.png dist/navbar-logo-black.png",
-    "postinstall": "npm run build-for-production"
+    "test": "xvfb-run electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --auto-run",
+    "test-window": "npm run build-static && cp package.json test/package.json && cd test && npm install && cd .. && rm -rf test/node_modules/prendus-question-elements && mkdir test/node_modules/prendus-question-elements && cp -r dist test/node_modules/prendus-question-elements/dist && electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --window"
   },
   "repository": {
     "type": "git",
@@ -23,16 +20,14 @@
   "homepage": "https://github.com/Prendus/prendus-question-elements#readme",
   "dependencies": {
     "@types/esprima": "^2.1.33",
-    "assessml": "0.0.10",
+    "assessml": "^0.2.8",
     "dompurify": "^0.9.0",
     "escodegen-temp": "git+https://github.com/Prendus/escodegen-temp.git",
     "esprima": "^4.0.0",
-    "redux-store-element": "^1.2.6",
-    "rollup": "^0.45.1",
-    "typescript": "^2.4.1",
-    "webpack": "^3.1.0"
+    "redux-store-element": "^1.2.6"
   },
   "devDependencies": {
-    "scram-engine": "^0.6.1"
+    "scram-engine": "^0.6.10",
+    "zwitterion": "^0.12.15"
   }
 }

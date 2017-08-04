@@ -11,7 +11,7 @@ export async function buildQuestion(text: string, code: string): Promise<{
 }> {
     try {
         const originalAmlAst = parse(text);
-        const jsAst: Program = esprima.parseScript(code);
+        const jsAst: Program = esprima.parse(code);
 
         const newAmlAst = {
             ...originalAmlAst,

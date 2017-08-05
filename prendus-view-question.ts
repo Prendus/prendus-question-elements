@@ -2,7 +2,7 @@ import {GQLQuery} from './services/graphql-service';
 import {SetComponentPropertyAction, Question, BuiltQuestion, Reducer, UserInput, UserVariable, UserCheck, UserRadio, UserEssay} from './prendus-question-elements.d';
 import {buildQuestion, checkAnswer} from './services/question-service';
 import {createUUID} from './services/utilities-service';
-import {compileToHTML, parse, getAstObjects} from '../assessml/assessml';
+import {getAstObjects} from '../assessml/assessml';
 import {RootReducer} from './redux/reducers';
 import {AST, Variable, Input, Essay, Radio, Check, Drag, Drop} from '../assessml/assessml.d';
 

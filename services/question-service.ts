@@ -10,7 +10,7 @@ export async function buildQuestion(text: string, code: string): Promise<{
     ast: AST;
 }> {
     try {
-        const originalAmlAst = parse(text);
+        const originalAmlAst = parse(text, () => generateRandomInteger(0, 100));
         const jsAst: Program = esprima.parse(code);
 
         const newAmlAst = {
@@ -35,7 +35,7 @@ export async function buildQuestion(text: string, code: string): Promise<{
         };
 
         return {
-            html: compileToHTML(newAmlAst),
+            html: compileToHTML(newAmlAst, () => generateRandomInteger(0, 100)),
             ast: newAmlAst
         };
     }
@@ -43,8 +43,8 @@ export async function buildQuestion(text: string, code: string): Promise<{
         console.log('probably a JS parsing error while the user is typing');
         // There will be many intermediate JavaScript parsing errors while the user is typing. If that happens, do nothing
         return {
-            html: compileToHTML(text),
-            ast: parse(text)
+            html: compileToHTML(text, () => generateRandomInteger(0, 100)),
+            ast: parse(text, () => generateRandomInteger(0, 100))
         };
     }
 }
@@ -98,4 +98,9 @@ export async function checkAnswer(code: string, userVariables: UserVariable[], u
     `;
 
     return await secureEval(codeToEval);
+}
+
+function generateRandomInteger(min: number, max: number): number {
+    //returns a random integer between min (included) and max (included)
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }

@@ -7,7 +7,8 @@
     "test": "sudo npm run link && xvfb-run -a electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --auto-run",
     "test-window": "npm run link && electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --window",
     "test-auto": "npm run link && electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --auto-run",
-    "link": "npm link && npm link prendus-question-elements"
+    "link": "npm link && npm link prendus-question-elements",
+    "postinstall": "npm install -g bower && bower install"
   },
   "repository": {
     "type": "git",

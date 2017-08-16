@@ -90,6 +90,10 @@ class PrendusViewQuestion extends Polymer.Element {
             height: document.body.scrollHeight,
             width: document.body.scrollWidth
         }, '*');
+
+        this.dispatchEvent(new CustomEvent('loaded', {
+            bubbles: false
+        }));
     }
 
     async questionIdChanged() {
@@ -115,6 +119,10 @@ class PrendusViewQuestion extends Polymer.Element {
             key: 'loaded',
             value: true
         };
+
+        this.dispatchEvent(new CustomEvent('loaded', {
+            bubbles: false
+        }));
     }
 
     async loadData() {

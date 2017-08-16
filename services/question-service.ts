@@ -1,6 +1,6 @@
 import {parse, compileToHTML} from '../../assessml/assessml';
 import {asyncMap} from '../services/utilities-service';
-import {secureEval} from '../services/secure-eval-service';
+import {secureEval} from '../../secure-eval/secure-eval';
 import {AST, ASTObject, Variable, Input, Essay, Check, Radio} from 'assessml';
 import {Program, ExpressionStatement, MemberExpression, Identifier, AssignmentExpression} from 'estree';
 import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay} from '../prendus-question-elements.d';

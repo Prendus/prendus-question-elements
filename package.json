@@ -8,7 +8,7 @@
     "test-window": "npm run link && electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --window",
     "test-auto": "npm run link && electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --auto-run",
     "link": "sudo npm link && sudo npm link prendus-question-elements",
-    "postinstall": "sudo npm install -g bower && sudo bower install"
+    "postinstall": "sudo bower install"
   },
   "repository": {
     "type": "git",
@@ -32,6 +32,7 @@
     "secure-eval": "^0.1.0"
   },
   "devDependencies": {
+    "bower": "^1.8.0",
     "deep-equal": "^1.0.1",
     "guesswork": "^0.3.0",
     "jsverify": "^0.8.2",

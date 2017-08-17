@@ -34,15 +34,12 @@ To work on locally:
 git clone https://github.com/Prendus/prendus-question-elements
 cd prendus-question-elements
 npm install
-bower install
-npm run test
-
-# or to open a debug window for the tests
-
 npm run test-window
 ```
 
 ## Use
+
+The elements are written in TypeScript, and there is no build process. You will have to implement your own build process to consume them. We use [Zwitterion](https://github.com/lastmjs/zwitterion).
 
 Import the Web Components polyfill for cross-browser compatibility:
 

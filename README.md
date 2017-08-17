@@ -1,6 +1,6 @@
 # Prendus Question Elements
 
-[![npm version](https://img.shields.io/npm/v/prendus-question-elements.svg?style=flat)](https://www.npmjs.com/package/prendus-question-elements) [![dependency Status](https://david-dm.org/prendus/prendus-question-elements/status.svg)](https://david-dm.org/prendus/prendus-question-elements) [![devDependency Status](https://david-dm.org/prendus/prendus-question-elements/dev-status.svg)](https://david-dm.org/prendus/prendus-question-elements?type=dev) [![Published on webcomponents.org](https://img.shields.io/badge/webcomponents.org-published-blue.svg)](https://www.webcomponents.org/element/prendus/prendus-question-elements)
+[![CircleCI](https://circleci.com/gh/Prendus/prendus-question-elements.svg?style=shield)](https://circleci.com/gh/Prendus/prendus-question-elements) [![npm version](https://img.shields.io/npm/v/prendus-question-elements.svg?style=flat)](https://www.npmjs.com/package/prendus-question-elements) [![dependency Status](https://david-dm.org/prendus/prendus-question-elements/status.svg)](https://david-dm.org/prendus/prendus-question-elements) [![devDependency Status](https://david-dm.org/prendus/prendus-question-elements/dev-status.svg)](https://david-dm.org/prendus/prendus-question-elements?type=dev) [![Published on webcomponents.org](https://img.shields.io/badge/webcomponents.org-published-blue.svg)](https://www.webcomponents.org/element/prendus/prendus-question-elements)
 
 ![Question demo](https://github.com/prendus/prendus-question-elements/raw/master/readme-demo.gif)
 

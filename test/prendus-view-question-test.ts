@@ -1,9 +1,12 @@
 import {html} from '../node_modules/lit-html/lit-html';
 import {render} from '../node_modules/lit-html/lib/lit-extended';
 import {parse, compileToAssessML, compileToHTML} from '../node_modules/assessml/assessml';
+import {GQLMutate, escapeString} from '../services/graphql-service';
 
 const jsc = require('jsverify');
 const deepEqual = require('deep-equal');
+const prendusQuestionElementsTestUserId = 'cj4oe24w1ei1u0160f2daribf';
+const prendusQuestionElementsTestJWT = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE1MDMwMDE3MjAsImNsaWVudElkIjoiY2oyd2lmdnZmM29raTAxNTRtZnN0c2lscCIsInByb2plY3RJZCI6ImNqMzZkZTlxNGRlbTAwMTM0Ymhrd200NHIiLCJwZXJtYW5lbnRBdXRoVG9rZW5JZCI6ImNqNmd3ZjF6NjF2YTYwMTEwbDlra2hwMWIifQ.I-3cxsgRzg1ArFylmkdNTxobkqKiEdpHNZ0_9vQ1kfQ';
 
 //TODO replace all of these with the imported arbitraries from prendus-shared
 const arbContent = jsc.record({
@@ -87,31 +90,86 @@ class PrendusViewQuestionTest extends HTMLElement {
     }
 
     prepareTests(test: any) {
-        test('set question property once no residual state', [arbQuestion], (rawArbQuestion: Question) => {
-            return new Promise((resolve, reject) => {
-                const arbQuestion = {
-                    ...rawArbQuestion,
-                    text: compileToAssessML(rawArbQuestion.ast, () => 5) // it doesn't matter what the variables are because AST to AssessML conversion loses variable information
-                };
+        test('set question property once with no residual state', [arbQuestion], test1.bind(this));
+        test('set question property multiple times with residual state', [arbQuestion], test2.bind(this));
+        test('set questionId property once with no residual state', [arbQuestion], test3.bind(this));
+        test('set questionId property multiple times with residual state', [arbQuestion], test4.bind(this));
 
-                const prendusViewQuestion = document.createElement('prendus-view-question');
-                prendusViewQuestion.addEventListener('loaded', (event) => {
-                    const result = (
-                        deepEqual(prendusViewQuestion.question, arbQuestion) &&
-                        deepEqual(prendusViewQuestion.loaded, true) &&
-                        deepEqual(compileToAssessML(prendusViewQuestion.builtQuestion.ast, () => 5), arbQuestion.text) &&
-                        verifyHTML(parse(arbQuestion.text, (varName: string) => generateVarValue(prendusViewQuestion.builtQuestion.ast, varName)), prendusViewQuestion.builtQuestion.html)
-                    );
+        async function test1(rawArbQuestion) {
+            resetASTVariables();
+            const arbQuestion = prepareArbQuestion(rawArbQuestion);
+            const prendusViewQuestion = document.createElement('prendus-view-question');
+            const {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
+            prendusViewQuestion.addEventListener('question-loaded', eventListener);
+            this.shadowRoot.appendChild(prendusViewQuestion);
+            prendusViewQuestion.question = arbQuestion;
+            await eventPromise;
+            const result = verifyQuestionLoaded(prendusViewQuestion, arbQuestion);
+            this.shadowRoot.removeChild(prendusViewQuestion);
+            return result;
 
-                    this.shadowRoot.removeChild(prendusViewQuestion);
+            function questionLoadedListener(event) {
+                prendusViewQuestion.removeEventListener('question-loaded', eventListener);
+            }
+        }
 
-                    resolve(result);
-                });
+        const setQuestionPropertyMultipleTimesPrendusViewQuestion = document.createElement('prendus-view-question');
+        this.shadowRoot.appendChild(setQuestionPropertyMultipleTimesPrendusViewQuestion);
+        async function test2(rawArbQuestion) {
+            resetASTVariables();
+            const arbQuestion = prepareArbQuestion(rawArbQuestion);
+            const {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
+            setQuestionPropertyMultipleTimesPrendusViewQuestion.addEventListener('question-loaded', eventListener);
+            setQuestionPropertyMultipleTimesPrendusViewQuestion.question = arbQuestion;
+            await eventPromise;
+            const result = verifyQuestionLoaded(setQuestionPropertyMultipleTimesPrendusViewQuestion, arbQuestion);
+            return result;
 
-                this.shadowRoot.appendChild(prendusViewQuestion);
-                prendusViewQuestion.question = arbQuestion;
-            });
-        });
+            function questionLoadedListener(event) {
+                setQuestionPropertyMultipleTimesPrendusViewQuestion.removeEventListener('question-loaded', eventListener);
+            }
+        }
+
+        async function test3(rawArbQuestion) {
+            resetASTVariables();
+            const arbQuestion = prepareArbQuestion(rawArbQuestion);
+            const data = await createQuestion(prendusQuestionElementsTestUserId, prendusQuestionElementsTestJWT, arbQuestion);
+            const questionId = data.createQuestion.id;
+            const {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
+            const prendusViewQuestion = document.createElement('prendus-view-question');
+            prendusViewQuestion.addEventListener('question-loaded', eventListener);
+            this.shadowRoot.appendChild(prendusViewQuestion);
+            prendusViewQuestion.questionId = questionId;
+            await eventPromise;
+            const result = verifyQuestionLoaded(prendusViewQuestion, arbQuestion);
+            this.shadowRoot.removeChild(prendusViewQuestion);
+            await deleteQuestion(prendusQuestionElementsTestUserId, prendusQuestionElementsTestJWT, questionId);
+            return result;
+
+            function questionLoadedListener(event) {
+                prendusViewQuestion.removeEventListener('question-loaded', eventListener);
+            }
+        }
+
+        const setQuestionIdPropertyMultipleTimesPrendusViewQuestion = document.createElement('prendus-view-question');
+        this.shadowRoot.appendChild(setQuestionIdPropertyMultipleTimesPrendusViewQuestion);
+        async function test4(rawArbQuestion) {
+            resetASTVariables();
+            const arbQuestion = prepareArbQuestion(rawArbQuestion);
+            const data = await createQuestion(prendusQuestionElementsTestUserId, prendusQuestionElementsTestJWT, arbQuestion);
+            const questionId = data.createQuestion.id;
+            const {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
+            setQuestionIdPropertyMultipleTimesPrendusViewQuestion.addEventListener('question-loaded', eventListener);
+            setQuestionIdPropertyMultipleTimesPrendusViewQuestion.questionId = questionId;
+            await eventPromise;
+            const result = verifyQuestionLoaded(setQuestionIdPropertyMultipleTimesPrendusViewQuestion, arbQuestion);
+            await deleteQuestion(prendusQuestionElementsTestUserId, prendusQuestionElementsTestJWT, questionId);
+            return result;
+
+            function questionLoadedListener(event) {
+                setQuestionIdPropertyMultipleTimesPrendusViewQuestion.removeEventListener('question-loaded', eventListener);
+            }
+        }
     }
 
     // stateChange(question) {
@@ -122,6 +180,84 @@ class PrendusViewQuestionTest extends HTMLElement {
 }
 
 window.customElements.define('prendus-view-question-test', PrendusViewQuestionTest);
+
+function resetASTVariables() {
+    numInputs = 1;
+    numEssays = 1;
+    numChecks = 1;
+    numRadios = 1;
+}
+
+// necessary preprocessing including changing the arbQuestion ast into text, so that we have an arbitrary AssessML string
+function prepareArbQuestion(rawArbQuestion) {
+    const arbQuestionIntermediate = {
+        ...rawArbQuestion,
+        text: compileToAssessML(rawArbQuestion.ast, () => 5)// it doesn't matter what the variables are because AST to AssessML conversion loses variable information
+    };
+    const {ast, ...arbQuestion} = arbQuestionIntermediate;
+
+    return arbQuestion;
+}
+
+function prepareEventListener(eventListener) {
+    let _resolve;
+    const eventPromise = new Promise((resolve, reject) => {
+        _resolve = resolve;
+    });
+
+    function augmentedEventListener(event) {
+        eventListener(event);
+        _resolve();
+    }
+
+    return {
+        eventPromise,
+        eventListener: augmentedEventListener
+    };
+}
+
+async function createQuestion(prendusQuestionElementsTestUserId: string, prendusQuestionElementsTestJWT: string, arbQuestion) {
+    return await GQLMutate(`
+        mutation createQuestion($authorId: ID!, $text: String!, $code: String!) {
+            createQuestion(
+                authorId: $authorId
+                text: $text
+                code: $code
+            ) {
+                id
+            }
+        }
+    `, {
+        authorId: prendusQuestionElementsTestUserId,
+        text: arbQuestion.text,
+        code: arbQuestion.code
+    }, prendusQuestionElementsTestJWT, () => {});
+}
+
+async function deleteQuestion(prendusQuestionElementsTestUserId: string, prendusQuestionElementsTestJWT: string, questionId: string) {
+    await GQLMutate(`
+        mutation deleteQuestion($questionId: ID!) {
+            deleteQuestion(
+                id: $questionId
+            ) {
+                id
+            }
+        }
+    `, {
+        questionId
+    }, prendusQuestionElementsTestJWT,() => {});
+}
+
+function verifyQuestionLoaded(prendusViewQuestion, arbQuestion) {
+    const result = (
+        deepEqual(prendusViewQuestion.question, arbQuestion) &&
+        deepEqual(prendusViewQuestion.loaded, true) &&
+        deepEqual(compileToAssessML(prendusViewQuestion.builtQuestion.ast, () => 5), arbQuestion.text) &&
+        verifyHTML(parse(arbQuestion.text, (varName: string) => generateVarValue(prendusViewQuestion.builtQuestion.ast, varName)), prendusViewQuestion.builtQuestion.html)
+    );
+
+    return result;
+}
 
 //TODO replace these with exports from AssessML
 function generateVarValue(ast: AST, varName: string) {

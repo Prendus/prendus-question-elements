@@ -50,7 +50,7 @@ webSocket.onmessage = (event) => {
     }
 };
 
-export const GQLQuery = async (queryString: string, userToken: string | null, dataCallback: GQLQueryDataCallback, errorCallback: GQLQueryErrorCallback) => {
+export const GQLQuery = async (queryString: string, variables: { [key: string]: any }, userToken: string | null, errorCallback: GQLQueryErrorCallback) => {
 
     //TODO to allow for good cacheing, we'll probably need to parse the queryString so that we can get all of the properties that we need
 
@@ -63,7 +63,8 @@ export const GQLQuery = async (queryString: string, userToken: string | null, da
             } //TODO As far as I understand the syntax above will be standard and this TypeScript error might go away with the following: https://github.com/Microsoft/TypeScript/issues/10727
         },
         body: JSON.stringify({
-            query: queryString
+            query: queryString,
+            variables
         })
     });
 
@@ -71,19 +72,15 @@ export const GQLQuery = async (queryString: string, userToken: string | null, da
     const data = responseJSON.data;
     const errors = responseJSON.errors;
 
-    Object.keys(data || {}).forEach((key) => {
-        dataCallback(key, data[key]);
-    });
-
     (errors || []).forEach((error: any) => {
-      console.log('error', error)
-        // errorCallback(error); Error Callback doesn't work at the moment
+    //   console.log('error', error)
+        errorCallback(error);
     });
 
     return data;
 };
 
-export const GQLMutate = async (queryString: string, userToken: string | null, errorCallback: GQLMutateErrorCallback) => {
+export const GQLMutate = async (queryString: string, variables: { [key: string]: any }, userToken: string | null, errorCallback: GQLMutateErrorCallback) => {
 
     //TODO to allow for good cacheing, we'll probably need to parse the queryString so that we can get all of the properties that we need
     const response = await window.fetch(httpEndpoint, {
@@ -95,16 +92,18 @@ export const GQLMutate = async (queryString: string, userToken: string | null, e
             } //TODO As far as I understand the syntax above will be standard and this TypeScript error might go away with the following: https://github.com/Microsoft/TypeScript/issues/10727
         },
         body: JSON.stringify({
-            query: queryString
+            query: queryString,
+            variables
         })
     });
 
     const responseJSON = await response.json();
     const data = responseJSON.data;
     const errors = responseJSON.errors;
+
     (errors || []).forEach((error: any) => {
-      console.log('error', error)
-        // errorCallback(error);
+    //   console.error('error', error)
+        errorCallback(error);
     });
 
     return data;

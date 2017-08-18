@@ -41,7 +41,6 @@ class PrendusViewQuestion extends Polymer.Element {
 
     async connectedCallback() {
         super.connectedCallback();
-
         // this.action = checkForUserToken();
         // this.action = await getAndSetUser();
     }
@@ -64,18 +63,18 @@ class PrendusViewQuestion extends Polymer.Element {
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
             componentId: this.componentId,
-            key: 'question',
-            value: this.question
-        };
-
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
             key: 'loaded',
             value: false
         };
 
-        await this.loadData();
+        const loadDataResult = await loadData(this.question, null, this.userToken);
+
+        this.action = {
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'builtQuestion',
+            value: loadDataResult.builtQuestion
+        };
 
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
@@ -91,7 +90,7 @@ class PrendusViewQuestion extends Polymer.Element {
             width: document.body.scrollWidth
         }, '*');
 
-        this.dispatchEvent(new CustomEvent('loaded', {
+        this.dispatchEvent(new CustomEvent('question-loaded', {
             bubbles: false
         }));
     }
@@ -100,18 +99,25 @@ class PrendusViewQuestion extends Polymer.Element {
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
             componentId: this.componentId,
-            key: 'questionId',
-            value: this.questionId
+            key: 'loaded',
+            value: false
+        };
+
+        const loadDataResult = await loadData(null, this.questionId, this.userToken);
+
+        this.action = {
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'question',
+            value: loadDataResult.question
         };
 
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
             componentId: this.componentId,
-            key: 'loaded',
-            value: false
+            key: 'builtQuestion',
+            value: loadDataResult.builtQuestion
         };
-
-        await this.loadData();
 
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
@@ -120,52 +126,16 @@ class PrendusViewQuestion extends Polymer.Element {
             value: true
         };
 
-        this.dispatchEvent(new CustomEvent('loaded', {
+        //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
+        window.parent.postMessage({
+            type: 'prendus-view-question-resize',
+            height: document.body.scrollHeight,
+            width: document.body.scrollWidth
+        }, '*');
+
+        this.dispatchEvent(new CustomEvent('question-loaded', {
             bubbles: false
         }));
-    }
-
-    async loadData() {
-        if (!this.question) {
-            await GQLQuery(`
-                query {
-                    question: Question(id: "${this.questionId}") {
-                        text
-                        code
-                    }
-                }
-            `, this.userToken, (key: string, value: any) => {
-                if (key === 'question' && !value) {
-                    this.action = {
-                        type: 'SET_COMPONENT_PROPERTY',
-                        componentId: this.componentId,
-                        key,
-                        value: {
-                            id: this.questionId,
-                            text: 'This question does not exist',
-                            code: 'answer = false;'
-                        }
-                    };
-                }
-                else {
-                    this.action = {
-                        type: 'SET_COMPONENT_PROPERTY',
-                        componentId: this.componentId,
-                        key,
-                        value
-                    };
-                }
-            }, (error: any) => {
-                console.log(error);
-            });
-        }
-
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'builtQuestion',
-            value: await buildQuestion(this.question.text, this.question.code)
-        };
     }
 
     getSanitizedHTML(html: string) {
@@ -222,6 +192,7 @@ class PrendusViewQuestion extends Polymer.Element {
 
         if (Object.keys(state.components[this.componentId] || {}).includes('loaded')) this.loaded = state.components[this.componentId].loaded;
         if (Object.keys(state.components[this.componentId] || {}).includes('question')) this.question = state.components[this.componentId].question;
+        if (Object.keys(state.components[this.componentId] || {}).includes('questionId')) this.questionId = state.components[this.componentId].questionId;
         if (Object.keys(state.components[this.componentId] || {}).includes('builtQuestion')) this.builtQuestion = state.components[this.componentId].builtQuestion;
         if (Object.keys(state.components[this.componentId] || {}).includes('showEmbedCode')) this.showEmbedCode = state.components[this.componentId].showEmbedCode;
         this.userToken = state.userToken;
@@ -229,3 +200,47 @@ class PrendusViewQuestion extends Polymer.Element {
 }
 
 window.customElements.define(PrendusViewQuestion.is, PrendusViewQuestion);
+
+async function loadData(question: Question | null, questionId: string | null, userToken: string | null) {
+    if (question) {
+        return {
+            question,
+            builtQuestion: await buildQuestion(question.text, question.code)
+        };
+    }
+    else {
+        const data = await GQLQuery(`
+            query getQuestion($questionId: ID!) {
+                question: Question(
+                    id: $questionId
+                ) {
+                    text
+                    code
+                }
+            }
+        `, {
+            questionId
+        }, userToken, (error: any) => {
+            console.log(error);
+        });
+
+        if (data.question) {
+            return {
+                question: data.question,
+                builtQuestion: await buildQuestion(data.question.text, data.question.code)
+            };
+        }
+        else {
+            const notFoundQuestion = {
+                id: questionId,
+                text: 'This question does not exist',
+                code: 'answer = false;'
+            };
+
+            return {
+                question: notFoundQuestion,
+                builtQuestion: await buildQuestion(notFoundQuestion.text, notFoundQuestion.code)
+            };
+        }
+    }
+}

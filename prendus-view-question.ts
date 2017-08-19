@@ -11,6 +11,8 @@ class PrendusViewQuestion extends Polymer.Element {
     action: SetComponentPropertyAction;
     questionId: string;
     question: Question;
+    _questionId: string;
+    _question: Question;
     builtQuestion: BuiltQuestion;
     userToken: string | null;
     loaded: boolean;
@@ -63,11 +65,25 @@ class PrendusViewQuestion extends Polymer.Element {
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
             componentId: this.componentId,
+            key: 'question',
+            value: this.question
+        };
+
+        this.action = {
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
             key: 'loaded',
             value: false
         };
 
-        const loadDataResult = await loadData(this.question, null, this.userToken);
+        const loadDataResult = await loadData(this._question, null, this.userToken);
+
+        this.action = {
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'question',
+            value: loadDataResult.question
+        };
 
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
@@ -99,11 +115,18 @@ class PrendusViewQuestion extends Polymer.Element {
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
             componentId: this.componentId,
+            key: 'questionId',
+            value: this.questionId
+        };
+
+        this.action = {
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
             key: 'loaded',
             value: false
         };
 
-        const loadDataResult = await loadData(null, this.questionId, this.userToken);
+        const loadDataResult = await loadData(null, this._questionId, this.userToken);
 
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
@@ -182,7 +205,7 @@ class PrendusViewQuestion extends Polymer.Element {
             };
         });
 
-        const checkAnswerInfo = await checkAnswer(this.question.code, userVariables, userInputs, userEssays, userChecks, userRadios);
+        const checkAnswerInfo = await checkAnswer(this._question.code, userVariables, userInputs, userEssays, userChecks, userRadios);
 
         alert(checkAnswerInfo.answer === true ? 'Correct' : checkAnswerInfo.error ? `This question has errors:\n\n${checkAnswerInfo.error}` :'Incorrect');
     }
@@ -191,8 +214,8 @@ class PrendusViewQuestion extends Polymer.Element {
         const state = e.detail.state;
 
         if (Object.keys(state.components[this.componentId] || {}).includes('loaded')) this.loaded = state.components[this.componentId].loaded;
-        if (Object.keys(state.components[this.componentId] || {}).includes('question')) this.question = state.components[this.componentId].question;
-        if (Object.keys(state.components[this.componentId] || {}).includes('questionId')) this.questionId = state.components[this.componentId].questionId;
+        if (Object.keys(state.components[this.componentId] || {}).includes('question')) this._question = state.components[this.componentId].question;
+        if (Object.keys(state.components[this.componentId] || {}).includes('questionId')) this._questionId = state.components[this.componentId].questionId;
         if (Object.keys(state.components[this.componentId] || {}).includes('builtQuestion')) this.builtQuestion = state.components[this.componentId].builtQuestion;
         if (Object.keys(state.components[this.componentId] || {}).includes('showEmbedCode')) this.showEmbedCode = state.components[this.componentId].showEmbedCode;
         this.userToken = state.userToken;

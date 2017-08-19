@@ -94,6 +94,7 @@ class PrendusViewQuestionTest extends HTMLElement {
         test('set question property multiple times with residual state', [arbQuestion], test2.bind(this));
         test('set questionId property once with no residual state', [arbQuestion], test3.bind(this));
         test('set questionId property multiple times with residual state', [arbQuestion], test4.bind(this));
+        test('interleave the setting of the question and questionId properties with residual state', [arbQuestion, jsc.bool], test5.bind(this));
 
         async function test1(rawArbQuestion) {
             resetASTVariables();
@@ -168,6 +169,30 @@ class PrendusViewQuestionTest extends HTMLElement {
 
             function questionLoadedListener(event) {
                 setQuestionIdPropertyMultipleTimesPrendusViewQuestion.removeEventListener('question-loaded', eventListener);
+            }
+        }
+
+        const interleaveQuestionAndQuestionIdPropertyPrendusViewQuestion = document.createElement('prendus-view-question');
+        this.shadowRoot.appendChild(interleaveQuestionAndQuestionIdPropertyPrendusViewQuestion);
+        async function test5(rawArbQuestion, questionOrQuestionId) {
+            resetASTVariables();
+            const arbQuestion = prepareArbQuestion(rawArbQuestion);
+            const data = questionOrQuestionId ? {
+                createQuestion: {
+                    id: null
+                }
+            } : await createQuestion(prendusQuestionElementsTestUserId, prendusQuestionElementsTestJWT, arbQuestion);
+            const questionId = data.createQuestion.id;
+            const {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
+            interleaveQuestionAndQuestionIdPropertyPrendusViewQuestion.addEventListener('question-loaded', eventListener);
+            interleaveQuestionAndQuestionIdPropertyPrendusViewQuestion[questionOrQuestionId ? 'question' : 'questionId'] = questionOrQuestionId ? arbQuestion : questionId;
+            await eventPromise;
+            const result = verifyQuestionLoaded(interleaveQuestionAndQuestionIdPropertyPrendusViewQuestion, arbQuestion);
+            questionOrQuestionId && await deleteQuestion(prendusQuestionElementsTestUserId, prendusQuestionElementsTestJWT, questionId);
+            return result;
+
+            function questionLoadedListener(event) {
+                interleaveQuestionAndQuestionIdPropertyPrendusViewQuestion.removeEventListener('question-loaded', eventListener);
             }
         }
     }
@@ -250,7 +275,7 @@ async function deleteQuestion(prendusQuestionElementsTestUserId: string, prendus
 
 function verifyQuestionLoaded(prendusViewQuestion, arbQuestion) {
     const result = (
-        deepEqual(prendusViewQuestion.question, arbQuestion) &&
+        deepEqual(prendusViewQuestion._question, arbQuestion) &&
         deepEqual(prendusViewQuestion.loaded, true) &&
         deepEqual(compileToAssessML(prendusViewQuestion.builtQuestion.ast, () => 5), arbQuestion.text) &&
         verifyHTML(parse(arbQuestion.text, (varName: string) => generateVarValue(prendusViewQuestion.builtQuestion.ast, varName)), prendusViewQuestion.builtQuestion.html)

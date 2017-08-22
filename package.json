@@ -33,8 +33,8 @@
   "devDependencies": {
     "bower": "^1.8.0",
     "deep-equal": "^1.0.1",
-    "guesswork": "^0.3.0",
+    "guesswork": "^0.3.1",
     "jsverify": "^0.8.2",
-    "scram-engine": "^0.6.16"
+    "scram-engine": "^0.6.17"
   }
 }

@@ -23,7 +23,8 @@ class PrendusViewQuestionTest extends HTMLElement {
         test('set questionId property once with no residual state', [arbQuestion], test3.bind(this));
         test('set questionId property multiple times with residual state', [arbQuestion], test4.bind(this));
         test('interleave the setting of the question and questionId properties with residual state', [arbQuestion, jsc.bool], test5.bind(this));
-        test('user inputs correct answer', [arbQuestion], test6.bind(this));
+        test('user inputs correct answer with no residual state', [arbQuestion], test6.bind(this));
+        test('user inputs correct answer with residual state', [arbQuestion], test7.bind(this));
 
         async function test1(rawArbQuestion) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
@@ -169,6 +170,51 @@ class PrendusViewQuestionTest extends HTMLElement {
 
             function _questionResponseListener(event) {
                 prendusViewQuestion.removeEventListener('question-response', prepareEventListenerResult.eventListener);
+            }
+        }
+
+        const userInputsCorrectAnswerPrendusViewQuestion = document.createElement('prendus-view-question');
+        this.shadowRoot.appendChild(userInputsCorrectAnswerPrendusViewQuestion);
+        async function test7(rawArbQuestion) {
+            const arbQuestion = prepareArbQuestion(rawArbQuestion);
+            resetNums();
+            let {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
+            userInputsCorrectAnswerPrendusViewQuestion.addEventListener('question-loaded', eventListener);
+            userInputsCorrectAnswerPrendusViewQuestion.question = arbQuestion;
+            await eventPromise;
+
+            // act as the user and set all of the inputs
+            rawArbQuestion.codeInfo.userChecks.forEach((userCheck: UserCheck) => {
+                userInputsCorrectAnswerPrendusViewQuestion.shadowRoot.querySelector(`#${userCheck.varName}`).checked = userCheck.checked;
+            });
+
+            rawArbQuestion.codeInfo.userRadios.forEach((userRadio: UserRadio) => {
+                userInputsCorrectAnswerPrendusViewQuestion.shadowRoot.querySelector(`#${userRadio.varName}`).checked = userRadio.checked;
+            });
+
+            rawArbQuestion.codeInfo.userInputs.forEach((userInput: UserInput) => {
+                userInputsCorrectAnswerPrendusViewQuestion.shadowRoot.querySelector(`#${userInput.varName}`).textContent = userInput.value;
+            });
+
+            rawArbQuestion.codeInfo.userEssays.forEach((userEssay: UserEssay) => {
+                userInputsCorrectAnswerPrendusViewQuestion.shadowRoot.querySelector(`#${userEssay.varName}`).value = userEssay.value;
+            });
+
+            const prepareEventListenerResult = prepareEventListener(_questionResponseListener);
+            userInputsCorrectAnswerPrendusViewQuestion.addEventListener('question-response', prepareEventListenerResult.eventListener);
+            userInputsCorrectAnswerPrendusViewQuestion.checkAnswer();
+            await prepareEventListenerResult.eventPromise;
+
+            const result = userInputsCorrectAnswerPrendusViewQuestion.checkAnswerResponse === 'Correct';
+
+            return result;
+
+            function questionLoadedListener(event) {
+                userInputsCorrectAnswerPrendusViewQuestion.removeEventListener('question-loaded', eventListener);
+            }
+
+            function _questionResponseListener(event) {
+                userInputsCorrectAnswerPrendusViewQuestion.removeEventListener('question-response', prepareEventListenerResult.eventListener);
             }
         }
     }

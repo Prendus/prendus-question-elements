@@ -25,6 +25,8 @@ class PrendusViewQuestionTest extends HTMLElement {
         test('interleave the setting of the question and questionId properties with residual state', [arbQuestion, jsc.bool], test5.bind(this));
         test('user inputs correct answer with no residual state', [arbQuestion], test6.bind(this));
         test('user inputs correct answer with residual state', [arbQuestion], test7.bind(this));
+        test('user inputs incorrect answer with no residual state', [arbQuestion], test8.bind(this));
+        test('user inputs incorrect answer with residual state', [arbQuestion], test9.bind(this));
 
         async function test1(rawArbQuestion) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
@@ -215,6 +217,98 @@ class PrendusViewQuestionTest extends HTMLElement {
 
             function _questionResponseListener(event) {
                 userInputsCorrectAnswerPrendusViewQuestion.removeEventListener('question-response', prepareEventListenerResult.eventListener);
+            }
+        }
+
+        async function test8(rawArbQuestion) {
+            const arbQuestion = prepareArbQuestion(rawArbQuestion);
+            resetNums();
+            const prendusViewQuestion = document.createElement('prendus-view-question');
+            let {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
+            prendusViewQuestion.addEventListener('question-loaded', eventListener);
+            this.shadowRoot.appendChild(prendusViewQuestion);
+            prendusViewQuestion.question = arbQuestion;
+            await eventPromise;
+
+            // act as the user and set all of the inputs
+            rawArbQuestion.codeInfo.userChecks.forEach((userCheck: UserCheck) => {
+                prendusViewQuestion.shadowRoot.querySelector(`#${userCheck.varName}`).checked = !userCheck.checked;
+            });
+
+            rawArbQuestion.codeInfo.userRadios.forEach((userRadio: UserRadio) => {
+                prendusViewQuestion.shadowRoot.querySelector(`#${userRadio.varName}`).checked = !userRadio.checked;
+            });
+
+            rawArbQuestion.codeInfo.userInputs.forEach((userInput: UserInput) => {
+                prendusViewQuestion.shadowRoot.querySelector(`#${userInput.varName}`).textContent = userInput.value + new Date();
+            });
+
+            rawArbQuestion.codeInfo.userEssays.forEach((userEssay: UserEssay) => {
+                prendusViewQuestion.shadowRoot.querySelector(`#${userEssay.varName}`).value = userEssay.value + new Date();
+            });
+
+            const prepareEventListenerResult = prepareEventListener(_questionResponseListener);
+            prendusViewQuestion.addEventListener('question-response', prepareEventListenerResult.eventListener);
+            prendusViewQuestion.checkAnswer();
+            await prepareEventListenerResult.eventPromise;
+
+            const result = prendusViewQuestion.checkAnswerResponse === 'Incorrect' || (prendusViewQuestion.checkAnswerResponse === 'Correct' && arbQuestion.code === 'answer = true;');
+
+            this.shadowRoot.removeChild(prendusViewQuestion);
+
+            return result;
+
+            function questionLoadedListener(event) {
+                prendusViewQuestion.removeEventListener('question-loaded', eventListener);
+            }
+
+            function _questionResponseListener(event) {
+                prendusViewQuestion.removeEventListener('question-response', prepareEventListenerResult.eventListener);
+            }
+        }
+
+        const userInputsInCorrectAnswerPrendusViewQuestion = document.createElement('prendus-view-question');
+        this.shadowRoot.appendChild(userInputsInCorrectAnswerPrendusViewQuestion);
+        async function test9(rawArbQuestion) {
+            const arbQuestion = prepareArbQuestion(rawArbQuestion);
+            resetNums();
+            let {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
+            userInputsInCorrectAnswerPrendusViewQuestion.addEventListener('question-loaded', eventListener);
+            userInputsInCorrectAnswerPrendusViewQuestion.question = arbQuestion;
+            await eventPromise;
+
+            // act as the user and set all of the inputs
+            rawArbQuestion.codeInfo.userChecks.forEach((userCheck: UserCheck) => {
+                userInputsInCorrectAnswerPrendusViewQuestion.shadowRoot.querySelector(`#${userCheck.varName}`).checked = !userCheck.checked;
+            });
+
+            rawArbQuestion.codeInfo.userRadios.forEach((userRadio: UserRadio) => {
+                userInputsInCorrectAnswerPrendusViewQuestion.shadowRoot.querySelector(`#${userRadio.varName}`).checked = !userRadio.checked;
+            });
+
+            rawArbQuestion.codeInfo.userInputs.forEach((userInput: UserInput) => {
+                userInputsInCorrectAnswerPrendusViewQuestion.shadowRoot.querySelector(`#${userInput.varName}`).textContent = userInput.value + new Date();
+            });
+
+            rawArbQuestion.codeInfo.userEssays.forEach((userEssay: UserEssay) => {
+                userInputsInCorrectAnswerPrendusViewQuestion.shadowRoot.querySelector(`#${userEssay.varName}`).value = userEssay.value + new Date();
+            });
+
+            const prepareEventListenerResult = prepareEventListener(_questionResponseListener);
+            userInputsInCorrectAnswerPrendusViewQuestion.addEventListener('question-response', prepareEventListenerResult.eventListener);
+            userInputsInCorrectAnswerPrendusViewQuestion.checkAnswer();
+            await prepareEventListenerResult.eventPromise;
+
+            const result = userInputsInCorrectAnswerPrendusViewQuestion.checkAnswerResponse === 'Incorrect' || (userInputsInCorrectAnswerPrendusViewQuestion.checkAnswerResponse === 'Correct' && arbQuestion.code === 'answer = true;');
+
+            return result;
+
+            function questionLoadedListener(event) {
+                userInputsInCorrectAnswerPrendusViewQuestion.removeEventListener('question-loaded', eventListener);
+            }
+
+            function _questionResponseListener(event) {
+                userInputsInCorrectAnswerPrendusViewQuestion.removeEventListener('question-response', prepareEventListenerResult.eventListener);
             }
         }
     }

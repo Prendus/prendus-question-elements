@@ -2,6 +2,7 @@
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="../../bower_components/paper-tabs/paper-tab.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="../redux-store-element/redux-store.html">
 
 <!--TODO ensure that this script does not do a network request for each instance of a question-->
@@ -86,6 +87,8 @@
                         <!-- <div on-click="showEmbedCodeClick" class="embedButton">Embed</div> -->
                     </div>
                     <!-- </div> -->
+
+                    <paper-toast id="checkAnswerResponseToast" text="[[checkAnswerResponse]]" duration="3000"></paper-toast>
 
                     <dom-if if="[[showEmbedCode]]">
                         <template>

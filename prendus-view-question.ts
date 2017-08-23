@@ -207,7 +207,25 @@ class PrendusViewQuestion extends Polymer.Element {
 
         const checkAnswerInfo = await checkAnswer(this._question.code, userVariables, userInputs, userEssays, userChecks, userRadios);
 
-        alert(checkAnswerInfo.answer === true ? 'Correct' : checkAnswerInfo.error ? `This question has errors:\n\n${checkAnswerInfo.error}` :'Incorrect');
+        this.dispatchEvent(new CustomEvent('question-response', {
+            bubbles: false,
+            detail: {
+                userVariables,
+                userInputs,
+                userEssays,
+                userChecks,
+                userRadios
+            }
+        }));
+
+        this.action = {
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'checkAnswerResponse',
+            value: checkAnswerInfo.answer === true ? 'Correct' : checkAnswerInfo.error ? `This question has errors:\n\n${checkAnswerInfo.error}` : 'Incorrect'
+        };
+
+        this.shadowRoot.querySelector('#checkAnswerResponseToast').open();
     }
 
     stateChange(e: CustomEvent) {
@@ -218,6 +236,7 @@ class PrendusViewQuestion extends Polymer.Element {
         if (Object.keys(state.components[this.componentId] || {}).includes('questionId')) this._questionId = state.components[this.componentId].questionId;
         if (Object.keys(state.components[this.componentId] || {}).includes('builtQuestion')) this.builtQuestion = state.components[this.componentId].builtQuestion;
         if (Object.keys(state.components[this.componentId] || {}).includes('showEmbedCode')) this.showEmbedCode = state.components[this.componentId].showEmbedCode;
+        if (Object.keys(state.components[this.componentId] || {}).includes('checkAnswerResponse')) this.checkAnswerResponse = state.components[this.componentId].checkAnswerResponse;
         this.userToken = state.userToken;
     }
 }

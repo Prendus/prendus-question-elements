@@ -19,7 +19,8 @@
     "paper-tabs": "^2.0.0",
     "juicy-ace-editor": "^2.0.1",
     "iron-pages": "^2.0.0",
-    "wysiwyg-e": "^2.0.5"
+    "wysiwyg-e": "^2.0.5",
+    "paper-toast": "^2.0.0"
   },
   "resolutions": {
     "webcomponentsjs": "^v1.0.2"

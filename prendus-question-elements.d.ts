@@ -70,28 +70,28 @@ export interface User {
 }
 
 export interface UserVariable {
-    varName: string;
-    value: number;
+    readonly varName: string;
+    readonly value: number;
 }
 
 export interface UserInput {
-    varName: string;
-    value: string;
+    readonly varName: string;
+    readonly value: string;
 }
 
 export interface UserEssay {
-    varName: string;
-    value: string;
+    readonly varName: string;
+    readonly value: string;
 }
 
 export interface UserCheck {
-    varName: string;
-    checked: boolean;
+    readonly varName: string;
+    readonly checked: boolean;
 }
 
 export interface UserRadio {
-    varName: string;
-    checked: boolean;
+    readonly varName: string;
+    readonly checked: boolean;
 }
 
 export interface QuestionScaffold {
@@ -99,5 +99,14 @@ export interface QuestionScaffold {
 }
 
 export interface QuestionScaffoldAnswer {
-    
+
+}
+
+export interface CodeInfo {
+    readonly code: string;
+    readonly userChecks: UserCheck[];
+    readonly userRadios: UserRadio[];
+    readonly userEssays: UserEssay[];
+    readonly userInputs: UserInput[];
+    readonly oneRadioHasBeenSetToTrue: boolean;
 }

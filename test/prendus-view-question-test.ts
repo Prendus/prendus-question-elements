@@ -1,7 +1,7 @@
 import {html} from '../node_modules/lit-html/lit-html';
 import {render} from '../node_modules/lit-html/lib/lit-extended';
 import {parse, compileToAssessML, compileToHTML} from '../node_modules/assessml/assessml';
-import {AST} from '../node_modules/assessml/assessml.d';
+import {AST, ASTObject} from '../node_modules/assessml/assessml.d';
 import {GQLMutate, escapeString} from '../services/graphql-service';
 import {arbAST, verifyHTML, generateVarValue, resetNums} from '../node_modules/assessml/test-utilities';
 import {arbQuestion} from '../test-utilities';
@@ -27,6 +27,7 @@ class PrendusViewQuestionTest extends HTMLElement {
         test('user inputs correct answer with residual state', [arbQuestion], test7.bind(this));
         test('user inputs incorrect answer with no residual state', [arbQuestion], test8.bind(this));
         test('user inputs incorrect answer with residual state', [arbQuestion], test9.bind(this));
+        test('variable min and max', [arbQuestion], test10.bind(this));
 
         async function test1(rawArbQuestion) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
@@ -311,6 +312,24 @@ class PrendusViewQuestionTest extends HTMLElement {
                 userInputsInCorrectAnswerPrendusViewQuestion.removeEventListener('question-response', prepareEventListenerResult.eventListener);
             }
         }
+
+        async function test10(rawArbQuestion) {
+            const arbQuestion = prepareArbQuestion(rawArbQuestion);
+            resetNums();
+            const prendusViewQuestion = document.createElement('prendus-view-question');
+            const {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
+            prendusViewQuestion.addEventListener('question-loaded', eventListener);
+            this.shadowRoot.appendChild(prendusViewQuestion);
+            prendusViewQuestion.question = arbQuestion;
+            await eventPromise;
+            const result = verifyMinAndMax(prendusViewQuestion.builtQuestion.ast, rawArbQuestion.codeInfo.varInfos);
+            this.shadowRoot.removeChild(prendusViewQuestion);
+            return result;
+
+            function questionLoadedListener(event) {
+                prendusViewQuestion.removeEventListener('question-loaded', eventListener);
+            }
+        }
     }
 
     // stateChange(question) {
@@ -321,6 +340,29 @@ class PrendusViewQuestionTest extends HTMLElement {
 }
 
 window.customElements.define('prendus-view-question-test', PrendusViewQuestionTest);
+
+function verifyMinAndMax(ast: AST, varInfos) {
+    return varInfos.reduce((result: boolean, varInfo) => {
+        if (!result) {
+            return result;
+        }
+
+        return ast.ast.reduce((result: boolean, astObject: ASTObject) => {
+            if (!result) {
+                return result;
+            }
+
+            if (astObject.type === 'VARIABLE' && astObject.varName === varInfo.varName) {
+                if (varInfo.min < varInfo.max) {
+                    return !isNaN(astObject.value) && astObject.value >= varInfo.min && astObject.value <= varInfo.max;
+                }
+                //TODO We might want to think about the expected behavior when the min is greater than the max...but that would be a user error
+            }
+
+            return result;
+        }, true);
+    }, true);
+}
 
 function prepareEventListener(eventListener) {
     let _resolve;

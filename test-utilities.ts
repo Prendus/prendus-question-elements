@@ -38,6 +38,24 @@ export const arbQuestion = arbAST.smap((arbAST: any) => {
                 };
             }
 
+            if (astObject.type === 'VARIABLE') {
+                const varName = astObject.varName;
+                const min = jsc.sampler(jsc.integer, 1000000)();
+                const max = jsc.sampler(jsc.integer, 1000000)();
+                const precision = 5; //TODO make this real
+
+                return {
+                    ...result,
+                    code: `${varName}.min = ${min}; ${varName}.max = ${max}; ${varName}.precision = ${precision}; ${result.code}`,
+                    varInfos: [...result.varInfos, {
+                        varName,
+                        min,
+                        max,
+                        precision
+                    }]
+                };
+            }
+
             return result
         }, {
             code: 'answer =',
@@ -45,7 +63,8 @@ export const arbQuestion = arbAST.smap((arbAST: any) => {
             userRadios: [],
             userEssays: [],
             userInputs: [],
-            oneRadioHasBeenSetToTrue: null
+            oneRadioHasBeenSetToTrue: null,
+            varInfos: []
         })
     };
 

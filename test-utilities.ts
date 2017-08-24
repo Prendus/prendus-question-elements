@@ -50,7 +50,7 @@ export function generateArbQuestion(numEquivalentVars: number) {
 
                     return {
                         ...result,
-                        code: `${varName}.min = ${min}; ${varName}.max = ${max}; ${varName}.precision = ${precision}; ${result.code}`,
+                        code: `${varName}.min = ${min}; ${varName}.max = ${max}; ${varName}.precision = ${precision}; ${result.code} !isNaN(${varName}) && ((${min} < ${max} && ${varName} >= ${min} && ${varName} <= ${max}) || ${min} >= ${max}) &&`,
                         varInfos: [...result.varInfos, {
                             varName,
                             min,

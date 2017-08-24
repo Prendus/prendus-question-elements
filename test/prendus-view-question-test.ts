@@ -31,7 +31,6 @@ class PrendusViewQuestionTest extends HTMLElement {
         test('user inputs correct answer with residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test7.bind(this));
         test('user inputs incorrect answer with no residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test8.bind(this));
         test('user inputs incorrect answer with residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test9.bind(this));
-        test('variable min and max', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test10.bind(this));
 
         async function test1(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
@@ -257,7 +256,7 @@ class PrendusViewQuestionTest extends HTMLElement {
             prendusViewQuestion.checkAnswer();
             await prepareEventListenerResult.eventPromise;
 
-            const result = prendusViewQuestion.checkAnswerResponse === 'Incorrect' || (prendusViewQuestion.checkAnswerResponse === 'Correct' && arbQuestion.code.includes('answer = true;'));
+            const result = prendusViewQuestion.checkAnswerResponse === 'Incorrect' || (prendusViewQuestion.checkAnswerResponse === 'Correct' && (arbQuestion.code.includes('answer = true;') || arbQuestion.code.includes('&& true;')));
 
             this.shadowRoot.removeChild(prendusViewQuestion);
 
@@ -304,7 +303,7 @@ class PrendusViewQuestionTest extends HTMLElement {
             userInputsInCorrectAnswerPrendusViewQuestion.checkAnswer();
             await prepareEventListenerResult.eventPromise;
 
-            const result = userInputsInCorrectAnswerPrendusViewQuestion.checkAnswerResponse === 'Incorrect' || (userInputsInCorrectAnswerPrendusViewQuestion.checkAnswerResponse === 'Correct' && arbQuestion.code.includes('answer = true;'));
+            const result = userInputsInCorrectAnswerPrendusViewQuestion.checkAnswerResponse === 'Incorrect' || (arbQuestion.code.includes('answer = true;') || arbQuestion.code.includes('&& true;')));
 
             return result;
 
@@ -314,24 +313,6 @@ class PrendusViewQuestionTest extends HTMLElement {
 
             function _questionResponseListener(event: Event) {
                 userInputsInCorrectAnswerPrendusViewQuestion.removeEventListener('question-response', prepareEventListenerResult.eventListener);
-            }
-        }
-
-        async function test10(rawArbQuestion: JSVerify.Arbitrary<Question>) {
-            const arbQuestion = prepareArbQuestion(rawArbQuestion);
-            resetNums();
-            const prendusViewQuestion = new PrendusViewQuestion();
-            const {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
-            prendusViewQuestion.addEventListener('question-loaded', eventListener);
-            this.shadowRoot.appendChild(prendusViewQuestion);
-            prendusViewQuestion.question = arbQuestion;
-            await eventPromise;
-            const result = verifyMinAndMax(prendusViewQuestion.builtQuestion.ast, rawArbQuestion.codeInfo.varInfos);
-            this.shadowRoot.removeChild(prendusViewQuestion);
-            return result;
-
-            function questionLoadedListener(event: Event) {
-                prendusViewQuestion.removeEventListener('question-loaded', eventListener);
             }
         }
     }
@@ -344,33 +325,6 @@ class PrendusViewQuestionTest extends HTMLElement {
 }
 
 window.customElements.define('prendus-view-question-test', PrendusViewQuestionTest);
-
-function verifyMinAndMax(ast: AST, varInfos) {
-    return varInfos.reduce((result: boolean, varInfo) => {
-        if (!result) {
-            return result;
-        }
-
-        return ast.ast.reduce((result: boolean, astObject: ASTObject) => {
-            if (!result) {
-                return result;
-            }
-
-            if (astObject.type === 'VARIABLE' && astObject.varName === varInfo.varName) {
-                if (varInfo.min < varInfo.max) {
-                    return !isNaN(astObject.value) && astObject.value >= varInfo.min && astObject.value <= varInfo.max;
-                }
-                //TODO We might want to think about the expected behavior when the min is greater than the max...but that would be a user error
-            }
-
-            return result;
-        }, true);
-    }, true);
-}
-
-new Promise((resolve, reject) => {
-
-})
 
 function prepareEventListener(eventListener: EventListener) {
     let _resolve: (value?: {} | PromiseLike<{}> | undefined) => void;

@@ -230,38 +230,42 @@ class PrendusEditQuestion extends Polymer.Element {
 
     async loadData() {
         if (!this.question || this.question.id !== this.questionId) {
-            await GQLRequest(`
-                query {
-                    question: Question(id: "${this.questionId}") {
+            const data = await GQLRequest(`
+                query getQuestion($questionId: ID!) {
+                    question: Question(
+                        id: $questionId
+                    ) {
                         id
                         text
                         code
                     }
                 }
-            `, this.userToken, (key: string, value: any) => {
-                if (key === 'question' && !value) {
-                    this.action = {
-                        type: 'SET_COMPONENT_PROPERTY',
-                        componentId: this.componentId,
-                        key,
-                        value: {
-                            id: this.questionId,
-                            text: 'This question does not exist',
-                            code: 'answer = false;'
-                        }
-                    };
-                }
-                else {
-                    this.action = {
-                        type: 'SET_COMPONENT_PROPERTY',
-                        componentId: this.componentId,
-                        key,
-                        value
-                    };
-                }
-            }, (error: any) => {
+            `, {
+                questionId: this.questionId
+            }, this.userToken, (error: any) => {
                 console.log(error);
             });
+
+            if (data.question) {
+                this.action = {
+                    type: 'SET_COMPONENT_PROPERTY',
+                    componentId: this.componentId,
+                    key: 'question',
+                    value: data.question
+                };
+            }
+            else {
+                this.action = {
+                    type: 'SET_COMPONENT_PROPERTY',
+                    componentId: this.componentId,
+                    key: 'question',
+                    value: {
+                        id: this.questionId,
+                        text: 'This question does not exist',
+                        code: 'answer = false;'
+                    }
+                };
+            }
         }
     }
 
@@ -271,34 +275,50 @@ class PrendusEditQuestion extends Polymer.Element {
         }
 
         if (!this.questionId) {
-            const data = await GQLMutate(`
-                mutation {
+            const data = await GQLRequest(`
+                mutation createQuestion(
+                    $authorId: ID!
+                    $text: String!
+                    $code: String!
+                ) {
                     createQuestion(
-                        authorId: "${escapeString(this.user.id)}"
-                        text: "${escapeString(this.question.text)}"
-                        code: "${escapeString(this.question.code)}"
+                        authorId: $authorId
+                        text: $text
+                        code: $code
                     ) {
                         id
                     }
                 }
-            `, this.userToken, (error: any) => {
+            `, {
+                authorId: this.user.id,
+                text: this.question.text,
+                code: this.question.code
+            }, this.userToken, (error: any) => {
                 console.log(error);
             });
 
             navigate(`/question/${data.createQuestion.id}/edit`);
         }
         else {
-            await GQLMutate(`
-                mutation {
+            await GQLRequest(`
+                mutation updateQuestion(
+                    $questionId: ID!
+                    $text: String!
+                    $code: String!
+                ) {
                     updateQuestion(
-                        id: "${escapeString(this.questionId)}"
-                        text: "${escapeString(this.question.text)}"
-                        code: "${escapeString(this.question.code)}"
+                        id: $questionId
+                        text: $text
+                        code: $code
                     ) {
                         id
                     }
                 }
-            `, this.userToken, (error: any) => {
+            `, {
+                questionId: this.questionId,
+                text: this.question.text,
+                code: this.question.code
+            }, this.userToken, (error: any) => {
                 console.log(error);
             });
         }

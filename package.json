@@ -27,7 +27,7 @@
     "escodegen-temp": "git+https://github.com/Prendus/escodegen-temp.git",
     "esprima": "^4.0.0",
     "lit-html": "^0.5.0",
-    "prendus-shared": "0.0.1",
+    "prendus-shared": "0.0.2",
     "redux-store-element": "^1.2.13",
     "secure-eval": "^0.1.0"
   },

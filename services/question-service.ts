@@ -4,6 +4,7 @@ import {secureEval} from '../../secure-eval/secure-eval';
 import {AST, ASTObject, Variable, Input, Essay, Check, Radio} from 'assessml';
 import {Program, ExpressionStatement, MemberExpression, Identifier, AssignmentExpression} from 'estree';
 import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay} from '../prendus-question-elements.d';
+import {normalizeVariables} from '../../assessml/test-utilities';
 
 export async function buildQuestion(text: string, code: string): Promise<{
     html: string;
@@ -34,9 +35,11 @@ export async function buildQuestion(text: string, code: string): Promise<{
             })
         };
 
+        const normalizedAmlAst = normalizeVariables(newAmlAst);
+
         return {
-            html: compileToHTML(newAmlAst, () => generateRandomInteger(0, 100)),
-            ast: newAmlAst
+            html: compileToHTML(normalizedAmlAst, () => generateRandomInteger(0, 100)),
+            ast: normalizedAmlAst
         };
     }
     catch(error) {
@@ -67,7 +70,7 @@ async function newPropertyValue(jsAst: Program, varName: string, propertyName: s
 }
 
 export async function checkAnswer(code: string, userVariables: UserVariable[], userInputs: UserInput[], userEssays: UserEssay[], userChecks: UserCheck[], userRadios: UserRadio[]) {
-    const defineUserVariablesString = userVariables.reduce((result: string, userVariable) => {
+    const defineUserVariablesString = normalizeUserVariables(userVariables).reduce((result: string, userVariable) => {
         return `${result}let ${userVariable.varName} = new Number(${userVariable.value});`;
     }, '');
     const defineUserInputsString = userInputs.reduce((result: string, userInput) => {
@@ -103,4 +106,10 @@ export async function checkAnswer(code: string, userVariables: UserVariable[], u
 function generateRandomInteger(min: number, max: number): number {
     //returns a random integer between min (included) and max (included)
     return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function normalizeUserVariables(userVariables: UserVariable[]): UserVariable[] {
+    return userVariables.reduce((result: UserVariable[], outerUserVariable: UserVariable, index: number) => {
+        return [userVariables[index], ...result.filter((innerUserVariable) => outerUserVariable.varName !== innerUserVariable.varName)];
+    }, userVariables);
 }

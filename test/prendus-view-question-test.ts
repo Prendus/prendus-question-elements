@@ -4,7 +4,7 @@ import {parse, compileToAssessML, compileToHTML} from '../node_modules/assessml/
 import {AST, ASTObject} from '../node_modules/assessml/assessml.d';
 import {GQLMutate, escapeString} from '../services/graphql-service';
 import {arbAST, verifyHTML, generateVarValue, resetNums} from '../node_modules/assessml/test-utilities';
-import {arbQuestion} from '../test-utilities';
+import {generateArbQuestion} from '../test-utilities';
 import {UserCheck, UserRadio, UserInput, UserEssay} from '../prendus-question-elements.d';
 
 const jsc = require('jsverify');
@@ -18,16 +18,16 @@ class PrendusViewQuestionTest extends HTMLElement {
     }
 
     prepareTests(test: any) {
-        test('set question property once with no residual state', [arbQuestion], test1.bind(this));
-        test('set question property multiple times with residual state', [arbQuestion], test2.bind(this));
-        test('set questionId property once with no residual state', [arbQuestion], test3.bind(this));
-        test('set questionId property multiple times with residual state', [arbQuestion], test4.bind(this));
-        test('interleave the setting of the question and questionId properties with residual state', [arbQuestion, jsc.bool], test5.bind(this));
-        test('user inputs correct answer with no residual state', [arbQuestion], test6.bind(this));
-        test('user inputs correct answer with residual state', [arbQuestion], test7.bind(this));
-        test('user inputs incorrect answer with no residual state', [arbQuestion], test8.bind(this));
-        test('user inputs incorrect answer with residual state', [arbQuestion], test9.bind(this));
-        test('variable min and max', [arbQuestion], test10.bind(this));
+        test('set question property once with no residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test1.bind(this));
+        test('set question property multiple times with residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test2.bind(this));
+        test('set questionId property once with no residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test3.bind(this));
+        test('set questionId property multiple times with residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test4.bind(this));
+        test('interleave the setting of the question and questionId properties with residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)()), jsc.bool], test5.bind(this));
+        test('user inputs correct answer with no residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test6.bind(this));
+        test('user inputs correct answer with residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test7.bind(this));
+        test('user inputs incorrect answer with no residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test8.bind(this));
+        test('user inputs incorrect answer with residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test9.bind(this));
+        test('variable min and max', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test10.bind(this));
 
         async function test1(rawArbQuestion) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);

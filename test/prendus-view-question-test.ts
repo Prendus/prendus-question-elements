@@ -5,7 +5,9 @@ import {AST, ASTObject} from '../node_modules/assessml/assessml.d';
 import {GQLMutate, escapeString} from '../services/graphql-service';
 import {arbAST, verifyHTML, generateVarValue, resetNums} from '../node_modules/assessml/test-utilities';
 import {generateArbQuestion} from '../test-utilities';
-import {UserCheck, UserRadio, UserInput, UserEssay} from '../prendus-question-elements.d';
+import {UserCheck, UserRadio, UserInput, UserEssay, Question} from '../prendus-question-elements.d';
+import * as JSVerify from 'jsverify';
+import {PrendusViewQuestion} from '../node_modules/prendus-question-elements/prendus-view-question';
 
 const jsc = require('jsverify');
 const deepEqual = require('deep-equal');
@@ -13,6 +15,8 @@ const prendusQuestionElementsTestUserId = 'cj4oe24w1ei1u0160f2daribf';
 const prendusQuestionElementsTestJWT = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE1MDMwMDE3MjAsImNsaWVudElkIjoiY2oyd2lmdnZmM29raTAxNTRtZnN0c2lscCIsInByb2plY3RJZCI6ImNqMzZkZTlxNGRlbTAwMTM0Ymhrd200NHIiLCJwZXJtYW5lbnRBdXRoVG9rZW5JZCI6ImNqNmd3ZjF6NjF2YTYwMTEwbDlra2hwMWIifQ.I-3cxsgRzg1ArFylmkdNTxobkqKiEdpHNZ0_9vQ1kfQ';
 
 class PrendusViewQuestionTest extends HTMLElement {
+    shadowRoot: ShadowRoot;
+
     connectedCallback() {
         this.attachShadow({mode: 'open'});
     }
@@ -29,10 +33,10 @@ class PrendusViewQuestionTest extends HTMLElement {
         test('user inputs incorrect answer with residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test9.bind(this));
         test('variable min and max', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test10.bind(this));
 
-        async function test1(rawArbQuestion) {
+        async function test1(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
             resetNums();
-            const prendusViewQuestion = document.createElement('prendus-view-question');
+            const prendusViewQuestion = new PrendusViewQuestion();
             const {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
             prendusViewQuestion.addEventListener('question-loaded', eventListener);
             this.shadowRoot.appendChild(prendusViewQuestion);
@@ -42,14 +46,14 @@ class PrendusViewQuestionTest extends HTMLElement {
             this.shadowRoot.removeChild(prendusViewQuestion);
             return result;
 
-            function questionLoadedListener(event) {
+            function questionLoadedListener(event: Event) {
                 prendusViewQuestion.removeEventListener('question-loaded', eventListener);
             }
         }
 
-        const setQuestionPropertyMultipleTimesPrendusViewQuestion = document.createElement('prendus-view-question');
+        const setQuestionPropertyMultipleTimesPrendusViewQuestion = new PrendusViewQuestion();
         this.shadowRoot.appendChild(setQuestionPropertyMultipleTimesPrendusViewQuestion);
-        async function test2(rawArbQuestion) {
+        async function test2(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
             resetNums();
             const {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
@@ -59,18 +63,18 @@ class PrendusViewQuestionTest extends HTMLElement {
             const result = verifyQuestionLoaded(setQuestionPropertyMultipleTimesPrendusViewQuestion, arbQuestion);
             return result;
 
-            function questionLoadedListener(event) {
+            function questionLoadedListener(event: Event) {
                 setQuestionPropertyMultipleTimesPrendusViewQuestion.removeEventListener('question-loaded', eventListener);
             }
         }
 
-        async function test3(rawArbQuestion) {
+        async function test3(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
             resetNums();
             const data = await createQuestion(prendusQuestionElementsTestUserId, prendusQuestionElementsTestJWT, arbQuestion);
             const questionId = data.createQuestion.id;
             const {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
-            const prendusViewQuestion = document.createElement('prendus-view-question');
+            const prendusViewQuestion = new PrendusViewQuestion();
             prendusViewQuestion.addEventListener('question-loaded', eventListener);
             this.shadowRoot.appendChild(prendusViewQuestion);
             prendusViewQuestion.questionId = questionId;
@@ -80,14 +84,14 @@ class PrendusViewQuestionTest extends HTMLElement {
             await deleteQuestion(prendusQuestionElementsTestUserId, prendusQuestionElementsTestJWT, questionId);
             return result;
 
-            function questionLoadedListener(event) {
+            function questionLoadedListener(event: Event) {
                 prendusViewQuestion.removeEventListener('question-loaded', eventListener);
             }
         }
 
-        const setQuestionIdPropertyMultipleTimesPrendusViewQuestion = document.createElement('prendus-view-question');
+        const setQuestionIdPropertyMultipleTimesPrendusViewQuestion = new PrendusViewQuestion();
         this.shadowRoot.appendChild(setQuestionIdPropertyMultipleTimesPrendusViewQuestion);
-        async function test4(rawArbQuestion) {
+        async function test4(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
             resetNums();
             const data = await createQuestion(prendusQuestionElementsTestUserId, prendusQuestionElementsTestJWT, arbQuestion);
@@ -100,14 +104,14 @@ class PrendusViewQuestionTest extends HTMLElement {
             await deleteQuestion(prendusQuestionElementsTestUserId, prendusQuestionElementsTestJWT, questionId);
             return result;
 
-            function questionLoadedListener(event) {
+            function questionLoadedListener(event: Event) {
                 setQuestionIdPropertyMultipleTimesPrendusViewQuestion.removeEventListener('question-loaded', eventListener);
             }
         }
 
-        const interleaveQuestionAndQuestionIdPropertyPrendusViewQuestion = document.createElement('prendus-view-question');
+        const interleaveQuestionAndQuestionIdPropertyPrendusViewQuestion = new PrendusViewQuestion();
         this.shadowRoot.appendChild(interleaveQuestionAndQuestionIdPropertyPrendusViewQuestion);
-        async function test5(rawArbQuestion, questionOrQuestionId) {
+        async function test5(rawArbQuestion: JSVerify.Arbitrary<Question>, questionOrQuestionId: JSVerify.Arbitrary<boolean>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
             resetNums();
             const data = questionOrQuestionId ? {
@@ -124,15 +128,15 @@ class PrendusViewQuestionTest extends HTMLElement {
             questionOrQuestionId && await deleteQuestion(prendusQuestionElementsTestUserId, prendusQuestionElementsTestJWT, questionId);
             return result;
 
-            function questionLoadedListener(event) {
+            function questionLoadedListener(event: Event) {
                 interleaveQuestionAndQuestionIdPropertyPrendusViewQuestion.removeEventListener('question-loaded', eventListener);
             }
         }
 
-        async function test6(rawArbQuestion) {
+        async function test6(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
             resetNums();
-            const prendusViewQuestion = document.createElement('prendus-view-question');
+            const prendusViewQuestion = new PrendusViewQuestion();
             let {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
             prendusViewQuestion.addEventListener('question-loaded', eventListener);
             this.shadowRoot.appendChild(prendusViewQuestion);
@@ -167,18 +171,18 @@ class PrendusViewQuestionTest extends HTMLElement {
 
             return result;
 
-            function questionLoadedListener(event) {
+            function questionLoadedListener(event: Event) {
                 prendusViewQuestion.removeEventListener('question-loaded', eventListener);
             }
 
-            function _questionResponseListener(event) {
+            function _questionResponseListener(event: Event) {
                 prendusViewQuestion.removeEventListener('question-response', prepareEventListenerResult.eventListener);
             }
         }
 
-        const userInputsCorrectAnswerPrendusViewQuestion = document.createElement('prendus-view-question');
+        const userInputsCorrectAnswerPrendusViewQuestion = new PrendusViewQuestion();
         this.shadowRoot.appendChild(userInputsCorrectAnswerPrendusViewQuestion);
-        async function test7(rawArbQuestion) {
+        async function test7(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
             resetNums();
             let {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
@@ -212,19 +216,19 @@ class PrendusViewQuestionTest extends HTMLElement {
 
             return result;
 
-            function questionLoadedListener(event) {
+            function questionLoadedListener(event: Event) {
                 userInputsCorrectAnswerPrendusViewQuestion.removeEventListener('question-loaded', eventListener);
             }
 
-            function _questionResponseListener(event) {
+            function _questionResponseListener(event: Event) {
                 userInputsCorrectAnswerPrendusViewQuestion.removeEventListener('question-response', prepareEventListenerResult.eventListener);
             }
         }
 
-        async function test8(rawArbQuestion) {
+        async function test8(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
             resetNums();
-            const prendusViewQuestion = document.createElement('prendus-view-question');
+            const prendusViewQuestion = new PrendusViewQuestion();
             let {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
             prendusViewQuestion.addEventListener('question-loaded', eventListener);
             this.shadowRoot.appendChild(prendusViewQuestion);
@@ -259,18 +263,18 @@ class PrendusViewQuestionTest extends HTMLElement {
 
             return result;
 
-            function questionLoadedListener(event) {
+            function questionLoadedListener(event: Event) {
                 prendusViewQuestion.removeEventListener('question-loaded', eventListener);
             }
 
-            function _questionResponseListener(event) {
+            function _questionResponseListener(event: Event) {
                 prendusViewQuestion.removeEventListener('question-response', prepareEventListenerResult.eventListener);
             }
         }
 
-        const userInputsInCorrectAnswerPrendusViewQuestion = document.createElement('prendus-view-question');
+        const userInputsInCorrectAnswerPrendusViewQuestion = new PrendusViewQuestion();
         this.shadowRoot.appendChild(userInputsInCorrectAnswerPrendusViewQuestion);
-        async function test9(rawArbQuestion) {
+        async function test9(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
             resetNums();
             let {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
@@ -304,19 +308,19 @@ class PrendusViewQuestionTest extends HTMLElement {
 
             return result;
 
-            function questionLoadedListener(event) {
+            function questionLoadedListener(event: Event) {
                 userInputsInCorrectAnswerPrendusViewQuestion.removeEventListener('question-loaded', eventListener);
             }
 
-            function _questionResponseListener(event) {
+            function _questionResponseListener(event: Event) {
                 userInputsInCorrectAnswerPrendusViewQuestion.removeEventListener('question-response', prepareEventListenerResult.eventListener);
             }
         }
 
-        async function test10(rawArbQuestion) {
+        async function test10(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
             resetNums();
-            const prendusViewQuestion = document.createElement('prendus-view-question');
+            const prendusViewQuestion = new PrendusViewQuestion();
             const {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
             prendusViewQuestion.addEventListener('question-loaded', eventListener);
             this.shadowRoot.appendChild(prendusViewQuestion);
@@ -326,7 +330,7 @@ class PrendusViewQuestionTest extends HTMLElement {
             this.shadowRoot.removeChild(prendusViewQuestion);
             return result;
 
-            function questionLoadedListener(event) {
+            function questionLoadedListener(event: Event) {
                 prendusViewQuestion.removeEventListener('question-loaded', eventListener);
             }
         }
@@ -364,13 +368,17 @@ function verifyMinAndMax(ast: AST, varInfos) {
     }, true);
 }
 
-function prepareEventListener(eventListener) {
-    let _resolve;
+new Promise((resolve, reject) => {
+
+})
+
+function prepareEventListener(eventListener: EventListener) {
+    let _resolve: (value?: {} | PromiseLike<{}> | undefined) => void;
     const eventPromise = new Promise((resolve, reject) => {
         _resolve = resolve;
     });
 
-    function augmentedEventListener(event) {
+    function augmentedEventListener(event: Event) {
         eventListener(event);
         _resolve();
     }

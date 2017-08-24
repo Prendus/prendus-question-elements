@@ -109,4 +109,9 @@ export interface CodeInfo {
     readonly userEssays: UserEssay[];
     readonly userInputs: UserInput[];
     readonly oneRadioHasBeenSetToTrue: boolean;
+    readonly varInfos: {
+        readonly min: number;
+        readonly max: number;
+        readonly precision: number;
+    }[];
 }

@@ -1,5 +1,5 @@
 import {parse, compileToHTML} from '../../assessml/assessml';
-import {asyncMap} from '../services/utilities-service';
+import {asyncMap} from '../../prendus-shared/services/utilities-service';
 import {secureEval} from '../../secure-eval/secure-eval';
 import {AST, ASTObject, Variable, Input, Essay, Check, Radio} from 'assessml';
 import {Program, ExpressionStatement, MemberExpression, Identifier, AssignmentExpression} from 'estree';

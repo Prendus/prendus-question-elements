@@ -1,8 +1,8 @@
-import {arbAST} from './node_modules/assessml/test-utilities';
-import {AST, ASTObject, Variable} from './node_modules/assessml/assessml.d';
-import {compileToAssessML} from './node_modules/assessml/assessml';
+import {arbAST} from '../assessml/test-utilities';
+import {AST, ASTObject, Variable} from '../assessml/assessml.d';
+import {compileToAssessML} from '../assessml/assessml';
 import {CodeInfo} from './prendus-question-elements.d';
-import {shuffleArray} from './services/utilities-service';
+import {shuffleArray} from '../prendus-shared/services/utilities-service';
 
 const jsc = require('jsverify');
 

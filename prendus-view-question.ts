@@ -1,7 +1,7 @@
-import {GQLQuery} from './services/graphql-service';
+import {GQLRequest} from '../prendus-shared/services/graphql-service';
 import {SetComponentPropertyAction, Question, BuiltQuestion, Reducer, UserInput, UserVariable, UserCheck, UserRadio, UserEssay} from './prendus-question-elements.d';
 import {buildQuestion, checkAnswer} from './services/question-service';
-import {createUUID} from './services/utilities-service';
+import {createUUID} from '../prendus-shared/services/utilities-service';
 import {getAstObjects} from '../assessml/assessml';
 import {RootReducer} from './redux/reducers';
 import {AST, Variable, Input, Essay, Radio, Check, Drag, Drop} from '../assessml/assessml.d';
@@ -253,7 +253,7 @@ async function loadData(question: Question | null, questionId: string | null, us
         };
     }
     else {
-        const data = await GQLQuery(`
+        const data = await GQLRequest(`
             query getQuestion($questionId: ID!) {
                 question: Question(
                     id: $questionId

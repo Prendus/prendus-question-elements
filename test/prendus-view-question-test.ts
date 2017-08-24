@@ -2,9 +2,9 @@ import {html} from '../node_modules/lit-html/lit-html';
 import {render} from '../node_modules/lit-html/lib/lit-extended';
 import {parse, compileToAssessML, compileToHTML} from '../node_modules/assessml/assessml';
 import {AST, ASTObject} from '../node_modules/assessml/assessml.d';
-import {GQLMutate, escapeString} from '../services/graphql-service';
+import {GQLRequest} from '../node_modules/prendus-shared/services/graphql-service';
 import {arbAST, verifyHTML, generateVarValue, resetNums} from '../node_modules/assessml/test-utilities';
-import {generateArbQuestion} from '../test-utilities';
+import {generateArbQuestion} from '../node_modules/prendus-question-elements/test-utilities';
 import {UserCheck, UserRadio, UserInput, UserEssay, Question} from '../prendus-question-elements.d';
 import * as JSVerify from 'jsverify';
 import {PrendusViewQuestion} from '../node_modules/prendus-question-elements/prendus-view-question';
@@ -344,7 +344,7 @@ function prepareEventListener(eventListener: EventListener) {
 }
 
 async function createQuestion(prendusQuestionElementsTestUserId: string, prendusQuestionElementsTestJWT: string, arbQuestion) {
-    return await GQLMutate(`
+    return await GQLRequest(`
         mutation createQuestion($authorId: ID!, $text: String!, $code: String!) {
             createQuestion(
                 authorId: $authorId
@@ -362,7 +362,7 @@ async function createQuestion(prendusQuestionElementsTestUserId: string, prendus
 }
 
 async function deleteQuestion(prendusQuestionElementsTestUserId: string, prendusQuestionElementsTestJWT: string, questionId: string) {
-    await GQLMutate(`
+    await GQLRequest(`
         mutation deleteQuestion($questionId: ID!) {
             deleteQuestion(
                 id: $questionId

@@ -1,7 +1,7 @@
-import {createUUID, navigate} from './services/utilities-service';
+import {createUUID, navigate} from '../prendus-shared/services/utilities-service';
 import {Question} from './prendus-question-elements.d';
 import {SetComponentPropertyAction} from './prendus-question-elements.d';
-import {GQLMutate, GQLQuery, escapeString} from './services/graphql-service';
+import {GQLRequest} from '../prendus-shared/services/graphql-service';
 import {User} from './prendus-question-elements.d';
 import {RootReducer} from './redux/reducers';
 import {Reducer} from './prendus-question-elements.d';
@@ -230,7 +230,7 @@ class PrendusEditQuestion extends Polymer.Element {
 
     async loadData() {
         if (!this.question || this.question.id !== this.questionId) {
-            await GQLQuery(`
+            await GQLRequest(`
                 query {
                     question: Question(id: "${this.questionId}") {
                         id

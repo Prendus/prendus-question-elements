@@ -6,7 +6,8 @@ import {getAstObjects} from '../assessml/assessml';
 import {RootReducer} from './redux/reducers';
 import {AST, Variable, Input, Essay, Radio, Check, Drag, Drop} from '../assessml/assessml.d';
 
-class PrendusViewQuestion extends Polymer.Element {
+export class PrendusViewQuestion extends Polymer.Element {
+    shadowRoot: ShadowRoot;
     componentId: string;
     action: SetComponentPropertyAction;
     questionId: string;
@@ -18,6 +19,7 @@ class PrendusViewQuestion extends Polymer.Element {
     loaded: boolean;
     showEmbedCode: boolean;
     rootReducer: Reducer;
+    checkAnswerResponse: string;
 
     static get is() { return 'prendus-view-question'; }
     static get properties() {

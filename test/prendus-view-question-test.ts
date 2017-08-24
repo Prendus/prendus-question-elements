@@ -253,7 +253,7 @@ class PrendusViewQuestionTest extends HTMLElement {
             prendusViewQuestion.checkAnswer();
             await prepareEventListenerResult.eventPromise;
 
-            const result = prendusViewQuestion.checkAnswerResponse === 'Incorrect' || (prendusViewQuestion.checkAnswerResponse === 'Correct' && arbQuestion.code === 'answer = true;');
+            const result = prendusViewQuestion.checkAnswerResponse === 'Incorrect' || (prendusViewQuestion.checkAnswerResponse === 'Correct' && arbQuestion.code.includes('answer = true;'));
 
             this.shadowRoot.removeChild(prendusViewQuestion);
 
@@ -300,7 +300,7 @@ class PrendusViewQuestionTest extends HTMLElement {
             userInputsInCorrectAnswerPrendusViewQuestion.checkAnswer();
             await prepareEventListenerResult.eventPromise;
 
-            const result = userInputsInCorrectAnswerPrendusViewQuestion.checkAnswerResponse === 'Incorrect' || (userInputsInCorrectAnswerPrendusViewQuestion.checkAnswerResponse === 'Correct' && arbQuestion.code === 'answer = true;');
+            const result = userInputsInCorrectAnswerPrendusViewQuestion.checkAnswerResponse === 'Incorrect' || (userInputsInCorrectAnswerPrendusViewQuestion.checkAnswerResponse === 'Correct' && arbQuestion.code.includes('answer = true;'));
 
             return result;
 

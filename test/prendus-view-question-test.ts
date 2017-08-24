@@ -7,7 +7,7 @@ import {arbAST, verifyHTML, generateVarValue, resetNums} from '../node_modules/a
 import {generateArbQuestion} from '../test-utilities';
 import {UserCheck, UserRadio, UserInput, UserEssay, Question} from '../prendus-question-elements.d';
 import * as JSVerify from 'jsverify';
-import {PrendusViewQuestion} from '../prendus-view-question';
+import {PrendusViewQuestion} from '../node_modules/prendus-question-elements/prendus-view-question';
 
 const jsc = require('jsverify');
 const deepEqual = require('deep-equal');

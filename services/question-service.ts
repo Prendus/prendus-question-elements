@@ -4,7 +4,7 @@ import {secureEval} from '../../secure-eval/secure-eval';
 import {AST, ASTObject, Variable, Input, Essay, Check, Radio} from 'assessml';
 import {Program, ExpressionStatement, MemberExpression, Identifier, AssignmentExpression} from 'estree';
 import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay} from '../prendus-question-elements.d';
-import {normalizeVariables} from '../../assessml/test-utilities';
+import {normalizeVariables} from '../../assessml/utilities';
 
 export async function buildQuestion(text: string, code: string): Promise<{
     html: string;

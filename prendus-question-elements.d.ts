@@ -1,4 +1,4 @@
-import {AST} from 'assessml';
+import {AST} from '../assessml/assessml.d';
 
 export interface Action {
     readonly type: string;

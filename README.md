@@ -26,6 +26,7 @@ bower install paper-tabs --save
 bower install iron-pages --save
 bower install juicy-ace-editor --save
 bower install wysiwyg-e --save
+bower install paper-toast --save
 ```
 
 To work on locally:

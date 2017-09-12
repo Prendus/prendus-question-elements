@@ -87,13 +87,15 @@ class PrendusEditQuestion extends Polymer.Element {
             return;
         }
 
+        const text = this.shadowRoot.querySelector('#textEditor').value;
+
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
             componentId: this.componentId,
             key: 'question',
             value: {
                 ...this.question,
-                text: this.shadowRoot.querySelector('#textEditor').value,
+                text,
                 code: this.question ? this.question.code : ''
             }
         };
@@ -113,9 +115,18 @@ class PrendusEditQuestion extends Polymer.Element {
             key: 'saving',
             value: false
         };
+
+        this.dispatchEvent(new CustomEvent('text-changed', {
+            detail: {
+                text
+            },
+            bubbles: false
+        }));
     }
 
     async codeEditorChanged() {
+        const code = this.shadowRoot.querySelector('#codeEditor').value;
+
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
             componentId: this.componentId,
@@ -123,7 +134,7 @@ class PrendusEditQuestion extends Polymer.Element {
             value: {
                 ...this.question,
                 text: this.question ? this.question.text : '',
-                code: this.shadowRoot.querySelector('#codeEditor').value
+                code
             }
         };
 
@@ -142,6 +153,13 @@ class PrendusEditQuestion extends Polymer.Element {
             key: 'saving',
             value: false
         };
+
+        this.dispatchEvent(new CustomEvent('code-changed', {
+            detail: {
+                code
+            },
+            bubbles: false
+        }));
     }
 
     async questionChanged() {

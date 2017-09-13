@@ -252,7 +252,7 @@ async function loadData(question: Question | null, questionId: string | null, us
             builtQuestion: await buildQuestion(question.text, question.code)
         };
     }
-    else {
+    else if (questionId) {
         const data = await GQLRequest(`
             query getQuestion($questionId: ID!) {
                 question: Question(
@@ -275,16 +275,26 @@ async function loadData(question: Question | null, questionId: string | null, us
             };
         }
         else {
-            const notFoundQuestion = {
-                id: questionId,
-                text: 'This question does not exist',
-                code: 'answer = false;'
-            };
-
-            return {
-                question: notFoundQuestion,
-                builtQuestion: await buildQuestion(notFoundQuestion.text, notFoundQuestion.code)
-            };
+            return await createNotFoundQuestion(questionId);
         }
     }
+    else {
+        return {
+            text: '',
+            code: ''
+        };
+    }
+}
+
+async function createNotFoundQuestion(questionId: string) {
+    const notFoundQuestion = {
+        id: questionId,
+        text: 'This question does not exist',
+        code: 'answer = false;'
+    };
+
+    return {
+        question: notFoundQuestion,
+        builtQuestion: await buildQuestion(notFoundQuestion.text, notFoundQuestion.code)
+    };
 }

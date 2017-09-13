@@ -8,6 +8,8 @@ import {Reducer} from './prendus-question-elements.d';
 
 class PrendusEditQuestion extends Polymer.Element {
     componentId: string;
+    _question: Question;
+    _questionId: string;
     question: Question;
     questionId: string;
     action: SetComponentPropertyAction;
@@ -94,9 +96,9 @@ class PrendusEditQuestion extends Polymer.Element {
             componentId: this.componentId,
             key: 'question',
             value: {
-                ...this.question,
+                ...this._question,
                 text,
-                code: this.question ? this.question.code : ''
+                code: this._question ? this._question.code : ''
             }
         };
 
@@ -132,8 +134,8 @@ class PrendusEditQuestion extends Polymer.Element {
             componentId: this.componentId,
             key: 'question',
             value: {
-                ...this.question,
-                text: this.question ? this.question.text : '',
+                ...this._question,
+                text: this._question ? this._question.text : '',
                 code
             }
         };
@@ -163,13 +165,12 @@ class PrendusEditQuestion extends Polymer.Element {
     }
 
     async questionChanged() {
-        //TODO this needs to be addressed, does not update correctly with Redux
-        // this.action = {
-        //     type: 'SET_COMPONENT_PROPERTY',
-        //     componentId: this.componentId,
-        //     key: 'question',
-        //     value: this.question
-        // };
+        this.action = {
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'question',
+            value: this.question
+        };
 
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
@@ -248,7 +249,7 @@ class PrendusEditQuestion extends Polymer.Element {
     }
 
     async loadData() {
-        if (!this.question || this.question.id !== this.questionId) {
+        if (!this._question || (this._questionId && this._question.id !== this._questionId)) {
             const data = await GQLRequest(`
                 query getQuestion($questionId: ID!) {
                     question: Question(
@@ -260,7 +261,7 @@ class PrendusEditQuestion extends Polymer.Element {
                     }
                 }
             `, {
-                questionId: this.questionId
+                questionId: this._questionId
             }, this.userToken, (error: any) => {
                 console.log(error);
             });
@@ -279,7 +280,7 @@ class PrendusEditQuestion extends Polymer.Element {
                     componentId: this.componentId,
                     key: 'question',
                     value: {
-                        id: this.questionId,
+                        id: this._questionId,
                         text: 'This question does not exist',
                         code: 'answer = false;'
                     }
@@ -293,7 +294,7 @@ class PrendusEditQuestion extends Polymer.Element {
             return;
         }
 
-        if (!this.questionId) {
+        if (!this._questionId) {
             const data = await GQLRequest(`
                 mutation createQuestion(
                     $authorId: ID!
@@ -310,8 +311,8 @@ class PrendusEditQuestion extends Polymer.Element {
                 }
             `, {
                 authorId: this.user.id,
-                text: this.question.text,
-                code: this.question.code
+                text: this._question.text,
+                code: this._question.code
             }, this.userToken, (error: any) => {
                 console.log(error);
             });
@@ -334,9 +335,9 @@ class PrendusEditQuestion extends Polymer.Element {
                     }
                 }
             `, {
-                questionId: this.questionId,
-                text: this.question.text,
-                code: this.question.code
+                questionId: this._questionId,
+                text: this._question.text,
+                code: this._question.code
             }, this.userToken, (error: any) => {
                 console.log(error);
             });
@@ -360,8 +361,8 @@ class PrendusEditQuestion extends Polymer.Element {
         const state = e.detail.state;
 
         if (Object.keys(state.components[this.componentId] || {}).includes('loaded')) this.loaded = state.components[this.componentId].loaded;
-        if (Object.keys(state.components[this.componentId] || {}).includes('question')) this.question = state.components[this.componentId].question;
-        if (Object.keys(state.components[this.componentId] || {}).includes('questionId')) this.questionId = state.components[this.componentId].questionId;
+        if (Object.keys(state.components[this.componentId] || {}).includes('question')) this._question = state.components[this.componentId].question;
+        if (Object.keys(state.components[this.componentId] || {}).includes('questionId')) this._questionId = state.components[this.componentId].questionId;
         if (Object.keys(state.components[this.componentId] || {}).includes('selected')) this.selected = state.components[this.componentId].selected;
         if (Object.keys(state.components[this.componentId] || {}).includes('saving')) this.saving = state.components[this.componentId].saving;
         if (Object.keys(state.components[this.componentId] || {}).includes('noSave')) this.noSave = state.components[this.componentId].noSave;

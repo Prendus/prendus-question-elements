@@ -78,18 +78,18 @@
 
                 <iron-pages id="ironPages" selected="[[selected]]">
                     <div class="editorContainer">
-                        <wysiwyg-e id="textEditor" class="editor" value="[[question.text]]" on-value-changed="textEditorChanged"></wysiwyg-e>
+                        <wysiwyg-e id="textEditor" class="editor" value="[[_question.text]]" on-value-changed="textEditorChanged"></wysiwyg-e>
                         <div class="savingText">[[getSavingText(saving)]]</div>
                     </div>
 
                     <div class="editorContainer">
-                        <juicy-ace-editor id="codeEditor" theme="ace/theme/chrome" mode="ace/mode/javascript" class="editor" value="[[question.code]]" on-change="codeEditorChanged"></juicy-ace-editor>
+                        <juicy-ace-editor id="codeEditor" theme="ace/theme/chrome" mode="ace/mode/javascript" class="editor" value="[[_question.code]]" on-change="codeEditorChanged"></juicy-ace-editor>
                         <div class="savingText">[[getSavingText(saving)]]</div>
                     </div>
                 </iron-pages>
 
                 <div class="previewContainer">
-                    <prendus-view-question question="[[question]]"></prendus-view-question>
+                    <prendus-view-question question="[[_question]]"></prendus-view-question>
                 </div>
             </template>
         </dom-if>

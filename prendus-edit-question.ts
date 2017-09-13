@@ -360,12 +360,10 @@ class PrendusEditQuestion extends Polymer.Element {
     insertVariable(e: CustomEvent) {
         const { varName, maxValue, minValue, precisionValue } = e.detail;
         const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const text = textEditor.shadowRoot.querySelector('#layout').querySelector('#content').querySelector('#editable').textContent;
+        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
 
-        console.log('varName', varName);
-        console.log('maxValue', maxValue);
-        console.log('minValue', minValue);
-        console.log('precisionValue', precisionValue);
+        const text = textEditor.shadowRoot.querySelector('#layout').querySelector('#content').querySelector('#editable').textContent;
+        const code = codeEditor.value;
 
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
@@ -373,7 +371,8 @@ class PrendusEditQuestion extends Polymer.Element {
             key: 'question',
             value: {
                 ...this._question,
-                text: insertVariableIntoText(text, this._question.text, varName, textEditor.range0)
+                text: insertVariableIntoText(text, this._question.text, varName, textEditor.range0),
+                code: insertVariableIntoCode(code, varName, minValue, maxValue, precisionValue)
             }
         };
     }
@@ -404,4 +403,8 @@ function insertVariableIntoText(editorText: string, questionText: string, varNam
     const newQuestionText = decodedQuestionText.replace(editorText, newEditorText);
 
     return newQuestionText;
+}
+
+function insertVariableIntoCode(editorCode: string, varName: string, minValue: number, maxValue: number, precisionValue: number) {
+    return `${varName}.min = ${minValue};\n${varName}.max = ${maxValue};\n${varName}.precision = ${precisionValue};\n\n${editorCode}`;
 }

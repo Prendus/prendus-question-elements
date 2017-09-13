@@ -21,7 +21,11 @@
     "iron-pages": "^2.0.0",
     "wysiwyg-e": "^2.0.5",
     "paper-toast": "^2.0.0",
-    "paper-dialog": "^2.0.0"
+    "paper-dialog": "^2.0.0",
+    "paper-input": "^2.0.2",
+    "paper-button": "^2.0.0",
+    "iron-icon": "^2.0.1",
+    "paper-tooltip": "^2.0.1"
   },
   "resolutions": {
     "webcomponentsjs": "^v1.0.2"

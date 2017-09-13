@@ -10,10 +10,30 @@ class PrendusVariableTool extends WysiwygTool {
     }
 
     insertClick() {
-        const varName = this.shadowRoot.querySelector('#varNameInput').value;
-        const maxValue = this.shadowRoot.querySelector('#varMaxInput').value;
-        const minValue = this.shadowRoot.querySelector('#varMinInput').value;
-        const precisionValue = this.shadowRoot.querySelector('#sigFigInput').value;
+        const varNameInput = this.shadowRoot.querySelector('#varNameInput');
+        const varMaxInput = this.shadowRoot.querySelector('#varMaxInput');
+        const varMinInput = this.shadowRoot.querySelector('#varMinInput');
+        const precisionInput = this.shadowRoot.querySelector('#precisionInput');
+
+        const varName = varNameInput.value;
+        const maxValue = +varMaxInput.value;
+        const minValue = +varMinInput.value;
+        const precisionValue = +precisionInput.value;
+
+        if (!varName.startsWith('var')) {
+            alert('Variable name must start with "var"');
+            return;
+        }
+
+        if (!varName[3]) {
+            alert('Variable name must have at least one character after "var"');
+            return;
+        }
+
+        if (precisionValue < 0 || precisionValue > 20) {
+            alert('Decimal precision must be between 0 and 20');
+            return;
+        }
 
         this.dispatchEvent(new CustomEvent('insert-variable', {
             bubbles: false,

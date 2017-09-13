@@ -163,12 +163,13 @@ class PrendusEditQuestion extends Polymer.Element {
     }
 
     async questionChanged() {
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'question',
-            value: this.question
-        };
+        //TODO this needs to be addressed, does not update correctly with Redux
+        // this.action = {
+        //     type: 'SET_COMPONENT_PROPERTY',
+        //     componentId: this.componentId,
+        //     key: 'question',
+        //     value: this.question
+        // };
 
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
@@ -359,7 +360,7 @@ class PrendusEditQuestion extends Polymer.Element {
         const state = e.detail.state;
 
         if (Object.keys(state.components[this.componentId] || {}).includes('loaded')) this.loaded = state.components[this.componentId].loaded;
-        // if (Object.keys(state.components[this.componentId] || {}).includes('question')) this.question = state.components[this.componentId].question; //TODO this needs to be addressed, does not update correctly
+        if (Object.keys(state.components[this.componentId] || {}).includes('question')) this.question = state.components[this.componentId].question;
         if (Object.keys(state.components[this.componentId] || {}).includes('questionId')) this.questionId = state.components[this.componentId].questionId;
         if (Object.keys(state.components[this.componentId] || {}).includes('selected')) this.selected = state.components[this.componentId].selected;
         if (Object.keys(state.components[this.componentId] || {}).includes('saving')) this.saving = state.components[this.componentId].saving;

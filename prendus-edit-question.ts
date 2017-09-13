@@ -5,6 +5,8 @@ import {GQLRequest} from '../prendus-shared/services/graphql-service';
 import {User} from './prendus-question-elements.d';
 import {RootReducer} from './redux/reducers';
 import {Reducer} from './prendus-question-elements.d';
+import {parse, getAstObjects} from '../assessml/assessml';
+import {AST, Input} from '../assessml/assessml.d';
 
 class PrendusEditQuestion extends Polymer.Element {
     componentId: string;
@@ -371,8 +373,33 @@ class PrendusEditQuestion extends Polymer.Element {
             key: 'question',
             value: {
                 ...this._question,
-                text: insertVariableIntoText(text, this._question.text, varName, textEditor.range0),
+                text: insertStringIntoText(text, this._question.text, `[${varName}]`, textEditor.range0),
                 code: insertVariableIntoCode(code, varName, minValue, maxValue, precisionValue)
+            }
+        };
+    }
+
+    insertInput(e: CustomEvent) {
+        const ast: AST = parse(this._question.text, () => 5);
+        const astInputs: Input[] = getAstObjects(ast, 'INPUT');
+
+        const varName = `input${astInputs.length + 1}`;
+        const answer = e.detail.answer;
+
+        const textEditor = this.shadowRoot.querySelector('#textEditor');
+        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+
+        const text = textEditor.shadowRoot.querySelector('#layout').querySelector('#content').querySelector('#editable').textContent;
+        const code = codeEditor.value;
+
+        this.action = {
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'question',
+            value: {
+                ...this._question,
+                text: insertStringIntoText(text, this._question.text, `[input]`, textEditor.range0),
+                code: insertInputIntoCode(code, varName, answer)
             }
         };
     }
@@ -393,13 +420,13 @@ class PrendusEditQuestion extends Polymer.Element {
 
 window.customElements.define(PrendusEditQuestion.is, PrendusEditQuestion);
 
-function insertVariableIntoText(editorText: string, questionText: string, varName: string, range0: any) {
+function insertStringIntoText(editorText: string, questionText: string, string: string, range0: any) {
     //TODO once the html encoding gets figured out by the wysiwyg-e web component, fix this hack
     const textArea = document.createElement('textarea');
     textArea.innerHTML = questionText;
     const decodedQuestionText = textArea.value;
 
-    const newEditorText = `${editorText.substring(0, range0.endOffset)}[${varName}]${editorText.substring(range0.endOffset)}`
+    const newEditorText = `${editorText.substring(0, range0.endOffset)}${string}${editorText.substring(range0.endOffset)}`
     const newQuestionText = decodedQuestionText.replace(editorText, newEditorText);
 
     return newQuestionText;
@@ -407,4 +434,8 @@ function insertVariableIntoText(editorText: string, questionText: string, varNam
 
 function insertVariableIntoCode(editorCode: string, varName: string, minValue: number, maxValue: number, precisionValue: number) {
     return `${varName}.min = ${minValue};\n${varName}.max = ${maxValue};\n${varName}.precision = ${precisionValue};\n\n${editorCode}`;
+}
+
+function insertInputIntoCode(code: string, varName: string, answer: string) {
+    return code.replace(/answer\s*=\s*/, `answer = ${varName} === "${answer}" && `);
 }

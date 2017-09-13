@@ -1,6 +1,7 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../redux-store-element/redux-store.html">
 <link rel="import" href="prendus-view-question.html">
+<link rel="import" href="prendus-variable-tool.html">
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
@@ -78,7 +79,9 @@
 
                 <iron-pages id="ironPages" selected="[[selected]]">
                     <div class="editorContainer">
-                        <wysiwyg-e id="textEditor" class="editor" value="[[_question.text]]" on-value-changed="textEditorChanged"></wysiwyg-e>
+                        <wysiwyg-e id="textEditor" class="editor" value="[[_question.text]]" on-value-changed="textEditorChanged">
+                            <prendus-variable-tool on-insert-variable="insertVariable"></prendus-variable-tool>
+                        </wysiwyg-e>
                         <div class="savingText">[[getSavingText(saving)]]</div>
                     </div>
 

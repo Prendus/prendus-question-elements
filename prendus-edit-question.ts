@@ -357,6 +357,27 @@ class PrendusEditQuestion extends Polymer.Element {
         };
     }
 
+    insertVariable(e: CustomEvent) {
+        const { varName, maxValue, minValue, precisionValue } = e.detail;
+        const textEditor = this.shadowRoot.querySelector('#textEditor');
+        const text = textEditor.shadowRoot.querySelector('#layout').querySelector('#content').querySelector('#editable').textContent;
+
+        console.log('varName', varName);
+        console.log('maxValue', maxValue);
+        console.log('minValue', minValue);
+        console.log('precisionValue', precisionValue);
+
+        this.action = {
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'question',
+            value: {
+                ...this._question,
+                text: insertVariableIntoText(text, this._question.text, varName, textEditor.range0)
+            }
+        };
+    }
+
     stateChange(e: CustomEvent) {
         const state = e.detail.state;
 
@@ -372,3 +393,15 @@ class PrendusEditQuestion extends Polymer.Element {
 }
 
 window.customElements.define(PrendusEditQuestion.is, PrendusEditQuestion);
+
+function insertVariableIntoText(editorText: string, questionText: string, varName: string, range0: any) {
+    //TODO once the html encoding gets figured out by the wysiwyg-e web component, fix this hack
+    const textArea = document.createElement('textarea');
+    textArea.innerHTML = questionText;
+    const decodedQuestionText = textArea.value;
+
+    const newEditorText = `${editorText.substring(0, range0.endOffset)}[${varName}]${editorText.substring(range0.endOffset)}`
+    const newQuestionText = decodedQuestionText.replace(editorText, newEditorText);
+
+    return newQuestionText;
+}

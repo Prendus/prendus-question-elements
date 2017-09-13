@@ -1,0 +1,31 @@
+<link rel="import" href="../../bower_components/wysiwyg-e/wysiwyg-tool.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+
+<dom-module id="prendus-variable-tool">
+    <template>
+        <style include="wysiwyg-tool"></style>
+        <paper-button disabled="[[disabled]]" id="button">Variable</paper-button>
+
+        <paper-dialog id="variableDialog" on-click="variableDialogClick">
+            <div>
+                Variable name (var1, var2, etc): <input id="varNameInput" type="text" value="var">
+            </div>
+
+            <div>
+                Max value: <input id="varMaxInput" type="number">
+            </div>
+
+            <div>
+                Min value: <input id="varMinInput" type="number">
+            </div>
+
+            <div>
+                Significant figures: <input id="sigFigInput" type="number">
+            </div>
+
+            <button on-click="insertClick">Insert</button>
+        </paper-dialog>
+    </template>
+
+    <script src="prendus-variable-tool.ts"></script>
+</dom-module>

@@ -8,6 +8,17 @@ const prendusQuestionElementsTestJWT = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ
 class PrendusEditQuestionTest extends HTMLElement {
     connectedCallback() {
         this.attachShadow({mode: 'open'});
+
+        const prendusEditQuestion = document.createElement('prendus-edit-question');
+
+        prendusEditQuestion.noSave = true;
+        prendusEditQuestion.question = {
+            id: 'My id',
+            text: 'Test it out',
+            code: 'answer = true'
+        };
+
+        this.shadowRoot.appendChild(prendusEditQuestion);
     }
 
     prepareTests(test: any) {

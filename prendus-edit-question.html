@@ -4,6 +4,8 @@
 <link rel="import" href="text-editor-tools/prendus-variable-tool.html">
 <link rel="import" href="text-editor-tools/prendus-input-tool.html">
 <link rel="import" href="text-editor-tools/prendus-essay-tool.html">
+<link rel="import" href="text-editor-tools/prendus-radio-tool.html">
+<link rel="import" href="text-editor-tools/prendus-check-tool.html">
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
@@ -82,6 +84,8 @@
                 <iron-pages id="ironPages" selected="[[selected]]">
                     <div class="editorContainer">
                         <wysiwyg-e id="textEditor" class="editor" value="[[_question.text]]" on-value-changed="textEditorChanged">
+                            <prendus-radio-tool on-insert-radio="insertRadio"></prendus-radio-tool>
+                            <prendus-check-tool on-insert-check="insertCheck"></prendus-check-tool>
                             <prendus-variable-tool on-insert-variable="insertVariable"></prendus-variable-tool>
                             <prendus-input-tool on-insert-input="insertInput"></prendus-input-tool>
                             <prendus-essay-tool on-insert-essay="insertEssay"></prendus-essay-tool>

@@ -428,6 +428,56 @@ class PrendusEditQuestion extends Polymer.Element {
         };
     }
 
+    insertRadio(e: CustomEvent) {
+        const ast: AST = parse(this._question.text, () => 5);
+        const astRadios: Input[] = getAstObjects(ast, 'RADIO');
+
+        const varName = `radio${astRadios.length + 1}`;
+
+        const { content, correct } = e.detail;
+        const textEditor = this.shadowRoot.querySelector('#textEditor');
+        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+
+        const text = textEditor.shadowRoot.querySelector('#layout').querySelector('#content').querySelector('#editable').textContent;
+        const code = codeEditor.value;
+
+        this.action = {
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'question',
+            value: {
+                ...this._question,
+                text: insertStringIntoText(text, this._question.text, `<p>[*]${content}[*]</p>`, textEditor.range0),
+                code: insertRadioOrCheckIntoCode(code, varName, correct)
+            }
+        };
+    }
+
+    insertCheck(e: CustomEvent) {
+        const ast: AST = parse(this._question.text, () => 5);
+        const astChecks: Input[] = getAstObjects(ast, 'CHECK');
+
+        const varName = `check${astChecks.length + 1}`;
+
+        const { content, correct } = e.detail;
+        const textEditor = this.shadowRoot.querySelector('#textEditor');
+        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+
+        const text = textEditor.shadowRoot.querySelector('#layout').querySelector('#content').querySelector('#editable').textContent;
+        const code = codeEditor.value;
+
+        this.action = {
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'question',
+            value: {
+                ...this._question,
+                text: insertStringIntoText(text, this._question.text, `<p>[x]${content}[x]</p>`, textEditor.range0),
+                code: insertRadioOrCheckIntoCode(code, varName, correct)
+            }
+        };
+    }
+
     stateChange(e: CustomEvent) {
         const state = e.detail.state;
 
@@ -466,4 +516,8 @@ function insertInputIntoCode(code: string, varName: string, answer: string) {
 
 function insertEssayIntoCode(code: string, varName: string) {
     return code.replace(/answer\s*=\s*/, `answer = true && `);
+}
+
+function insertRadioOrCheckIntoCode(code: string, varName: string, correct: boolean) {
+    return code.replace(/answer\s*=\s*/, `answer = ${varName} === ${correct} && `);
 }

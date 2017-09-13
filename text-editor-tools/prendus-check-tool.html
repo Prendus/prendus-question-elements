@@ -1,0 +1,39 @@
+<link rel="import" href="../../../bower_components/wysiwyg-e/wysiwyg-tool.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../../bower_components/paper-tooltip/paper-tooltip.html">
+
+<dom-module id="prendus-check-tool">
+    <template>
+        <style include="wysiwyg-tool"></style>
+        <paper-button id="button">
+            <iron-icon icon="icons:check-box"></iron-icon>
+        </paper-button>
+        <paper-tooltip id="tooltip" for="button" position="[[tooltipPosition]]" offset="5">
+			<span>Checkbox</span>
+		</paper-tooltip>
+
+        <paper-dialog id="checkDialog" on-click="checkDialogClick">
+            <div>
+                <paper-input id="contentInput" type="text" label="Content of the checkbox" autofocus></paper-input>
+            </div>
+
+            <div>
+                Correct
+                <select id="correctSelect">
+                    <option value="true">True</option>
+                    <option value="false">False</option>
+                </select>
+            </div>
+
+            <div style="display: flex">
+                <paper-button style="margin-left: auto" on-click="insertClick" raised noink>Insert</paper-button>
+            </div>
+        </paper-dialog>
+    </template>
+
+    <script src="prendus-check-tool.ts"></script>
+</dom-module>

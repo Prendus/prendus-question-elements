@@ -404,6 +404,30 @@ class PrendusEditQuestion extends Polymer.Element {
         };
     }
 
+    insertEssay(e: CustomEvent) {
+        const ast: AST = parse(this._question.text, () => 5);
+        const astEssays: Input[] = getAstObjects(ast, 'ESSAY');
+
+        const varName = `essay${astEssays.length + 1}`;
+
+        const textEditor = this.shadowRoot.querySelector('#textEditor');
+        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+
+        const text = textEditor.shadowRoot.querySelector('#layout').querySelector('#content').querySelector('#editable').textContent;
+        const code = codeEditor.value;
+
+        this.action = {
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'question',
+            value: {
+                ...this._question,
+                text: insertStringIntoText(text, this._question.text, `[essay]`, textEditor.range0),
+                code: insertEssayIntoCode(code, varName)
+            }
+        };
+    }
+
     stateChange(e: CustomEvent) {
         const state = e.detail.state;
 
@@ -438,4 +462,8 @@ function insertVariableIntoCode(editorCode: string, varName: string, minValue: n
 
 function insertInputIntoCode(code: string, varName: string, answer: string) {
     return code.replace(/answer\s*=\s*/, `answer = ${varName} === "${answer}" && `);
+}
+
+function insertEssayIntoCode(code: string, varName: string) {
+    return code.replace(/answer\s*=\s*/, `answer = true && `);
 }

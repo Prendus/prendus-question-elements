@@ -15,13 +15,6 @@ class PrendusMathTool extends WysiwygTool {
     connectedCallback() {
         super.connectedCallback();
 
-        const mathDiv = this.shadowRoot.querySelector('#mathDiv');
-        window.renderMathInElement(mathDiv, {
-            delimiters: [
-              {left: "$$", right: "$$", display: false}
-            ]
-        });
-
         this.action = fireLocalAction(this.componentId, 'selected', 0);
     }
 
@@ -38,7 +31,7 @@ class PrendusMathTool extends WysiwygTool {
     }
 
     mathSymbolClick(e) {
-        const mathText = e.currentTarget.getAttribute('math-text');
+        const mathText = e.currentTarget.finalTex;
         const finalMathTextInput = this.shadowRoot.querySelector('#finalMathTextInput');
         const finalMathText = finalMathTextInput.value || '';
         const newFinalMathText = finalMathText + mathText;
@@ -72,8 +65,6 @@ class PrendusMathTool extends WysiwygTool {
         const state = e.detail.state;
 
         if (state.components[this.componentId]) this.selected = state.components[this.componentId].selected;
-
-        console.log(state.components[this.componentId]);
     }
 }
 

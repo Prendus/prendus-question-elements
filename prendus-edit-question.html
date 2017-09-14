@@ -6,6 +6,7 @@
 <link rel="import" href="text-editor-tools/prendus-essay-tool.html">
 <link rel="import" href="text-editor-tools/prendus-radio-tool.html">
 <link rel="import" href="text-editor-tools/prendus-check-tool.html">
+<link rel="import" href="text-editor-tools/prendus-math-tool.html">
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
@@ -89,6 +90,7 @@
                             <prendus-variable-tool on-insert-variable="insertVariable"></prendus-variable-tool>
                             <prendus-input-tool on-insert-input="insertInput"></prendus-input-tool>
                             <prendus-essay-tool on-insert-essay="insertEssay"></prendus-essay-tool>
+                            <prendus-math-tool on-insert-math="insertMath"></prendus-math-tool>
                         </wysiwyg-e>
                         <div class="savingText">[[getSavingText(saving)]]</div>
                     </div>

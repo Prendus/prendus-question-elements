@@ -478,6 +478,10 @@ class PrendusEditQuestion extends Polymer.Element {
         };
     }
 
+    insertMath(e: CustomEvent) {
+        console.log(e.detail);
+    }
+
     stateChange(e: CustomEvent) {
         const state = e.detail.state;
 

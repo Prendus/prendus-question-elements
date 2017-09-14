@@ -17,6 +17,7 @@
                 cursor: pointer;
                 box-shadow: 0px 0px 3px grey;
                 margin: .5vw;
+                height: auto;
             }
         </style>
 
@@ -26,7 +27,7 @@
 
         <dom-repeat items="[[paramsArray]]">
             <template>
-                <paper-input id="[[item]]Input" type="number" label="[[item]]" on-click="paperInputClick" on-value-changed="paperInputValueChanged"></paper-input>
+                <paper-input id="[[item]]Input" style="width: 5vw" type="number" label="[[item]]" on-click="paperInputClick" on-value-changed="paperInputValueChanged"></paper-input>
             </template>
         </dom-repeat>
     </template>

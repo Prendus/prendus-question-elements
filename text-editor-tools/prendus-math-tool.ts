@@ -3,6 +3,7 @@ import {createUUID} from '../../prendus-shared/services/utilities-service';
 class PrendusMathTool extends WysiwygTool {
     componentId: string;
     selected: number;
+    finalMathText: string;
 
     static get is() { return 'prendus-math-tool'; }
 
@@ -23,6 +24,10 @@ class PrendusMathTool extends WysiwygTool {
     }
 
     execCommand() {
+        if (!this.range0) {
+            return;
+        }
+
         this.shadowRoot.querySelector('#dialog').open();
     }
 
@@ -30,27 +35,18 @@ class PrendusMathTool extends WysiwygTool {
         e.stopPropagation();
     }
 
-    mathSymbolClick(e) {
+    mathSymbolClick(e: Event) {
         const mathText = e.currentTarget.finalTex;
-        const finalMathTextInput = this.shadowRoot.querySelector('#finalMathTextInput');
-        const finalMathText = finalMathTextInput.value || '';
-        const newFinalMathText = finalMathText + mathText;
-        const finalMathTextPreview = this.shadowRoot.querySelector('#finalMathTextPreview');
+        this.action = fireLocalAction(this.componentId, 'finalMathText', (this.finalMathText || '') + mathText);
+    }
 
-        finalMathTextInput.value = newFinalMathText;
-        finalMathTextPreview.innerHTML = `$$${newFinalMathText}$$`;
-
-        window.renderMathInElement(finalMathTextPreview, {
-            delimiters: [
-              {left: "$$", right: "$$", display: false}
-            ]
-        });
-
+    finalMathTextInputChanged(e: CustomEvent) {
+        const finalMathText = e.detail.value;
+        this.action = fireLocalAction(this.componentId, 'finalMathText', finalMathText);
     }
 
     insertClick() {
-        const finalMathTextInput = this.shadowRoot.querySelector('#finalMathTextInput');
-        const mathText = `$$$${finalMathTextInput.value}$$$`;
+        const mathText = `$$$${this.finalMathText}$$$`;
 
         this.dispatchEvent(new CustomEvent('insert-math', {
             bubbles: false,
@@ -58,6 +54,7 @@ class PrendusMathTool extends WysiwygTool {
                 mathText
             }
         }));
+        
         this.shadowRoot.querySelector('#dialog').close();
     }
 
@@ -65,6 +62,14 @@ class PrendusMathTool extends WysiwygTool {
         const state = e.detail.state;
 
         if (state.components[this.componentId]) this.selected = state.components[this.componentId].selected;
+        if (state.components[this.componentId]) this.finalMathText = state.components[this.componentId].finalMathText;
+
+        const finalMathTextPreview = this.shadowRoot.querySelector('#finalMathTextPreview');
+        window.renderMathInElement(finalMathTextPreview, {
+            delimiters: [
+              {left: "$$", right: "$$", display: false}
+            ]
+        });
     }
 }
 

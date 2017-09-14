@@ -16,6 +16,12 @@ class PrendusMathSymbol extends Polymer.Element {
         };
     }
 
+    connectedCallback() {
+        this.addEventListener('click', (e: Event) => {
+            e.stopPropagation();
+        });
+    }
+
     texChanged() {
         this.finalTex = this.tex;
         window.renderMathInElement(this.shadowRoot, {

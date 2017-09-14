@@ -78,7 +78,9 @@
                 <paper-tab>Common</paper-tab>
                 <paper-tab>Greek Letters</paper-tab>
                 <paper-tab>Other Letters</paper-tab>
+                <paper-tab>Big Operators</paper-tab>
                 <paper-tab>Binary Operators</paper-tab>
+                <paper-tab>Binomial Coefficients</paper-tab>
                 <paper-tab>Logic and Set Theory</paper-tab>
                 <paper-tab>Relations</paper-tab>
                 <paper-tab>Negated Relations</paper-tab>
@@ -162,6 +164,27 @@
                 </div>
 
                 <div class="symbolsContainer">
+                    <prendus-math-symbol tex="\sum" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\prod" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\bigvee" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\bigotimes" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\int" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\coprod" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\bigwedge" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\bigoplus" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\iint" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\intop" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\bigcap" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\bigodot" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\iiint" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\smallint" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\bigcup" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\biguplus" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\oint" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\bigsqcup" on-click="mathSymbolClick"></prendus-math-symbol>
+                </div>
+
+                <div class="symbolsContainer">
                     <prendus-math-symbol tex="\cdotp" on-click="mathSymbolClick"></prendus-math-symbol>
                     <prendus-math-symbol tex="\intercal" on-click="mathSymbolClick"></prendus-math-symbol>
                     <prendus-math-symbol tex="\centerdot" on-click="mathSymbolClick"></prendus-math-symbol>
@@ -224,6 +247,12 @@
                     <prendus-math-symbol tex="\mod {x}" params="x" on-click="mathSymbolClick"></prendus-math-symbol>
                     <prendus-math-symbol tex="{x} \pod {a}" params="x, a" on-click="mathSymbolClick"></prendus-math-symbol>
                     <prendus-math-symbol tex="{x} \pmod {a}" params="x, a" on-click="mathSymbolClick"></prendus-math-symbol>
+                </div>
+
+                <div class="symbolsContainer">
+                    <prendus-math-symbol tex="\binom{n}{k}" params="n, k" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\dbinom{n}{k}" params="n, k" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\left\langle {n} \atop {k} \right\rangle" params="n, k" on-click="mathSymbolClick"></prendus-math-symbol>
                 </div>
 
                 <div class="symbolsContainer">

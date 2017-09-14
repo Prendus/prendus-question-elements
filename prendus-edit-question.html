@@ -86,13 +86,13 @@
                 <iron-pages id="ironPages" selected="[[selected]]">
                     <div class="editorContainer">
                         <wysiwyg-e id="textEditor" class="editor" value="[[_question.text]]" on-value-changed="textEditorChanged">
+                            <wysiwyg-tool-italic></wysiwyg-tool-italic>
                             <prendus-radio-tool on-insert-radio="insertRadio"></prendus-radio-tool>
                             <prendus-check-tool on-insert-check="insertCheck"></prendus-check-tool>
                             <prendus-variable-tool on-insert-variable="insertVariable"></prendus-variable-tool>
                             <prendus-input-tool on-insert-input="insertInput"></prendus-input-tool>
                             <prendus-essay-tool on-insert-essay="insertEssay"></prendus-essay-tool>
                             <prendus-math-tool on-insert-math="insertMath"></prendus-math-tool>
-                            <wysiwyg-tool-italic></wysiwyg-tool-italic>
                         </wysiwyg-e>
                         <div class="savingText">[[getSavingText(saving)]]</div>
                     </div>

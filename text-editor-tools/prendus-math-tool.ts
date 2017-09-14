@@ -21,7 +21,26 @@ class PrendusMathTool extends WysiwygTool {
     }
 
     mathSymbolClick(e) {
-        const mathText = e.target.innerHTML;
+        const mathText = e.currentTarget.getAttribute('math-text');
+        const finalMathTextInput = this.shadowRoot.querySelector('#finalMathTextInput');
+        const finalMathText = finalMathTextInput.value || '';
+        const newFinalMathText = finalMathText + mathText;
+        const finalMathTextPreview = this.shadowRoot.querySelector('#finalMathTextPreview');
+
+        finalMathTextInput.value = newFinalMathText;
+        finalMathTextPreview.innerHTML = `$$${newFinalMathText}$$`;
+
+        window.renderMathInElement(finalMathTextPreview, {
+            delimiters: [
+              {left: "$$", right: "$$", display: false}
+            ]
+        });
+
+    }
+
+    insertClick() {
+        const finalMathTextInput = this.shadowRoot.querySelector('#finalMathTextInput');
+        const mathText = `$$$${finalMathTextInput.value}$$$`;
 
         this.dispatchEvent(new CustomEvent('insert-math', {
             bubbles: false,

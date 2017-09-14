@@ -479,7 +479,21 @@ class PrendusEditQuestion extends Polymer.Element {
     }
 
     insertMath(e: CustomEvent) {
-        console.log(e.detail);
+        const { mathText } = e.detail;
+        const textEditor = this.shadowRoot.querySelector('#textEditor');
+        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+
+        const text = textEditor.shadowRoot.querySelector('#layout').querySelector('#content').querySelector('#editable').textContent;
+
+        this.action = {
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'question',
+            value: {
+                ...this._question,
+                text: insertStringIntoText(text, this._question.text, mathText, textEditor.range0)
+            }
+        };
     }
 
     stateChange(e: CustomEvent) {

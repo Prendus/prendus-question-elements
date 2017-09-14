@@ -76,7 +76,6 @@
         <paper-dialog id="dialog" on-click="dialogClick">
             <paper-tabs id="paperTabs" selected="[[selected]]" on-selected-changed="selectedChanged" scrollable>
                 <paper-tab>Common</paper-tab>
-                <paper-tab>Fractions</paper-tab>
                 <paper-tab>Greek Letters</paper-tab>
                 <paper-tab>Other Letters</paper-tab>
                 <paper-tab>Binary Operators</paper-tab>
@@ -87,13 +86,10 @@
 
             <iron-pages id="ironPages" selected="[[selected]]">
                 <div class="symbolsContainer">
-                </div>
-
-                <div class="symbolsContainer">
+                    <prendus-math-symbol tex="\sqrt{x}" params="x" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\sqrt[a]{x}" params="a, x" on-click="mathSymbolClick"></prendus-math-symbol>
                     <prendus-math-symbol tex="\frac{a}{b}" params="a, b" on-click="mathSymbolClick"></prendus-math-symbol>
                     <prendus-math-symbol tex="\dfrac{a}{b}" params="a, b" on-click="mathSymbolClick"></prendus-math-symbol>
-                    <prendus-math-symbol tex="{a}\over{b}" params="a, b" on-click="mathSymbolClick"></prendus-math-symbol>
-                    <prendus-math-symbol tex="\tfrac{a}{b}" params="a, b" on-click="mathSymbolClick"></prendus-math-symbol>
                 </div>
 
                 <div class="symbolsContainer">
@@ -255,12 +251,190 @@
                 </div>
 
                 <div class="symbolsContainer">
-                    <prendus-math-symbol tex="\digamma" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\curlyeqsucc" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\gtrapprox" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\perp" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\succapprox" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\dashv" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\gtreqless" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\pitchfork" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\succcurlyeq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\dblcolon" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\gtreqqless" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\prec" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\succeq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\doteq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\gtrless" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\precapprox" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\succsim" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\approx" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\Doteq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\gtrsim" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\preccurlyeq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\Supset" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\approxeq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\doteqdot" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\in" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\preceq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\supset" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\asymp" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\eqcirc" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\Join" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\precsim" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\supseteq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\backepsilon" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\eqcolon" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\le" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\propto" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\supseteqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\backsim" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\Eqcolon" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\risingdotseq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\thickapprox" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\backsimeq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\eqqcolon" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\leqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\shortmid" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\thicksim" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\between" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\Eqqcolon" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\leqslant" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\shortparallel" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\trianglelefteq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\bowtie" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\eqsim" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\lessapprox" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\sim" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\triangleq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\bumpeq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\eqslantgtr" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\lesseqgtr" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\simeq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\trianglerighteq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\Bumpeq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\eqslantless" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\lesseqqgtr" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\smallfrown" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\varpropto" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\circeq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\equiv" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\lessgtr" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\smallsmile" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\vartriangle" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\colonapprox" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\fallingdotseq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\lesssim" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\smile" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\vartriangleleft" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\Colonapprox" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\frown" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\ll" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\sqsubset" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\vartriangleright" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\coloneq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\ge" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\lll" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\sqsubseteq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\vcentcolon" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\Coloneq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\geq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\llless" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\sqsupset" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\vdash" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\coloneqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\geqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\lt" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\sqsupseteq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\vDash" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\Coloneqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\geqslant" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\mid" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\Subset" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\Vdash" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\colonsim" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\gg" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\models" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\subset" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\Vvdash" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\Colonsim" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\ggg" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\multimap" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\subseteq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\cong" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\gggtr" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\owns" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\subseteqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\curlyeqprec" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\gt" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\parallel" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\succ" on-click="mathSymbolClick"></prendus-math-symbol>
+                </div>
+
+                <div class="symbolsContainer">
+                    <prendus-math-symbol tex="\not" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\gnapprox" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\ngeqslant" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nsubseteq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\precneqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\gneq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\ngtr" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nsubseteqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\precnsim" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\gneqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\ni" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nsucc" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\subsetneq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\gnsim" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nleq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nsucceq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\subsetneqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\gvertneqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nleqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nsupseteq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\succnapprox" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\lnapprox" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nleqslant" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nsupseteqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\succneqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\lneq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nless" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\ntriangleleft" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\succnsim" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\lneqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nmid" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\ntrianglelefteq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\supsetneq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\lnsim" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\notin" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\ntriangleright" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\supsetneqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\lvertneqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nparallel" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\ntrianglerighteq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\varsubsetneq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\ncong" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nprec" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nvdash" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\varsubsetneqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\ne" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\npreceq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nvDash" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\varsupsetneq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\neq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nshortmid" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nVDash" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\varsupsetneqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\ngeq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nshortparallel" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nVdash" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\ngeqq" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nsim" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\precnapprox" on-click="mathSymbolClick"></prendus-math-symbol>
                 </div>
             </iron-pages>
 
             <div style="display: flex">
-                <paper-input id="finalMathTextInput" type="text" label="Math will appear here" style="flex: 1" value="[[finalMathText]]" on-value-changed="finalMathTextInputChanged"></paper-input>
+                <paper-input id="finalMathTextInput" type="text" label="TeX will appear here, Math will appear below" style="flex: 1" value="[[finalMathText]]" on-value-changed="finalMathTextInputChanged"></paper-input>
             </div>
 
             <div id="finalMathTextPreview" inner-h-t-m-l="$$[[finalMathText]]$$"></div>

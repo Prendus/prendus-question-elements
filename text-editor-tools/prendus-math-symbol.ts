@@ -43,7 +43,7 @@ class PrendusMathSymbol extends Polymer.Element {
         this.finalTex = this.paramsArray.reduce((result, paramName) => {
             const paramInput = this.shadowRoot.querySelector(`#${paramName}Input`);
             if (paramInput.value) {
-                return result.replace(`{${paramName}}`, `{${paramInput.value}}`);
+                return result.replace(`{${paramName}}`, `{${paramInput.value}}`).replace(`[${paramName}]`, `[${paramInput.value}]`);
             }
             else {
                 return result;

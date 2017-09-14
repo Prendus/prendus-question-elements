@@ -240,6 +240,17 @@ export class PrendusViewQuestion extends Polymer.Element {
         if (Object.keys(state.components[this.componentId] || {}).includes('showEmbedCode')) this.showEmbedCode = state.components[this.componentId].showEmbedCode;
         if (Object.keys(state.components[this.componentId] || {}).includes('checkAnswerResponse')) this.checkAnswerResponse = state.components[this.componentId].checkAnswerResponse;
         this.userToken = state.userToken;
+
+        const contentDiv = this.shadowRoot.querySelector('#contentDiv');
+        if (contentDiv) {
+            setTimeout(() => {
+                window.renderMathInElement(contentDiv, {
+                    delimiters: [
+                      {left: "$$", right: "$$", display: false}
+                    ]
+                });
+            });
+        }
     }
 }
 

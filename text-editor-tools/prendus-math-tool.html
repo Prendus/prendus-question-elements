@@ -6,6 +6,11 @@
 <link rel="import" href="../../../bower_components/iron-icons/editor-icons.html">
 <link rel="import" href="../../../bower_components/paper-tooltip/paper-tooltip.html">
 <link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../../bower_components/paper-tabs/paper-tab.html">
+<link rel="import" href="../../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../redux-store-element/redux-store.html">
+
 <!--TODO once KaTex supports Shadow DOM, get rid of the huge CSS source in the style tag and use this stylesheet import-->
 <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.8.3/katex.min.css" integrity="sha384-B41nY7vEWuDrE9Mr+J2nBL0Liu+nl/rBXTdpQal730oTHdlrlXHzYMOhDU60cwde" crossorigin="anonymous"> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.8.3/katex.min.js" integrity="sha384-L9gv4ooDLrYwW0QCM6zY3EKSSPrsuUncpx26+erN0pJX4wv1B1FzVW1SvpcJPx/8" crossorigin="anonymous"></script>
@@ -22,7 +27,33 @@
                 box-shadow: 0px 0px 3px grey;
                 margin: .5vw;
             }
+
+            #paperTabs {
+                /*width: calc(1000px - 10vw);*/
+                /*margin: 0 auto;*/
+                /*font-size: calc(50px - 1vw);*/
+                --paper-tabs-selection-bar-color: #2a9af2;
+                /*--paper-tab-ink: grey;*/
+                /*--paper-tab-content: {*/
+                    /*font-family: Ubuntu;*/
+                    /*padding: 25px;*/
+                }
+                /*height: auto;*/
+            }
+
+            paper-tab {
+                color: grey;
+            }
+
+            paper-tab.iron-selected {
+                border: 1px solid rgba(0, 0, 0, .2500);
+                box-shadow: 0px 0px 3px grey;
+                color: black;
+            }
         </style>
+
+        <redux-store id="reduxStoreElement" action="[[action]]" on-statechange="stateChange" store-name="PRENDUS_QUESTION_ELEMENTS"></redux-store>
+
         <paper-button id="button">
             <iron-icon icon="editor:functions"></iron-icon>
         </paper-button>
@@ -31,9 +62,61 @@
 		</paper-tooltip>
 
         <paper-dialog id="dialog" on-click="dialogClick">
-            <div id="mathDiv" style="display: flex; flex-direction: row">
-                <div class="mathSymbol" on-click="mathSymbolClick" math-text="\pi">$$\pi$$</div>
-                <div class="mathSymbol" on-click="mathSymbolClick" math-text="\alpha">$$\alpha$$</div>
+            <paper-tabs id="paperTabs" selected="[[selected]]" on-selected-changed="selectedChanged" scrollable>
+                <paper-tab>Greek</paper-tab>
+                <paper-tab>Operators</paper-tab>
+                <paper-tab>Logic and Set</paper-tab>
+                <paper-tab>Relations</paper-tab>
+            </paper-tabs>
+
+            <div id="mathDiv">
+                <iron-pages selected="[[selected]]">
+                    <div style="display: flex; flex-direction: row">
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\Gamma">$$\Gamma$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\Delta">$$\Delta$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\Theta">$$\Theta$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\Lambda">$$\Lambda$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\Xi">$$\Xi$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\Pi">$$\Pi$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\Sigma">$$\Sigma$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\Upsilon">$$\Upsilon$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\Phi">$$\Phi$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\Psi">$$\Psi$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\Omega">$$\Omega$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\alpha">$$\alpha$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\beta">$$\beta$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\gamma">$$\gamma$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\delta">$$\delta$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\epsilon">$$\epsilon$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\zeta">$$\zeta$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\eta">$$\eta$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\theta">$$\theta$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\iota">$$\iota$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\kappa">$$\kappa$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\lambda">$$\lambda$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\mu">$$\mu$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\nu">$$\nu$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\xi">$$\xi$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\omicron">$$\omicron$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\pi">$$\pi$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\rho">$$\rho$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\sigma">$$\sigma$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\tau">$$\tau$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\upsilon">$$\upsilon$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\phi">$$\phi$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\chi">$$\chi$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\psi">$$\psi$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\omega">$$\omega$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\varepsilon">$$\varepsilon$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\varkappa">$$\varkappa$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\vartheta">$$\vartheta$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\varpi">$$\varpi$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\varrho">$$\varrho$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\varsigma">$$\varsigma$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\varphi">$$\varphi$$</div>
+                        <div class="mathSymbol" on-click="mathSymbolClick" math-text="\digamma">$$\digamma$$</div>
+                    </div>
+                </iron-pages>
             </div>
 
             <paper-input id="finalMathTextInput" type="text" label="Math will appear here"></paper-input>
@@ -45,5 +128,5 @@
         </paper-dialog>
     </template>
 
-    <script src="prendus-math-tool.ts"></script>
+    <script type="module" src="prendus-math-tool.ts"></script>
 </dom-module>

@@ -1,5 +1,16 @@
+import {createUUID} from '../../prendus-shared/services/utilities-service';
+
 class PrendusMathTool extends WysiwygTool {
+    componentId: string;
+    selected: number;
+
     static get is() { return 'prendus-math-tool'; }
+
+    constructor() {
+        super();
+
+        this.componentId = createUUID();
+    }
 
     connectedCallback() {
         super.connectedCallback();
@@ -10,6 +21,12 @@ class PrendusMathTool extends WysiwygTool {
               {left: "$$", right: "$$", display: false}
             ]
         });
+
+        this.action = fireLocalAction(this.componentId, 'selected', 0);
+    }
+
+    selectedChanged(e: CustomEvent) {
+        this.action = fireLocalAction(this.componentId, 'selected', e.detail.value);
     }
 
     execCommand() {
@@ -50,6 +67,23 @@ class PrendusMathTool extends WysiwygTool {
         }));
         this.shadowRoot.querySelector('#dialog').close();
     }
+
+    stateChange(e: CustomEvent) {
+        const state = e.detail.state;
+
+        if (state.components[this.componentId]) this.selected = state.components[this.componentId].selected;
+
+        console.log(state.components[this.componentId]);
+    }
 }
 
 window.customElements.define(PrendusMathTool.is, PrendusMathTool);
+
+function fireLocalAction(componentId: string, key: string, value: any) {
+    return {
+        type: 'SET_COMPONENT_PROPERTY',
+        componentId,
+        key,
+        value
+    };
+}

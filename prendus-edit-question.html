@@ -11,6 +11,7 @@
 <link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../../bower_components/wysiwyg-e/wysiwyg-e.html">
+<link rel="import" href="../../bower_components/wysiwyg-e/tools/italic.html">
 <link rel="import" href="../../bower_components/juicy-ace-editor/juicy-ace-editor.html">
 
 <dom-module id="prendus-edit-question">
@@ -91,6 +92,7 @@
                             <prendus-input-tool on-insert-input="insertInput"></prendus-input-tool>
                             <prendus-essay-tool on-insert-essay="insertEssay"></prendus-essay-tool>
                             <prendus-math-tool on-insert-math="insertMath"></prendus-math-tool>
+                            <wysiwyg-tool-italic></wysiwyg-tool-italic>
                         </wysiwyg-e>
                         <div class="savingText">[[getSavingText(saving)]]</div>
                     </div>

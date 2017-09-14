@@ -51,7 +51,7 @@
             }
 
             #ironPages {
-                width: 50vw;
+                width: 75vw;
                 height: 40vh;
                 overflow-y: auto;
             }
@@ -75,14 +75,20 @@
 
         <paper-dialog id="dialog" on-click="dialogClick">
             <paper-tabs id="paperTabs" selected="[[selected]]" on-selected-changed="selectedChanged" scrollable>
+                <paper-tab>Common</paper-tab>
                 <paper-tab>Fractions</paper-tab>
                 <paper-tab>Greek Letters</paper-tab>
+                <paper-tab>Other Letters</paper-tab>
                 <paper-tab>Binary Operators</paper-tab>
                 <paper-tab>Logic and Set Theory</paper-tab>
                 <paper-tab>Relations</paper-tab>
+                <paper-tab>Negated Relations</paper-tab>
             </paper-tabs>
 
             <iron-pages id="ironPages" selected="[[selected]]">
+                <div class="symbolsContainer">
+                </div>
+
                 <div class="symbolsContainer">
                     <prendus-math-symbol tex="\frac{a}{b}" params="a, b" on-click="mathSymbolClick"></prendus-math-symbol>
                     <prendus-math-symbol tex="\dfrac{a}{b}" params="a, b" on-click="mathSymbolClick"></prendus-math-symbol>
@@ -134,6 +140,27 @@
                     <prendus-math-symbol tex="\varsigma" on-click="mathSymbolClick"></prendus-math-symbol>
                     <prendus-math-symbol tex="\varphi" on-click="mathSymbolClick"></prendus-math-symbol>
                     <prendus-math-symbol tex="\digamma" on-click="mathSymbolClick"></prendus-math-symbol>
+                </div>
+
+                <div class="symbolsContainer">
+                    <prendus-math-symbol tex="\imath" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\jmath" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\aleph" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\beth" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\gimel" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\daleth" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\eth" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\Finv" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\Game" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\ell" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\hbar" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\hslash" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\Im" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\Re" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\wp" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\partial" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\nabla" on-click="mathSymbolClick"></prendus-math-symbol>
+                    <prendus-math-symbol tex="\Bbbk" on-click="mathSymbolClick"></prendus-math-symbol>
                 </div>
 
                 <div class="symbolsContainer">

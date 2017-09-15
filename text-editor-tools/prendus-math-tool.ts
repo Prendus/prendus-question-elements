@@ -46,7 +46,7 @@ class PrendusMathTool extends WysiwygTool {
     }
 
     insertClick() {
-        const mathText = `$$$${this.finalMathText}$$$`;
+        const mathText = `$$${this.finalMathText}$$`;
 
         this.dispatchEvent(new CustomEvent('insert-math', {
             bubbles: false,
@@ -54,7 +54,7 @@ class PrendusMathTool extends WysiwygTool {
                 mathText
             }
         }));
-        
+
         this.shadowRoot.querySelector('#dialog').close();
     }
 

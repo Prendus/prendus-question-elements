@@ -351,6 +351,7 @@ async function createQuestion(prendusQuestionElementsTestUserId: string, prendus
                 authorId: $authorId
                 text: $text
                 code: $code
+                visibility: PUBLIC
             ) {
                 id
             }

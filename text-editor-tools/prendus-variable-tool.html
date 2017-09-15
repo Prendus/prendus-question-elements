@@ -1,0 +1,43 @@
+<link rel="import" href="../../../bower_components/wysiwyg-e/wysiwyg-tool.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../../bower_components/paper-tooltip/paper-tooltip.html">
+
+<dom-module id="prendus-variable-tool">
+    <template>
+        <style include="wysiwyg-tool"></style>
+        <paper-button id="button">
+            <iron-icon icon="icons:cancel"></iron-icon>
+        </paper-button>
+        <paper-tooltip id="tooltip" for="button" position="[[tooltipPosition]]" offset="5">
+			<span>Variable</span>
+		</paper-tooltip>
+
+        <paper-dialog id="variableDialog" on-click="variableDialogClick">
+            <div>
+                <paper-input id="varNameInput" type="text" value="var" label="Variable name (var1, var2, etc)" autofocus></paper-input>
+            </div>
+
+            <div>
+                <paper-input id="varMaxInput" type="number" value="10" label="Max value">
+            </div>
+
+            <div>
+                <paper-input id="varMinInput" type="number" value="0" label="Min value"></paper-input
+            </div>
+
+            <div>
+                <paper-input id="precisionInput" type="number" value="0" label="Decimal precision"></paper-input>
+            </div>
+
+            <div style="display: flex">
+                <paper-button style="margin-left: auto" on-click="insertClick" raised noink>Insert</paper-button>
+            </div>
+        </paper-dialog>
+    </template>
+
+    <script src="prendus-variable-tool.ts"></script>
+</dom-module>

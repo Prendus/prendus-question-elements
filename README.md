@@ -23,10 +23,15 @@ npm install prendus-question-elements
 
 bower install polymer --save
 bower install paper-tabs --save
-bower install iron-pages --save
 bower install juicy-ace-editor --save
+bower install iron-pages --save
 bower install wysiwyg-e --save
 bower install paper-toast --save
+bower install paper-dialog --save
+bower install paper-input --save
+bower install paper-button --save
+bower install iron-icon --save
+bower install paper-tooltip --save
 ```
 
 To work on locally:

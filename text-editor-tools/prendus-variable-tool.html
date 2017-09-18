@@ -18,19 +18,19 @@
 
         <paper-dialog id="variableDialog" on-click="variableDialogClick">
             <div>
-                <paper-input id="varNameInput" type="text" value="var" label="Variable name (var1, var2, etc)" autofocus></paper-input>
+                <paper-input id="varNameInput" type="text" value="var1" label="Variable name (var1, var2, etc)" autofocus auto-validate pattern="var((.|\n|\r)+?)" error-message='Must start with "var" follwed by at least one character'></paper-input>
             </div>
 
             <div>
-                <paper-input id="varMaxInput" type="number" value="10" label="Max value">
+                <paper-input id="varMaxInput" type="text" value="10" label="Max value" auto-validate pattern="[-.0-9]+" required error-message="Must be a number">
             </div>
 
             <div>
-                <paper-input id="varMinInput" type="number" value="0" label="Min value"></paper-input
+                <paper-input id="varMinInput" type="text" value="0" label="Min value" auto-validate pattern="[-.0-9]+" required error-message="Must be a number"></paper-input
             </div>
 
             <div>
-                <paper-input id="precisionInput" type="number" value="0" label="Decimal precision"></paper-input>
+                <paper-input id="precisionInput" type="text" value="0" label="Decimal precision" auto-validate pattern="[0-1]?[0-9]|20" required error-message="Must be an integer between 0 and 20"></paper-input>
             </div>
 
             <div style="display: flex">

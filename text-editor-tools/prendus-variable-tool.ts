@@ -45,6 +45,11 @@ class PrendusVariableTool extends WysiwygTool {
             }
         }));
         this.shadowRoot.querySelector('#variableDialog').close();
+
+        varNameInput.value = 'var';
+        varMaxInput.value = '10';
+        varMinInput.value = '0';
+        precisionInput.value = '0';
     }
 }
 

@@ -24,6 +24,9 @@ class PrendusCheckTool extends WysiwygTool {
             }
         }));
         this.shadowRoot.querySelector('#checkDialog').close();
+
+        contentInput.value = '';
+        correctSelect.value = 'true';
     }
 }
 

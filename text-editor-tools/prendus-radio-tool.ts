@@ -24,6 +24,9 @@ class PrendusRadioTool extends WysiwygTool {
             }
         }));
         this.shadowRoot.querySelector('#radioDialog').close();
+
+        contentInput.value = '';
+        correctSelect.value = 'true';
     }
 }
 

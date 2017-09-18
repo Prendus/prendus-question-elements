@@ -20,6 +20,7 @@ class PrendusInputTool extends WysiwygTool {
             }
         }));
         this.shadowRoot.querySelector('#inputDialog').close();
+        answerInput.value = '';
     }
 }
 

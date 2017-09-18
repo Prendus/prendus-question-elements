@@ -30,18 +30,23 @@ class PrendusVariableTool extends WysiwygTool {
         const minValue = +varMinInput.value;
         const precisionValue = +precisionInput.value;
 
-        if (!varName.startsWith('var')) {
-            alert('Variable name must start with "var"');
+        if (varNameInput.invalid) {
+            varNameInput.focus();
             return;
         }
 
-        if (!varName[3]) {
-            alert('Variable name must have at least one character after "var"');
+        if (varMaxInput.invalid) {
+            varMaxInput.focus();
             return;
         }
 
-        if (precisionValue < 0 || precisionValue > 20) {
-            alert('Decimal precision must be between 0 and 20');
+        if (varMinInput.invalid) {
+            varMinInput.focus();
+            return;
+        }
+
+        if (precisionInput.invalid) {
+            precisionInput.focus();
             return;
         }
 
@@ -56,7 +61,7 @@ class PrendusVariableTool extends WysiwygTool {
         }));
         this.shadowRoot.querySelector('#variableDialog').close();
 
-        varNameInput.value = 'var';
+        varNameInput.value = 'var1';
         varMaxInput.value = '10';
         varMinInput.value = '0';
         precisionInput.value = '0';

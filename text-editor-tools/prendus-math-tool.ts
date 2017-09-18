@@ -16,6 +16,8 @@ class PrendusMathTool extends WysiwygTool {
     connectedCallback() {
         super.connectedCallback();
 
+        this._setCommand('insertText');
+        
         this.action = fireLocalAction(this.componentId, 'selected', 0);
     }
 
@@ -24,7 +26,7 @@ class PrendusMathTool extends WysiwygTool {
     }
 
     execCommand() {
-        if (!this.range0) {
+        if (this.disabled || !this.range0) {
             return;
         }
 

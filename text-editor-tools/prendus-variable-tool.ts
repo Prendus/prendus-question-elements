@@ -1,7 +1,17 @@
 class PrendusVariableTool extends WysiwygTool {
     static get is() { return 'prendus-variable-tool'; }
 
+    connectedCallback() {
+        super.connectedCallback();
+
+        this._setCommand('insertText');
+    }
+
     execCommand() {
+        if (this.disabled || !this.range0) {
+            return;
+        }
+
         this.shadowRoot.querySelector('#variableDialog').open();
     }
 

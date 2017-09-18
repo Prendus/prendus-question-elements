@@ -1,7 +1,17 @@
 class PrendusInputTool extends WysiwygTool {
     static get is() { return 'prendus-input-tool'; }
 
+    connectedCallback() {
+        super.connectedCallback();
+
+        this._setCommand('insertText');
+    }
+
     execCommand() {
+        if (this.disabled || !this.range0) {
+            return;
+        }
+
         this.shadowRoot.querySelector('#inputDialog').open();
     }
 

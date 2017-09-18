@@ -364,8 +364,10 @@ class PrendusEditQuestion extends Polymer.Element {
         const textEditor = this.shadowRoot.querySelector('#textEditor');
         const codeEditor = this.shadowRoot.querySelector('#codeEditor');
 
-        const text = textEditor.shadowRoot.querySelector('#layout').querySelector('#content').querySelector('#editable').textContent;
         const code = codeEditor.value;
+
+        const newTextNode = document.createTextNode(`[${varName}]`);
+        textEditor.range0.insertNode(newTextNode);
 
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
@@ -373,7 +375,6 @@ class PrendusEditQuestion extends Polymer.Element {
             key: 'question',
             value: {
                 ...this._question,
-                text: insertStringIntoText(text, this._question.text, `[${varName}]`, textEditor.range0),
                 code: insertVariableIntoCode(code, varName, minValue, maxValue, precisionValue)
             }
         };
@@ -389,8 +390,10 @@ class PrendusEditQuestion extends Polymer.Element {
         const textEditor = this.shadowRoot.querySelector('#textEditor');
         const codeEditor = this.shadowRoot.querySelector('#codeEditor');
 
-        const text = textEditor.shadowRoot.querySelector('#layout').querySelector('#content').querySelector('#editable').textContent;
         const code = codeEditor.value;
+
+        const newTextNode = document.createTextNode(`[input]`);
+        textEditor.range0.insertNode(newTextNode);
 
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
@@ -398,7 +401,6 @@ class PrendusEditQuestion extends Polymer.Element {
             key: 'question',
             value: {
                 ...this._question,
-                text: insertStringIntoText(text, this._question.text, `[input]`, textEditor.range0),
                 code: insertInputIntoCode(code, varName, answer)
             }
         };
@@ -413,8 +415,10 @@ class PrendusEditQuestion extends Polymer.Element {
         const textEditor = this.shadowRoot.querySelector('#textEditor');
         const codeEditor = this.shadowRoot.querySelector('#codeEditor');
 
-        const text = textEditor.shadowRoot.querySelector('#layout').querySelector('#content').querySelector('#editable').textContent;
         const code = codeEditor.value;
+
+        const newTextNode = document.createTextNode(`[essay]`);
+        textEditor.range0.insertNode(newTextNode);
 
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
@@ -422,7 +426,6 @@ class PrendusEditQuestion extends Polymer.Element {
             key: 'question',
             value: {
                 ...this._question,
-                text: insertStringIntoText(text, this._question.text, `[essay]`, textEditor.range0),
                 code: insertEssayIntoCode(code, varName)
             }
         };
@@ -438,8 +441,10 @@ class PrendusEditQuestion extends Polymer.Element {
         const textEditor = this.shadowRoot.querySelector('#textEditor');
         const codeEditor = this.shadowRoot.querySelector('#codeEditor');
 
-        const text = textEditor.shadowRoot.querySelector('#layout').querySelector('#content').querySelector('#editable').textContent;
         const code = codeEditor.value;
+
+        const newTextNode = document.createTextNode(`[*]${content}[*]`);
+        textEditor.range0.insertNode(newTextNode);
 
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
@@ -447,7 +452,6 @@ class PrendusEditQuestion extends Polymer.Element {
             key: 'question',
             value: {
                 ...this._question,
-                text: insertStringIntoText(text, this._question.text, `<p>[*]${content}[*]</p>`, textEditor.range0),
                 code: insertRadioOrCheckIntoCode(code, varName, correct)
             }
         };
@@ -463,8 +467,10 @@ class PrendusEditQuestion extends Polymer.Element {
         const textEditor = this.shadowRoot.querySelector('#textEditor');
         const codeEditor = this.shadowRoot.querySelector('#codeEditor');
 
-        const text = textEditor.shadowRoot.querySelector('#layout').querySelector('#content').querySelector('#editable').textContent;
         const code = codeEditor.value;
+
+        const newTextNode = document.createTextNode(`[x]${content}[x]`);
+        textEditor.range0.insertNode(newTextNode);
 
         this.action = {
             type: 'SET_COMPONENT_PROPERTY',
@@ -472,7 +478,6 @@ class PrendusEditQuestion extends Polymer.Element {
             key: 'question',
             value: {
                 ...this._question,
-                text: insertStringIntoText(text, this._question.text, `<p>[x]${content}[x]</p>`, textEditor.range0),
                 code: insertRadioOrCheckIntoCode(code, varName, correct)
             }
         };
@@ -485,15 +490,8 @@ class PrendusEditQuestion extends Polymer.Element {
 
         const text = textEditor.shadowRoot.querySelector('#layout').querySelector('#content').querySelector('#editable').textContent;
 
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'question',
-            value: {
-                ...this._question,
-                text: insertStringIntoText(text, this._question.text, mathText, textEditor.range0)
-            }
-        };
+        const newTextNode = document.createTextNode(mathText);
+        textEditor.range0.insertNode(newTextNode);
     }
 
     stateChange(e: CustomEvent) {
@@ -511,18 +509,6 @@ class PrendusEditQuestion extends Polymer.Element {
 }
 
 window.customElements.define(PrendusEditQuestion.is, PrendusEditQuestion);
-
-function insertStringIntoText(editorText: string, questionText: string, string: string, range0: any) {
-    //TODO once the html encoding gets figured out by the wysiwyg-e web component, fix this hack
-    const textArea = document.createElement('textarea');
-    textArea.innerHTML = questionText;
-    const decodedQuestionText = textArea.value;
-
-    const newEditorText = `${editorText.substring(0, range0.endOffset)}${string}${editorText.substring(range0.endOffset)}`
-    const newQuestionText = decodedQuestionText.replace(editorText, newEditorText);
-
-    return newQuestionText;
-}
 
 function insertVariableIntoCode(editorCode: string, varName: string, minValue: number, maxValue: number, precisionValue: number) {
     return `${varName}.min = ${minValue};\n${varName}.max = ${maxValue};\n${varName}.precision = ${precisionValue};\n\n${editorCode}`;

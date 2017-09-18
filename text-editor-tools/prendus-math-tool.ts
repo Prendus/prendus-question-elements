@@ -56,6 +56,8 @@ class PrendusMathTool extends WysiwygTool {
         }));
 
         this.shadowRoot.querySelector('#dialog').close();
+
+        this.action = fireLocalAction(this.componentId, 'finalMathText', '');
     }
 
     stateChange(e: CustomEvent) {

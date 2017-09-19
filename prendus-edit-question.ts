@@ -1,4 +1,4 @@
-import {createUUID, navigate} from '../prendus-shared/services/utilities-service';
+import {createUUID, navigate, fireLocalAction} from '../prendus-shared/services/utilities-service';
 import {Question} from './prendus-question-elements.d';
 import {SetComponentPropertyAction} from './prendus-question-elements.d';
 import {GQLRequest} from '../prendus-shared/services/graphql-service';
@@ -59,26 +59,9 @@ class PrendusEditQuestion extends Polymer.Element {
     connectedCallback() {
         super.connectedCallback();
 
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'selected',
-            value: 0
-        };
-
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'saving',
-            value: false
-        };
-
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'loaded',
-            value: true
-        };
+        this.action = fireLocalAction(this.componentId, 'selected', 0);
+        this.action = fireLocalAction(this.componentId, 'saving', false);
+        this.action = fireLocalAction(this.componentId, 'loaded', true);
 
         setTimeout(() => { //TODO fix this...it would be nice to be able to set the font-size officially through the ace editor web component, and then we wouldn't have to hack. The timeout is to ensure the current task on the event loop completes and the dom template is stamped because of the loaded property before accessing the dom
             this.shadowRoot.querySelector('#codeEditor').shadowRoot.querySelector('#juicy-ace-editor-container').style = 'font-size: calc(40px - 1vw)';
@@ -93,32 +76,17 @@ class PrendusEditQuestion extends Polymer.Element {
 
         const text = this.shadowRoot.querySelector('#textEditor').value;
 
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'question',
-            value: {
-                ...this._question,
-                text,
-                code: this._question ? this._question.code : ''
-            }
-        };
+        this.action = fireLocalAction(this.componentId, 'question', {
+            ...this._question,
+            text,
+            code: this._question ? this._question.code : ''
+        });
 
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'saving',
-            value: true
-        };
+        this.action = fireLocalAction(this.componentId, 'saving', true);
 
         await this.save();
 
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'saving',
-            value: false
-        };
+        this.action = fireLocalAction(this.componentId, 'saving', false);
 
         this.dispatchEvent(new CustomEvent('text-changed', {
             detail: {
@@ -131,32 +99,17 @@ class PrendusEditQuestion extends Polymer.Element {
     async codeEditorChanged() {
         const code = this.shadowRoot.querySelector('#codeEditor').value;
 
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'question',
-            value: {
-                ...this._question,
-                text: this._question ? this._question.text : '',
-                code
-            }
-        };
+        this.action = fireLocalAction(this.componentId, 'question', {
+            ...this._question,
+            text: this._question ? this._question.text : '',
+            code
+        });
 
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'saving',
-            value: true
-        };
+        this.action = fireLocalAction(this.componentId, 'saving', true);
 
         await this.save();
 
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'saving',
-            value: false
-        };
+        this.action = fireLocalAction(this.componentId, 'saving', false);
 
         this.dispatchEvent(new CustomEvent('code-changed', {
             detail: {
@@ -167,28 +120,12 @@ class PrendusEditQuestion extends Polymer.Element {
     }
 
     async questionChanged() {
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'question',
-            value: this.question
-        };
-
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'loaded',
-            value: false
-        };
+        this.action = fireLocalAction(this.componentId, 'question', this.question);
+        this.action = fireLocalAction(this.componentId, 'loaded', false);
 
         await this.loadData();
 
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'loaded',
-            value: true
-        };
+        this.action = fireLocalAction(this.componentId, 'loaded', true);
 
         //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
         window.parent.postMessage({
@@ -199,55 +136,24 @@ class PrendusEditQuestion extends Polymer.Element {
     }
 
     async questionIdChanged() {
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'questionId',
-            value: this.questionId
-        };
-
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'loaded',
-            value: false
-        };
+        this.action = fireLocalAction(this.componentId, 'questionId', this.questionId);
+        this.action = fireLocalAction(this.componentId, 'loaded', false);
 
         await this.loadData();
 
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'loaded',
-            value: true
-        };
+        this.action = fireLocalAction(this.componentId, 'loaded', true);
     }
 
     noSaveChanged() {
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'noSave',
-            value: this.noSave
-        };
+        this.action = fireLocalAction(this.componentId, 'noSave', this.noSave);
     }
 
     userChanged() {
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'user',
-            value: this.user
-        };
+        this.action = fireLocalAction(this.componentId, 'user', this.user);
     }
 
     userTokenChanged() {
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'userToken',
-            value: this.userToken
-        };
+        this.action = fireLocalAction(this.componentId, 'userToken', this.userToken);
     }
 
     async loadData() {
@@ -269,24 +175,14 @@ class PrendusEditQuestion extends Polymer.Element {
             });
 
             if (data.question) {
-                this.action = {
-                    type: 'SET_COMPONENT_PROPERTY',
-                    componentId: this.componentId,
-                    key: 'question',
-                    value: data.question
-                };
+                this.action = fireLocalAction(this.componentId, 'question', data.question);
             }
             else {
-                this.action = {
-                    type: 'SET_COMPONENT_PROPERTY',
-                    componentId: this.componentId,
-                    key: 'question',
-                    value: {
-                        id: this._questionId,
-                        text: 'This question does not exist',
-                        code: 'answer = false;'
-                    }
-                };
+                this.action = fireLocalAction(this.componentId, 'question', {
+                    id: this._questionId,
+                    text: 'This question does not exist',
+                    code: 'answer = false;'
+                });
             }
         }
     }
@@ -351,12 +247,7 @@ class PrendusEditQuestion extends Polymer.Element {
     }
 
     selectedChanged(e: CustomEvent) {
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'selected',
-            value: e.detail.value
-        };
+        this.action = fireLocalAction(this.componentId, 'selected', e.detail.value);
     }
 
     insertVariable(e: CustomEvent) {
@@ -369,15 +260,10 @@ class PrendusEditQuestion extends Polymer.Element {
         const newTextNode = document.createTextNode(`[${varName}]`);
         textEditor.range0.insertNode(newTextNode);
 
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'question',
-            value: {
-                ...this._question,
-                code: insertVariableIntoCode(code, varName, minValue, maxValue, precisionValue)
-            }
-        };
+        this.action = fireLocalAction(this.componentId, 'question', {
+            ...this._question,
+            code: insertVariableIntoCode(code, varName, minValue, maxValue, precisionValue)
+        });
     }
 
     insertInput(e: CustomEvent) {
@@ -395,15 +281,10 @@ class PrendusEditQuestion extends Polymer.Element {
         const newTextNode = document.createTextNode(`[input]`);
         textEditor.range0.insertNode(newTextNode);
 
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'question',
-            value: {
-                ...this._question,
-                code: insertInputIntoCode(code, varName, answer)
-            }
-        };
+        this.action = fireLocalAction(this.componentId, 'question', {
+            ...this._question,
+            code: insertInputIntoCode(code, varName, answer)
+        });
     }
 
     insertEssay(e: CustomEvent) {
@@ -420,15 +301,10 @@ class PrendusEditQuestion extends Polymer.Element {
         const newTextNode = document.createTextNode(`[essay]`);
         textEditor.range0.insertNode(newTextNode);
 
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'question',
-            value: {
-                ...this._question,
-                code: insertEssayIntoCode(code, varName)
-            }
-        };
+        this.action = fireLocalAction(this.componentId, 'question', {
+            ...this._question,
+            code: insertEssayIntoCode(code, varName)
+        });
     }
 
     insertRadio(e: CustomEvent) {
@@ -446,15 +322,10 @@ class PrendusEditQuestion extends Polymer.Element {
         const newTextNode = document.createTextNode(`[*]${content}[*]`);
         textEditor.range0.insertNode(newTextNode);
 
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'question',
-            value: {
-                ...this._question,
-                code: insertRadioOrCheckIntoCode(code, varName, correct)
-            }
-        };
+        this.action = fireLocalAction(this.componentId, 'question', {
+            ...this._question,
+            code: insertRadioOrCheckIntoCode(code, varName, correct)
+        });
     }
 
     insertCheck(e: CustomEvent) {
@@ -472,15 +343,10 @@ class PrendusEditQuestion extends Polymer.Element {
         const newTextNode = document.createTextNode(`[x]${content}[x]`);
         textEditor.range0.insertNode(newTextNode);
 
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'question',
-            value: {
-                ...this._question,
-                code: insertRadioOrCheckIntoCode(code, varName, correct)
-            }
-        };
+        this.action = fireLocalAction(this.componentId, 'question', {
+            ...this._question,
+            code: insertRadioOrCheckIntoCode(code, varName, correct)
+        });
     }
 
     insertMath(e: CustomEvent) {

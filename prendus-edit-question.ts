@@ -7,6 +7,7 @@ import {RootReducer} from './redux/reducers';
 import {Reducer} from './prendus-question-elements.d';
 import {parse, getAstObjects} from '../assessml/assessml';
 import {AST, Input} from '../assessml/assessml.d';
+import {insertEssayIntoCode} from './services/question-service';
 
 class PrendusEditQuestion extends Polymer.Element {
     componentId: string;
@@ -303,7 +304,7 @@ class PrendusEditQuestion extends Polymer.Element {
 
         this.action = fireLocalAction(this.componentId, 'question', {
             ...this._question,
-            code: insertEssayIntoCode(code, varName)
+            code: insertEssayIntoCode(code)
         });
     }
 
@@ -384,9 +385,11 @@ function insertInputIntoCode(code: string, varName: string, answer: string) {
     return code.replace(/answer\s*=\s*/, `answer = ${varName} === "${answer}" && `);
 }
 
-function insertEssayIntoCode(code: string, varName: string) {
-    return code.replace(/answer\s*=\s*/, `answer = true && `);
-}
+// function insertEssayIntoCode(code: string, varName: string) {
+//     const jsAst =
+//
+//     return code.replace(/answer\s*=\s*/, `answer = true && `);
+// }
 
 function insertRadioOrCheckIntoCode(code: string, varName: string, correct: boolean) {
     return code.replace(/answer\s*=\s*/, `answer = ${varName} === ${correct} && `);

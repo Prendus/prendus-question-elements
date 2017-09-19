@@ -114,7 +114,47 @@ function normalizeUserVariables(userVariables: UserVariable[]): UserVariable[] {
     }, userVariables);
 }
 
-export function insertRadioOrCheckIntoCode(code: string, varName: string, correct: boolean) {
+export function insertVariableIntoCode(code: string, varName: string, minValue: string, maxValue: string, precisionValue: string) {
+    const jsAst: Program = esprima.parse(code);
+    return escodegen.generate({
+        ...jsAst,
+        body: [
+            createPropertyAssignment(varName, 'min', minValue),
+            createPropertyAssignment(varName, 'max', maxValue),
+            createPropertyAssignment(varName, 'precision', precisionValue),
+            ...jsAst.body
+        ]
+    });
+}
+
+function createPropertyAssignment(varName: string, property: string, value: number | string) {
+    return {
+        type: 'ExpressionStatement',
+        expression: {
+            type: 'AssignmentExpression',
+            operator: '=',
+            left: {
+                type: 'MemberExpression',
+                computed: false,
+                object: {
+                    type: 'Identifier',
+                    name: varName
+                },
+                property: {
+                    type: 'Identifier',
+                    name: property
+                }
+            },
+            right: {
+                type: 'Literal',
+                value: Number(value),
+                raw: value.toString()
+            }
+        }
+    };
+}
+
+export function insertRadioOrCheckIntoCode(code: string, varName: string, correct: boolean): string {
     const jsAst: Program = esprima.parse(code);
     const expressionToAdd: BinaryExpression = {
         type: 'BinaryExpression',
@@ -135,7 +175,7 @@ export function insertRadioOrCheckIntoCode(code: string, varName: string, correc
     });
 }
 
-export function insertInputIntoCode(code: string, varName: string, answer: string) {
+export function insertInputIntoCode(code: string, varName: string, answer: string): string {
     const jsAst: Program = esprima.parse(code);
     const expressionToAdd: BinaryExpression = {
         type: 'BinaryExpression',

@@ -1,7 +1,7 @@
 import {GQLRequest} from '../prendus-shared/services/graphql-service';
 import {SetComponentPropertyAction, Question, BuiltQuestion, Reducer, UserInput, UserVariable, UserCheck, UserRadio, UserEssay} from './prendus-question-elements.d';
 import {buildQuestion, checkAnswer} from './services/question-service';
-import {createUUID} from '../prendus-shared/services/utilities-service';
+import {createUUID, fireLocalAction} from '../prendus-shared/services/utilities-service';
 import {getAstObjects} from '../assessml/assessml';
 import {RootReducer} from './redux/reducers';
 import {AST, Variable, Input, Essay, Radio, Check, Drag, Drop} from '../assessml/assessml.d';
@@ -50,12 +50,7 @@ export class PrendusViewQuestion extends Polymer.Element {
     }
 
     showEmbedCodeClick() {
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'showEmbedCode',
-            value: !this.showEmbedCode
-        };
+        this.action = fireLocalAction(this.componentId, 'showEmbedCode', !this.showEmbedCode);
 
         //allow the template with the input to be stamped
         setTimeout(() => {
@@ -64,42 +59,14 @@ export class PrendusViewQuestion extends Polymer.Element {
     }
 
     async questionChanged() {
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'question',
-            value: this.question
-        };
-
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'loaded',
-            value: false
-        };
+        this.action = fireLocalAction(this.componentId, 'question', this.question);
+        this.action = fireLocalAction(this.componentId, 'loaded', false);
 
         const loadDataResult = await loadData(this._question, null, this.userToken);
 
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'question',
-            value: loadDataResult.question
-        };
-
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'builtQuestion',
-            value: loadDataResult.builtQuestion
-        };
-
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'loaded',
-            value: true
-        };
+        this.action = fireLocalAction(this.componentId, 'question', loadDataResult.question);
+        this.action = fireLocalAction(this.componentId, 'builtQuestion', loadDataResult.builtQuestion);
+        this.action = fireLocalAction(this.componentId, 'loaded', true);
 
         //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
         window.parent.postMessage({
@@ -114,42 +81,14 @@ export class PrendusViewQuestion extends Polymer.Element {
     }
 
     async questionIdChanged() {
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'questionId',
-            value: this.questionId
-        };
-
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'loaded',
-            value: false
-        };
+        this.action = fireLocalAction(this.componentId, 'questionId', this.questionId);
+        this.action = fireLocalAction(this.componentId, 'loaded', false);
 
         const loadDataResult = await loadData(null, this._questionId, this.userToken);
 
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'question',
-            value: loadDataResult.question
-        };
-
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'builtQuestion',
-            value: loadDataResult.builtQuestion
-        };
-
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'loaded',
-            value: true
-        };
+        this.action = fireLocalAction(this.componentId, 'question', loadDataResult.question);
+        this.action = fireLocalAction(this.componentId, 'builtQuestion', loadDataResult.builtQuestion);
+        this.action = fireLocalAction(this.componentId, 'loaded', true);
 
         //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
         window.parent.postMessage({
@@ -220,12 +159,7 @@ export class PrendusViewQuestion extends Polymer.Element {
             }
         }));
 
-        this.action = {
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'checkAnswerResponse',
-            value: checkAnswerInfo.answer === true ? 'Correct' : checkAnswerInfo.error ? `This question has errors:\n\n${checkAnswerInfo.error}` : 'Incorrect'
-        };
+        this.action = fireLocalAction(this.componentId, 'checkAnswerResponse', checkAnswerInfo.answer === true ? 'Correct' : checkAnswerInfo.error ? `This question has errors:\n\n${checkAnswerInfo.error}` : 'Incorrect');
 
         this.shadowRoot.querySelector('#checkAnswerResponseToast').open();
     }

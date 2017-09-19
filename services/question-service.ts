@@ -114,6 +114,27 @@ function normalizeUserVariables(userVariables: UserVariable[]): UserVariable[] {
     }, userVariables);
 }
 
+export function insertRadioOrCheckIntoCode(code: string, varName: string, correct: boolean) {
+    const jsAst: Program = esprima.parse(code);
+    const expressionToAdd: BinaryExpression = {
+        type: 'BinaryExpression',
+        operator: '===',
+        left: {
+            type: 'Identifier',
+            name: varName
+        },
+        right: {
+            type: 'Literal',
+            value: correct,
+            raw: correct.toString()
+        }
+    };
+    return escodegen.generate({
+        ...jsAst,
+        body: addToAnswerAssignment(jsAst, expressionToAdd)
+    });
+}
+
 export function insertInputIntoCode(code: string, varName: string, answer: string) {
     const jsAst: Program = esprima.parse(code);
     const expressionToAdd: BinaryExpression = {

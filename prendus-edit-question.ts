@@ -7,7 +7,7 @@ import {RootReducer} from './redux/reducers';
 import {Reducer} from './prendus-question-elements.d';
 import {parse, getAstObjects} from '../assessml/assessml';
 import {AST, Input} from '../assessml/assessml.d';
-import {insertEssayIntoCode} from './services/question-service';
+import {insertEssayIntoCode, insertInputIntoCode} from './services/question-service';
 
 class PrendusEditQuestion extends Polymer.Element {
     componentId: string;
@@ -380,16 +380,6 @@ window.customElements.define(PrendusEditQuestion.is, PrendusEditQuestion);
 function insertVariableIntoCode(editorCode: string, varName: string, minValue: number, maxValue: number, precisionValue: number) {
     return `${varName}.min = ${minValue};\n${varName}.max = ${maxValue};\n${varName}.precision = ${precisionValue};\n\n${editorCode}`;
 }
-
-function insertInputIntoCode(code: string, varName: string, answer: string) {
-    return code.replace(/answer\s*=\s*/, `answer = ${varName} === "${answer}" && `);
-}
-
-// function insertEssayIntoCode(code: string, varName: string) {
-//     const jsAst =
-//
-//     return code.replace(/answer\s*=\s*/, `answer = true && `);
-// }
 
 function insertRadioOrCheckIntoCode(code: string, varName: string, correct: boolean) {
     return code.replace(/answer\s*=\s*/, `answer = ${varName} === ${correct} && `);

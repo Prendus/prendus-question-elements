@@ -361,6 +361,24 @@ class PrendusEditQuestion extends Polymer.Element {
         textEditor.range0.insertNode(newTextNode);
     }
 
+    insertImage(e: CustomEvent) {
+        const { dataUrl } = e.detail;
+        const textEditor = this.shadowRoot.querySelector('#textEditor');
+
+        const newImageNode = document.createElement('img');
+        newImageNode.src = dataUrl;
+        textEditor.range0.insertNode(newImageNode);
+    }
+
+    getAllowedTagNames() {
+        return [
+            'br',
+			'p',
+			'span',
+            'img'
+        ];
+    }
+
     stateChange(e: CustomEvent) {
         const state = e.detail.state;
 

@@ -49,6 +49,10 @@ export class PrendusViewQuestion extends Polymer.Element {
         // this.action = await getAndSetUser();
     }
 
+    getThis() {
+        return this;
+    }
+
     showEmbedCodeClick() {
         this.action = fireLocalAction(this.componentId, 'showEmbedCode', !this.showEmbedCode);
 

@@ -12,7 +12,6 @@
 <link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../../bower_components/wysiwyg-e/wysiwyg-e.html">
-<link rel="import" href="../../bower_components/wysiwyg-e/tools/italic.html">
 <link rel="import" href="../../bower_components/juicy-ace-editor/juicy-ace-editor.html">
 
 <dom-module id="prendus-edit-question">
@@ -87,7 +86,6 @@
                 <iron-pages id="ironPages" selected="[[selected]]">
                     <div class="editorContainer">
                         <wysiwyg-e id="textEditor" class="editor" value="[[_question.text]]" on-value-changed="textEditorChanged" allowed-tag-names="[[getAllowedTagNames()]]">
-                            <wysiwyg-tool-italic></wysiwyg-tool-italic>
                             <prendus-radio-tool on-insert-radio="insertRadio"></prendus-radio-tool>
                             <prendus-check-tool on-insert-check="insertCheck"></prendus-check-tool>
                             <prendus-input-tool on-insert-input="insertInput"></prendus-input-tool>

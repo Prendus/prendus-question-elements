@@ -1,7 +1,7 @@
-import {parse, compileToHTML} from '../../assessml/assessml';
-import {asyncMap} from '../../prendus-shared/services/utilities-service';
+import {parse, compileToHTML, getAstObjects} from '../../assessml/assessml';
+import {asyncMap, asyncReduce} from '../../prendus-shared/services/utilities-service';
 import {secureEval} from '../../secure-eval/secure-eval';
-import {AST, ASTObject, Variable, Input, Essay, Check, Radio} from '../../assessml/assessml.d';
+import {AST, ASTObject, Variable, Input, Essay, Check, Radio, Content, Drag, Drop, Image} from '../../assessml/assessml.d';
 import {Program, ExpressionStatement, MemberExpression, Identifier, AssignmentExpression, Literal, BinaryExpression} from 'estree';
 import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay} from '../prendus-question-elements.d';
 import {normalizeVariables} from '../../assessml/utilities';
@@ -11,54 +11,98 @@ export async function buildQuestion(text: string, code: string): Promise<{
     ast: AST;
 }> {
     try {
-        const originalAmlAst = parse(text, () => generateRandomInteger(0, 100));
+        const originalAmlAst = parse(text, () => undefined, () => '');
         const jsAst: Program = esprima.parse(code);
 
-        const newAmlAst = {
-            ...originalAmlAst,
-            ast: await asyncMap(originalAmlAst.ast, async (astObject: ASTObject) => {
+        const initialVariablesSetAmlAst = await asyncReduce(originalAmlAst.ast, async (result: AST, astObject: ASTObject, index: number) => {
                 if (astObject.type === 'VARIABLE') {
-                    const newMin = await newPropertyValue(jsAst, astObject.varName, 'min', 0);
-                    const newMax = await newPropertyValue(jsAst, astObject.varName, 'max', 100);
-                    const precision = await newPropertyValue(jsAst, astObject.varName, 'precision', 0);
-
+                    const newMin = await getPropertyValue(jsAst, result, astObject.varName, 'min', 0);
+                    const newMax = await getPropertyValue(jsAst, result, astObject.varName, 'max', 100);
+                    const precision = await getPropertyValue(jsAst, result, astObject.varName, 'precision', 0);
                     const randomVariable = (Math.random() * (newMax - newMin + 1)) + newMin;
 
                     return {
-                        ...astObject,
-                        value: precision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(precision)
+                        ...result,
+                        ast: [...result.ast.slice(0, index), {
+                            ...astObject,
+                            value: astObject.value === undefined ? precision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(precision) : astObject.value
+                        }, ...result.ast.slice(index + 1)]
                     };
                 }
-                else {
-                    return astObject;
+
+                return result;
+            }, originalAmlAst);
+
+        const normalizedInitialVariablesSetAmlAst = normalizeVariables(initialVariablesSetAmlAst);
+
+        const newAmlAst = await asyncReduce(normalizedInitialVariablesSetAmlAst.ast, async (result: AST, astObject: ASTObject, index: number) => {
+                if (astObject.type === 'VARIABLE') {
+                    const newMin = await getPropertyValue(jsAst, result, astObject.varName, 'min', 0);
+                    const newMax = await getPropertyValue(jsAst, result, astObject.varName, 'max', 100);
+                    const precision = await getPropertyValue(jsAst, result, astObject.varName, 'precision', 0);
+                    const randomVariable = (Math.random() * (newMax - newMin + 1)) + newMin;
+
+                    return {
+                        ...result,
+                        ast: [...result.ast.slice(0, index), {
+                            ...astObject,
+                            value: astObject.value === null ? precision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(precision) : astObject.value
+                        }, ...result.ast.slice(index + 1)]
+                    };
                 }
-            })
-        };
+
+                if (astObject.type === 'IMAGE') {
+                    return {
+                        ...result,
+                        ast: [...result.ast.slice(0, index), {
+                            ...astObject,
+                            src: await getPropertyValue(jsAst, result, astObject.varName, 'src', '')
+                        }, ...result.ast.slice(index + 1)]
+                    };
+                }
+
+                return result;
+            }, normalizedInitialVariablesSetAmlAst);
 
         const normalizedAmlAst = normalizeVariables(newAmlAst);
 
         return {
-            html: compileToHTML(normalizedAmlAst, () => generateRandomInteger(0, 100)),
+            html: compileToHTML(normalizedAmlAst, () => generateRandomInteger(0, 100), () => ''),
             ast: normalizedAmlAst
         };
     }
     catch(error) {
+        console.log(error);
         console.log('probably a JS parsing error while the user is typing');
         // There will be many intermediate JavaScript parsing errors while the user is typing. If that happens, do nothing
         return {
-            html: compileToHTML(text, () => generateRandomInteger(0, 100)),
-            ast: parse(text, () => generateRandomInteger(0, 100))
+            html: compileToHTML(text, () => generateRandomInteger(0, 100), () => ''),
+            ast: parse(text, () => generateRandomInteger(0, 100), () => '')
         };
     }
 }
 
-async function newPropertyValue(jsAst: Program, varName: string, propertyName: string, defaultValue: number): Promise<number> {
+async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, propertyName: string, defaultValue: number | string): Promise<number | string> {
     const objectsWithProperty = jsAst.body.filter((bodyObj) => {
         return bodyObj.type === 'ExpressionStatement' && bodyObj.expression.type === 'AssignmentExpression' && (<MemberExpression> bodyObj.expression.left).object && (<Identifier> (<MemberExpression> bodyObj.expression.left).object).name === varName && (<Identifier> (<MemberExpression> bodyObj.expression.left).property).name === propertyName;
     });
 
+
     if (objectsWithProperty.length > 0) {
+        const astVariables: Variable[] = <Variable[]> getAstObjects(amlAst, 'VARIABLE');
+        const astImages: Image[] = <Image[]> getAstObjects(amlAst, 'IMAGE');
+        const defineUserVariablesString = normalizeUserVariables(astVariables).reduce((result: string, astVariable: Variable) => {
+            return `${result}let ${astVariable.varName} = new Number(${astVariable.value});`;
+        }, '');
+        const defineUserImagesString = astImages.reduce((result: string, astImage: Image) => {
+            return `${result}let ${astImage.varName} = {};`;
+        }, '');
+
         return (await secureEval(`
+            ${defineUserVariablesString}
+            ${defineUserImagesString}
+            ${escodegen.generate(jsAst)}
+
             postMessage({
                 result: ${escodegen.generate((<AssignmentExpression> (<ExpressionStatement> objectsWithProperty[0]).expression).right)}
             });

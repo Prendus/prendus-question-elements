@@ -147,7 +147,7 @@ function createPropertyAssignment(varName: string, property: string, value: numb
             },
             right: {
                 type: 'Literal',
-                value: Number(value),
+                value: value,
                 raw: value.toString()
             }
         }
@@ -206,6 +206,17 @@ export function insertEssayIntoCode(code: string): string {
     return escodegen.generate({
         ...jsAst,
         body: addToAnswerAssignment(jsAst, expressionToAdd)
+    });
+}
+
+export function insertImageIntoCode(code: string, varName: string, src: string): string {
+    const jsAst: Program = esprima.parse(code);
+    return escodegen.generate({
+        ...jsAst,
+        body: [
+            createPropertyAssignment(varName, 'src', src),
+            ...jsAst.body
+        ]
     });
 }
 

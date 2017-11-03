@@ -18,14 +18,16 @@ export async function buildQuestion(text: string, code: string): Promise<{
                 if (astObject.type === 'VARIABLE') {
                     const newMin = await getPropertyValue(jsAst, result, astObject.varName, 'min', 0);
                     const newMax = await getPropertyValue(jsAst, result, astObject.varName, 'max', 100);
-                    const precision = await getPropertyValue(jsAst, result, astObject.varName, 'precision', 0);
+                    const newPrecision = await getPropertyValue(jsAst, result, astObject.varName, 'precision', 0);
                     const randomVariable = (Math.random() * (newMax - newMin + 1)) + newMin;
+                    const newValue = await getAssignmentValue(jsAst, result, astObject.varName);
+                    const value = (newValue || newValue === 0) ? newValue : (astObject.value === undefined ? newPrecision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(newPrecision) : astObject.value);
 
                     return {
                         ...result,
                         ast: [...result.ast.slice(0, index), {
                             ...astObject,
-                            value: astObject.value === undefined ? precision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(precision) : astObject.value
+                            value
                         }, ...result.ast.slice(index + 1)]
                     };
                 }
@@ -39,14 +41,16 @@ export async function buildQuestion(text: string, code: string): Promise<{
                 if (astObject.type === 'VARIABLE') {
                     const newMin = await getPropertyValue(jsAst, result, astObject.varName, 'min', 0);
                     const newMax = await getPropertyValue(jsAst, result, astObject.varName, 'max', 100);
-                    const precision = await getPropertyValue(jsAst, result, astObject.varName, 'precision', 0);
+                    const newPrecision = await getPropertyValue(jsAst, result, astObject.varName, 'precision', 0);
                     const randomVariable = (Math.random() * (newMax - newMin + 1)) + newMin;
+                    const newValue = await getAssignmentValue(jsAst, result, astObject.varName);
+                    const value = (newValue || newValue === 0) ? newValue : (astObject.value === undefined ? newPrecision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(newPrecision) : astObject.value);
 
                     return {
                         ...result,
                         ast: [...result.ast.slice(0, index), {
                             ...astObject,
-                            value: astObject.value === null ? precision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(precision) : astObject.value
+                            value
                         }, ...result.ast.slice(index + 1)]
                     };
                 }
@@ -87,16 +91,17 @@ async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, pr
         return bodyObj.type === 'ExpressionStatement' && bodyObj.expression.type === 'AssignmentExpression' && (<MemberExpression> bodyObj.expression.left).object && (<Identifier> (<MemberExpression> bodyObj.expression.left).object).name === varName && (<Identifier> (<MemberExpression> bodyObj.expression.left).property).name === propertyName;
     });
 
-
     if (objectsWithProperty.length > 0) {
         const astVariables: Variable[] = <Variable[]> getAstObjects(amlAst, 'VARIABLE');
         const astImages: Image[] = <Image[]> getAstObjects(amlAst, 'IMAGE');
         const defineUserVariablesString = normalizeUserVariables(astVariables).reduce((result: string, astVariable: Variable) => {
-            return `${result}let ${astVariable.varName} = new Number(${astVariable.value});`;
+            return `${result}let ${astVariable.varName} = ${typeof astVariable.value === 'number' ? `new Number(${astVariable.value})` : typeof astVariable.value === 'string' ? `new String('${astVariable.value}')` : NaN};`;
         }, '');
         const defineUserImagesString = astImages.reduce((result: string, astImage: Image) => {
             return `${result}let ${astImage.varName} = {};`;
         }, '');
+
+        console.log('defineUserVariablesString', defineUserVariablesString);
 
         return (await secureEval(`
             ${defineUserVariablesString}
@@ -110,6 +115,31 @@ async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, pr
     }
     else {
         return defaultValue;
+    }
+}
+
+async function getAssignmentValue(jsAst: Program, amlAst: AST, varName: string): Promise<number | string | undefined> {
+    const objectsWithAssignment = jsAst.body.filter((bodyObj) => {
+        return bodyObj.type === 'ExpressionStatement' && bodyObj.expression.type === 'AssignmentExpression' && bodyObj.expression.left.type === 'Identifier' && bodyObj.expression.left.name === varName;
+    });
+
+    if (objectsWithAssignment.length > 0) {
+        const astVariables: Variable[] = <Variable[]> getAstObjects(amlAst, 'VARIABLE');
+        const defineUserVariablesString = normalizeUserVariables(astVariables).reduce((result: string, astVariable: Variable) => {
+            return `${result}let ${astVariable.varName} = ${typeof astVariable.value === 'number' ? `new Number(${astVariable.value})` : typeof astVariable.value === 'string' ? `new String('${astVariable.value}')` : NaN};`;
+        }, '');
+
+        return (await secureEval(`
+            ${defineUserVariablesString}
+            ${escodegen.generate(jsAst)}
+
+            postMessage({
+                result: ${escodegen.generate((<AssignmentExpression> (<ExpressionStatement> objectsWithAssignment[objectsWithAssignment.length - 1]).expression).right)}
+            });
+        `)).result;
+    }
+    else {
+        return undefined;
     }
 }
 

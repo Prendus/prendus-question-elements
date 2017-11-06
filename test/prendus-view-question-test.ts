@@ -4,7 +4,7 @@ import {parse, compileToAssessML, compileToHTML} from '../node_modules/assessml/
 import {AST, ASTObject} from '../node_modules/assessml/assessml.d';
 import {GQLRequest} from '../node_modules/prendus-shared/services/graphql-service';
 import {arbAST, verifyHTML, resetNums} from '../node_modules/assessml/test-utilities';
-import {generateVarValue} from '../node_modules/assessml/utilities';
+import {generateVarValue} from '../node_modules/assessml/assessml';
 import {generateArbQuestion} from '../node_modules/prendus-question-elements/test-utilities';
 import {UserCheck, UserRadio, UserInput, UserEssay, Question} from '../prendus-question-elements.d';
 import * as JSVerify from 'jsverify';

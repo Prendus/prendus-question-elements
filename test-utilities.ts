@@ -11,7 +11,7 @@ export function generateArbQuestion(numEquivalentVars: number) {
 
     const arbQuestion = _arbAST.smap((arbAST: any) => {
         const arbQuestionIntermediate = {
-            text: compileToAssessML(arbAST, () => 5),
+            text: compileToAssessML(arbAST, () => 5, () => ''),
             codeInfo: arbAST.ast.reduce((result: CodeInfo, astObject: ASTObject, index: number) => {
                 if (astObject.type === 'CHECK' || astObject.type === 'RADIO') {
                     const arrayName = astObject.type === 'CHECK' ? 'userChecks' : 'userRadios';

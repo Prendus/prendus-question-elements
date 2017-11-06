@@ -4,7 +4,7 @@ import {secureEval} from '../../secure-eval/secure-eval';
 import {AST, ASTObject, Variable, Input, Essay, Check, Radio, Content, Drag, Drop, Image} from '../../assessml/assessml.d';
 import {Program, ExpressionStatement, MemberExpression, Identifier, AssignmentExpression, Literal, BinaryExpression} from 'estree';
 import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay} from '../prendus-question-elements.d';
-import {normalizeVariables} from '../../assessml/utilities';
+import {normalizeVariables} from '../../assessml/assessml';
 
 export async function buildQuestion(text: string, code: string): Promise<{
     html: string;
@@ -28,6 +28,44 @@ export async function buildQuestion(text: string, code: string): Promise<{
                         ast: [...result.ast.slice(0, index), {
                             ...astObject,
                             value
+                        }, ...result.ast.slice(index + 1)]
+                    };
+                }
+
+                if (astObject.type === 'RADIO' || astObject.type === 'CHECK') {
+                    return {
+                        ...result,
+                        ast: [...result.ast.slice(0, index), {
+                            ...astObject,
+                            content: await asyncReduce(astObject.content, async (result: (Variable | Content)[], astObject: Variable | Content, index: number) => {
+                                if (astObject.type === 'VARIABLE') {
+                                    const newMin = await getPropertyValue(jsAst, {
+                                        type: 'AST',
+                                        ast: result
+                                    }, astObject.varName, 'min', 0);
+                                    const newMax = await getPropertyValue(jsAst, {
+                                        type: 'AST',
+                                        ast: result
+                                    }, astObject.varName, 'max', 100);
+                                    const newPrecision = await getPropertyValue(jsAst, {
+                                        type: 'AST',
+                                        ast: result
+                                    }, astObject.varName, 'precision', 0);
+                                    const randomVariable = (Math.random() * (+newMax - +newMin + 1)) + +newMin;
+                                    const newValue = await getAssignmentValue(jsAst, {
+                                        type: 'AST',
+                                        ast: result
+                                    }, astObject.varName);
+                                    const value = (newValue || newValue === 0) ? newValue : (astObject.value === undefined ? newPrecision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(newPrecision) : astObject.value);
+
+                                    return [...result.slice(0, index), {
+                                        ...astObject,
+                                        value
+                                    }, ...result.slice(index + 1)]
+                                }
+
+                                return result;
+                            }, astObject.content)
                         }, ...result.ast.slice(index + 1)]
                     };
                 }
@@ -100,8 +138,6 @@ async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, pr
         const defineUserImagesString = astImages.reduce((result: string, astImage: Image) => {
             return `${result}let ${astImage.varName} = {};`;
         }, '');
-
-        console.log('defineUserVariablesString', defineUserVariablesString);
 
         return (await secureEval(`
             ${defineUserVariablesString}

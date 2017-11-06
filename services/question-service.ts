@@ -6,6 +6,7 @@ import {Program, ExpressionStatement, MemberExpression, Identifier, AssignmentEx
 import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay} from '../prendus-question-elements.d';
 import {normalizeVariables} from '../../assessml/assessml';
 
+//TODO there is a lot of repeated code in here
 export async function buildQuestion(text: string, code: string): Promise<{
     html: string;
     ast: AST;
@@ -37,7 +38,7 @@ export async function buildQuestion(text: string, code: string): Promise<{
                         ...result,
                         ast: [...result.ast.slice(0, index), {
                             ...astObject,
-                            content: await asyncReduce(astObject.content, async (result: (Variable | Content)[], astObject: Variable | Content, index: number) => {
+                            content: await asyncReduce(astObject.content, async (result: (Variable | Content | Image)[], astObject: Variable | Content, index: number) => {
                                 if (astObject.type === 'VARIABLE') {
                                     const newMin = await getPropertyValue(jsAst, {
                                         type: 'AST',
@@ -61,7 +62,7 @@ export async function buildQuestion(text: string, code: string): Promise<{
                                     return [...result.slice(0, index), {
                                         ...astObject,
                                         value
-                                    }, ...result.slice(index + 1)]
+                                    }, ...result.slice(index + 1)];
                                 }
 
                                 return result;
@@ -99,6 +100,54 @@ export async function buildQuestion(text: string, code: string): Promise<{
                         ast: [...result.ast.slice(0, index), {
                             ...astObject,
                             src: await getPropertyValue(jsAst, result, astObject.varName, 'src', '')
+                        }, ...result.ast.slice(index + 1)]
+                    };
+                }
+
+                if (astObject.type === 'RADIO' || astObject.type === 'CHECK') {
+                    return {
+                        ...result,
+                        ast: [...result.ast.slice(0, index), {
+                            ...astObject,
+                            content: await asyncReduce(astObject.content, async (result: (Variable | Content | Image)[], astObject: Variable | Content | Image, index: number) => {
+                                if (astObject.type === 'VARIABLE') {
+                                    const newMin = await getPropertyValue(jsAst, {
+                                        type: 'AST',
+                                        ast: result
+                                    }, astObject.varName, 'min', 0);
+                                    const newMax = await getPropertyValue(jsAst, {
+                                        type: 'AST',
+                                        ast: result
+                                    }, astObject.varName, 'max', 100);
+                                    const newPrecision = await getPropertyValue(jsAst, {
+                                        type: 'AST',
+                                        ast: result
+                                    }, astObject.varName, 'precision', 0);
+                                    const randomVariable = (Math.random() * (+newMax - +newMin + 1)) + +newMin;
+                                    const newValue = await getAssignmentValue(jsAst, {
+                                        type: 'AST',
+                                        ast: result
+                                    }, astObject.varName);
+                                    const value = (newValue || newValue === 0) ? newValue : (astObject.value === undefined ? newPrecision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(newPrecision) : astObject.value);
+
+                                    return [...result.slice(0, index), {
+                                        ...astObject,
+                                        value
+                                    }, ...result.slice(index + 1)];
+                                }
+
+                                if (astObject.type === 'IMAGE') {
+                                    return [...result.slice(0, index), {
+                                        ...astObject,
+                                        src: await getPropertyValue(jsAst, {
+                                            type: 'AST',
+                                            ast: result
+                                        }, astObject.varName, 'src', '')
+                                    }, ...result.slice(index + 1)];
+                                }
+
+                                return result;
+                            }, astObject.content)
                         }, ...result.ast.slice(index + 1)]
                     };
                 }

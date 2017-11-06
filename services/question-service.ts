@@ -1,7 +1,7 @@
 import {parse, compileToHTML, getAstObjects} from '../../assessml/assessml';
 import {asyncMap, asyncReduce} from '../../prendus-shared/services/utilities-service';
 import {secureEval} from '../../secure-eval/secure-eval';
-import {AST, ASTObject, Variable, Input, Essay, Check, Radio, Content, Drag, Drop, Image} from '../../assessml/assessml.d';
+import {AST, ASTObject, Variable, Input, Essay, Check, Radio, Content, Drag, Drop, Image, Solution} from '../../assessml/assessml.d';
 import {Program, ExpressionStatement, MemberExpression, Identifier, AssignmentExpression, Literal, BinaryExpression} from 'estree';
 import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay} from '../prendus-question-elements.d';
 import {normalizeVariables} from '../../assessml/assessml';
@@ -33,7 +33,7 @@ export async function buildQuestion(text: string, code: string): Promise<{
                     };
                 }
 
-                if (astObject.type === 'RADIO' || astObject.type === 'CHECK') {
+                if (astObject.type === 'RADIO' || astObject.type === 'CHECK' || astObject.type === 'SOLUTION') {
                     return {
                         ...result,
                         ast: [...result.ast.slice(0, index), {
@@ -104,7 +104,7 @@ export async function buildQuestion(text: string, code: string): Promise<{
                     };
                 }
 
-                if (astObject.type === 'RADIO' || astObject.type === 'CHECK') {
+                if (astObject.type === 'RADIO' || astObject.type === 'CHECK' || astObject.type === 'SOLUTION') {
                     return {
                         ...result,
                         ast: [...result.ast.slice(0, index), {

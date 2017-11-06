@@ -168,6 +168,17 @@ export class PrendusViewQuestion extends Polymer.Element {
         this.shadowRoot.querySelector('#checkAnswerResponseToast').open();
     }
 
+    async showSolution() {
+        const solutionTemplate = <HTMLTemplateElement> this.shadowRoot.querySelector('#solution1');
+
+        if (solutionTemplate) {
+            this.action = fireLocalAction(this.componentId, 'builtQuestion', await buildQuestion(solutionTemplate.innerHTML, this.question.code));
+        }
+        else {
+            this.action = fireLocalAction(this.componentId, 'builtQuestion', await buildQuestion(this.question.text, this.question.code));
+        }
+    }
+
     stateChange(e: CustomEvent) {
         const state = e.detail.state;
 

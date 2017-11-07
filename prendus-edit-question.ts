@@ -6,8 +6,8 @@ import {User} from './prendus-question-elements.d';
 import {RootReducer} from './redux/reducers';
 import {Reducer} from './prendus-question-elements.d';
 import {parse, getAstObjects} from '../assessml/assessml';
-import {AST, Input} from '../assessml/assessml.d';
-import {insertEssayIntoCode, insertInputIntoCode, insertRadioOrCheckIntoCode, insertVariableIntoCode} from './services/question-service';
+import {AST, Input, Image, Radio, Check, Essay} from '../assessml/assessml.d';
+import {insertEssayIntoCode, insertInputIntoCode, insertRadioOrCheckIntoCode, insertVariableIntoCode, insertImageIntoCode} from './services/question-service';
 
 class PrendusEditQuestion extends Polymer.Element {
     componentId: string;
@@ -268,8 +268,8 @@ class PrendusEditQuestion extends Polymer.Element {
     }
 
     insertInput(e: CustomEvent) {
-        const ast: AST = parse(this._question.text, () => 5);
-        const astInputs: Input[] = getAstObjects(ast, 'INPUT');
+        const ast: AST = parse(this._question.text, () => 5, () => '');
+        const astInputs: Input[] = <Input[]> getAstObjects(ast, 'INPUT');
 
         const varName = `input${astInputs.length + 1}`;
         const answer = e.detail.answer;
@@ -289,8 +289,8 @@ class PrendusEditQuestion extends Polymer.Element {
     }
 
     insertEssay(e: CustomEvent) {
-        const ast: AST = parse(this._question.text, () => 5);
-        const astEssays: Input[] = getAstObjects(ast, 'ESSAY');
+        const ast: AST = parse(this._question.text, () => 5, () => '');
+        const astEssays: Essay[] = <Essay[]> getAstObjects(ast, 'ESSAY');
 
         const varName = `essay${astEssays.length + 1}`;
 
@@ -309,8 +309,8 @@ class PrendusEditQuestion extends Polymer.Element {
     }
 
     insertRadio(e: CustomEvent) {
-        const ast: AST = parse(this._question.text, () => 5);
-        const astRadios: Input[] = getAstObjects(ast, 'RADIO');
+        const ast: AST = parse(this._question.text, () => 5, () => '');
+        const astRadios: Radio[] = <Radio[]> getAstObjects(ast, 'RADIO');
 
         const varName = `radio${astRadios.length + 1}`;
 
@@ -330,8 +330,8 @@ class PrendusEditQuestion extends Polymer.Element {
     }
 
     insertCheck(e: CustomEvent) {
-        const ast: AST = parse(this._question.text, () => 5);
-        const astChecks: Input[] = getAstObjects(ast, 'CHECK');
+        const ast: AST = parse(this._question.text, () => 5, () => '');
+        const astChecks: Check[] = <Check[]> getAstObjects(ast, 'CHECK');
 
         const varName = `check${astChecks.length + 1}`;
 
@@ -359,6 +359,31 @@ class PrendusEditQuestion extends Polymer.Element {
 
         const newTextNode = document.createTextNode(mathText);
         textEditor.range0.insertNode(newTextNode);
+    }
+
+    insertImage(e: CustomEvent) {
+        const ast: AST = parse(this._question.text, () => 5, () => '');
+        const { dataUrl } = e.detail;
+        const textEditor = this.shadowRoot.querySelector('#textEditor');
+        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+        const astImages: Image[] = <Image[]> getAstObjects(ast, 'IMAGE');
+        const varName = `img${astImages.length + 1}`;
+        const code = codeEditor.value;
+        const newTextNode = document.createTextNode(`[img${astImages.length + 1}]`);
+        textEditor.range0.insertNode(newTextNode);
+        this.action = fireLocalAction(this.componentId, 'question', {
+            ...this._question,
+            code: insertImageIntoCode(code, varName, dataUrl)
+        });
+    }
+
+    getAllowedTagNames() {
+        return [
+            'br',
+			'p',
+			'span',
+            'img'
+        ];
     }
 
     stateChange(e: CustomEvent) {

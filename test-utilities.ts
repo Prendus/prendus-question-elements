@@ -48,9 +48,12 @@ export function generateArbQuestion(numEquivalentVars: number) {
                     const max = jsc.sampler(jsc.integer, 1000000)();
                     const precision = 5; //TODO make this real
 
+                    //TODO the code below was once checking variables for us, but now that variables can be strings, it needs to be reworked...also, is this the best way to be testing the variables? Perhaps variables should have their own tests
+                    // !isNaN(${varName}) && ((${min} < ${max} && ${varName} >= ${min} && ${varName} <= ${max}) || ${min} >= ${max}) &&
+
                     return {
                         ...result,
-                        code: `${varName}.min = ${min}; ${varName}.max = ${max}; ${varName}.precision = ${precision}; ${result.code} !isNaN(${varName}) && ((${min} < ${max} && ${varName} >= ${min} && ${varName} <= ${max}) || ${min} >= ${max}) &&`,
+                        code: `${varName}.min = ${min}; ${varName}.max = ${max}; ${varName}.precision = ${precision}; ${result.code}`,
                         varInfos: [...result.varInfos, {
                             varName,
                             min,

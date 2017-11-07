@@ -70,6 +70,7 @@ export class PrendusViewQuestion extends Polymer.Element {
 
         this.action = fireLocalAction(this.componentId, 'question', loadDataResult.question);
         this.action = fireLocalAction(this.componentId, 'builtQuestion', loadDataResult.builtQuestion);
+        this.action = fireLocalAction(this.componentId, 'showSolution', getAstObjects(this.builtQuestion.ast, 'SOLUTION').length > 0);
         this.action = fireLocalAction(this.componentId, 'loaded', true);
 
         //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
@@ -92,6 +93,7 @@ export class PrendusViewQuestion extends Polymer.Element {
 
         this.action = fireLocalAction(this.componentId, 'question', loadDataResult.question);
         this.action = fireLocalAction(this.componentId, 'builtQuestion', loadDataResult.builtQuestion);
+        this.action = fireLocalAction(this.componentId, 'showSolution', getAstObjects(this.builtQuestion.ast, 'SOLUTION').length > 0);
         this.action = fireLocalAction(this.componentId, 'loaded', true);
 
         //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
@@ -168,7 +170,7 @@ export class PrendusViewQuestion extends Polymer.Element {
         this.shadowRoot.querySelector('#checkAnswerResponseToast').open();
     }
 
-    async showSolution() {
+    async showSolutionClick() {
         const solutionTemplate = <HTMLTemplateElement> this.shadowRoot.querySelector('#solution1');
 
         if (solutionTemplate) {
@@ -188,6 +190,7 @@ export class PrendusViewQuestion extends Polymer.Element {
         if (Object.keys(state.components[this.componentId] || {}).includes('builtQuestion')) this.builtQuestion = state.components[this.componentId].builtQuestion;
         if (Object.keys(state.components[this.componentId] || {}).includes('showEmbedCode')) this.showEmbedCode = state.components[this.componentId].showEmbedCode;
         if (Object.keys(state.components[this.componentId] || {}).includes('checkAnswerResponse')) this.checkAnswerResponse = state.components[this.componentId].checkAnswerResponse;
+        if (Object.keys(state.components[this.componentId] || {}).includes('showSolution')) this.showSolution = state.components[this.componentId].showSolution;
         this.userToken = state.userToken;
 
         const contentDiv = this.shadowRoot.querySelector('#contentDiv');

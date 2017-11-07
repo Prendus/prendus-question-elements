@@ -89,7 +89,12 @@
                     <!-- <div style="width: 100%; position: relative"> -->
                     <div class="bottomButtons">
                         <div on-click="checkAnswer" class="checkButton">Check</div>
-                        <div on-click="showSolution" class="checkButton">Solution</div>
+
+                        <dom-if if="[[showSolution]]">
+                            <template>
+                                <div on-click="showSolutionClick" class="checkButton">Solution</div>
+                            </template>
+                        </dom-if>
                         <!-- <div on-click="showEmbedCodeClick" class="embedButton">Embed</div> -->
                     </div>
                     <!-- </div> -->

@@ -1,4 +1,4 @@
-import {parse, compileToHTML, getAstObjects} from '../../assessml/assessml';
+import {parse, compileToHTML, getAstObjects, generateRandomInteger} from '../../assessml/assessml';
 import {asyncMap, asyncReduce} from '../../prendus-shared/services/utilities-service';
 import {secureEval} from '../../secure-eval/secure-eval';
 import {AST, ASTObject, Variable, Input, Essay, Check, Radio, Content, Drag, Drop, Image, Solution} from '../../assessml/assessml.d';
@@ -12,153 +12,207 @@ export async function buildQuestion(text: string, code: string): Promise<{
     ast: AST;
 }> {
     try {
+        // const jsAst: Program = esprima.parse(code);
+
+        // const initialVariablesSetAmlAst = await asyncReduce(originalAmlAst.ast, async (result: AST, astObject: ASTObject, index: number) => {
+                // if (astObject.type === 'VARIABLE') {
+                    // const newMin = await getPropertyValue(jsAst, result, astObject.varName, 'min', 0);
+                    // const newMax = await getPropertyValue(jsAst, result, astObject.varName, 'max', 100);
+                    // const newPrecision = await getPropertyValue(jsAst, result, astObject.varName, 'precision', 0);
+                    // const randomVariable = (Math.random() * (newMax - newMin + 1)) + newMin;
+                    // const newValue = await getAssignmentValue(jsAst, result, astObject.varName);
+                    // const value = (newValue || newValue === 0) ? newValue : (astObject.value === undefined ? newPrecision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(newPrecision) : astObject.value);
+                    //
+                //     return {
+                //         ...result,
+                //         ast: [...result.ast.slice(0, index), {
+                //             ...astObject,
+                //             value: await getAssignmentValue(jsAst, result, astObject.varName, generateRandomInteger(0, 10))
+                //         }, ...result.ast.slice(index + 1)]
+                //     };
+                // }
+
+                // if (astObject.type === 'IMAGE') {
+                //     return {
+                //         ...result,
+                //         ast: [...result.ast.slice(0, index), {
+                //             ...astObject,
+                //             src: await getPropertyValue(jsAst, result, astObject.varName, 'src', '')
+                //         }, ...result.ast.slice(index + 1)]
+                //     };
+                // }
+
+                // if (astObject.type === 'RADIO' || astObject.type === 'CHECK' || astObject.type === 'SOLUTION') {
+                //     return {
+                //         ...result,
+                //         ast: [...result.ast.slice(0, index), {
+                //             ...astObject,
+                //             content: await asyncReduce(astObject.content, async (result: (Variable | Content | Image)[], astObject: Variable | Content, index: number) => {
+                //                 if (astObject.type === 'VARIABLE') {
+                //                     const newMin = await getPropertyValue(jsAst, {
+                //                         type: 'AST',
+                //                         ast: result
+                //                     }, astObject.varName, 'min', 0);
+                //                     const newMax = await getPropertyValue(jsAst, {
+                //                         type: 'AST',
+                //                         ast: result
+                //                     }, astObject.varName, 'max', 100);
+                //                     const newPrecision = await getPropertyValue(jsAst, {
+                //                         type: 'AST',
+                //                         ast: result
+                //                     }, astObject.varName, 'precision', 0);
+                //                     const randomVariable = (Math.random() * (+newMax - +newMin + 1)) + +newMin;
+                //                     const newValue = await getAssignmentValue(jsAst, {
+                //                         type: 'AST',
+                //                         ast: result
+                //                     }, astObject.varName);
+                //                     const value = (newValue || newValue === 0) ? newValue : (astObject.value === undefined ? newPrecision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(newPrecision) : astObject.value);
+                //
+                //                     return [...result.slice(0, index), {
+                //                         ...astObject,
+                //                         value
+                //                     }, ...result.slice(index + 1)];
+                //                 }
+                //
+                //                 return result;
+                //             }, astObject.content)
+                //         }, ...result.ast.slice(index + 1)]
+                //     };
+                // }
+
+        //         return result;
+        //     }, originalAmlAst);
+        //
+        // const normalizedInitialVariablesSetAmlAst = normalizeVariables(initialVariablesSetAmlAst);
+
+        // const newAmlAst = await asyncReduce(normalizedInitialVariablesSetAmlAst.ast, async (result: AST, astObject: ASTObject, index: number) => {
+        //         if (astObject.type === 'VARIABLE') {
+        //             const newMin = await getPropertyValue(jsAst, result, astObject.varName, 'min', 0);
+        //             const newMax = await getPropertyValue(jsAst, result, astObject.varName, 'max', 100);
+        //             const newPrecision = await getPropertyValue(jsAst, result, astObject.varName, 'precision', 0);
+        //             const randomVariable = (Math.random() * (newMax - newMin + 1)) + newMin;
+        //             const newValue = await getAssignmentValue(jsAst, result, astObject.varName);
+        //             const value = (newValue || newValue === 0) ? newValue : (astObject.value === undefined ? newPrecision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(newPrecision) : astObject.value);
+        //
+        //             return {
+        //                 ...result,
+        //                 ast: [...result.ast.slice(0, index), {
+        //                     ...astObject,
+        //                     value
+        //                 }, ...result.ast.slice(index + 1)]
+        //             };
+        //         }
+        //
+        //         if (astObject.type === 'IMAGE') {
+        //             return {
+        //                 ...result,
+        //                 ast: [...result.ast.slice(0, index), {
+        //                     ...astObject,
+        //                     src: await getPropertyValue(jsAst, result, astObject.varName, 'src', '')
+        //                 }, ...result.ast.slice(index + 1)]
+        //             };
+        //         }
+        //
+        //         if (astObject.type === 'RADIO' || astObject.type === 'CHECK' || astObject.type === 'SOLUTION') {
+        //             return {
+        //                 ...result,
+        //                 ast: [...result.ast.slice(0, index), {
+        //                     ...astObject,
+        //                     content: await asyncReduce(astObject.content, async (result: (Variable | Content | Image)[], astObject: Variable | Content | Image, index: number) => {
+        //                         if (astObject.type === 'VARIABLE') {
+        //                             const newMin = await getPropertyValue(jsAst, {
+        //                                 type: 'AST',
+        //                                 ast: result
+        //                             }, astObject.varName, 'min', 0);
+        //                             const newMax = await getPropertyValue(jsAst, {
+        //                                 type: 'AST',
+        //                                 ast: result
+        //                             }, astObject.varName, 'max', 100);
+        //                             const newPrecision = await getPropertyValue(jsAst, {
+        //                                 type: 'AST',
+        //                                 ast: result
+        //                             }, astObject.varName, 'precision', 0);
+        //                             const randomVariable = (Math.random() * (+newMax - +newMin + 1)) + +newMin;
+        //                             const newValue = await getAssignmentValue(jsAst, {
+        //                                 type: 'AST',
+        //                                 ast: result
+        //                             }, astObject.varName);
+        //                             const value = (newValue || newValue === 0) ? newValue : (astObject.value === undefined ? newPrecision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(newPrecision) : astObject.value);
+        //
+        //                             return [...result.slice(0, index), {
+        //                                 ...astObject,
+        //                                 value
+        //                             }, ...result.slice(index + 1)];
+        //                         }
+        //
+        //                         if (astObject.type === 'IMAGE') {
+        //                             return [...result.slice(0, index), {
+        //                                 ...astObject,
+        //                                 src: await getPropertyValue(jsAst, {
+        //                                     type: 'AST',
+        //                                     ast: result
+        //                                 }, astObject.varName, 'src', '')
+        //                             }, ...result.slice(index + 1)];
+        //                         }
+        //
+        //                         return result;
+        //                     }, astObject.content)
+        //                 }, ...result.ast.slice(index + 1)]
+        //             };
+        //         }
+        //
+        //         return result;
+        //     }, normalizedInitialVariablesSetAmlAst);
+        //
+        // const normalizedAmlAst = normalizeVariables(newAmlAst);
+
         const originalAmlAst = parse(text, () => undefined, () => '');
-        const jsAst: Program = esprima.parse(code);
 
-        const initialVariablesSetAmlAst = await asyncReduce(originalAmlAst.ast, async (result: AST, astObject: ASTObject, index: number) => {
-                if (astObject.type === 'VARIABLE') {
-                    const newMin = await getPropertyValue(jsAst, result, astObject.varName, 'min', 0);
-                    const newMax = await getPropertyValue(jsAst, result, astObject.varName, 'max', 100);
-                    const newPrecision = await getPropertyValue(jsAst, result, astObject.varName, 'precision', 0);
-                    const randomVariable = (Math.random() * (newMax - newMin + 1)) + newMin;
-                    const newValue = await getAssignmentValue(jsAst, result, astObject.varName);
-                    const value = (newValue || newValue === 0) ? newValue : (astObject.value === undefined ? newPrecision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(newPrecision) : astObject.value);
+        const astVariables: Variable[] = <Variable[]> getAstObjects(originalAmlAst, 'VARIABLE');
+        const astImages: Image[] = <Image[]> getAstObjects(originalAmlAst, 'IMAGE');
 
-                    return {
-                        ...result,
-                        ast: [...result.ast.slice(0, index), {
-                            ...astObject,
-                            value
-                        }, ...result.ast.slice(index + 1)]
-                    };
-                }
+        const astVariablesString = createUserVariablesString(astVariables);
+        const astImagesString = createUserImagesString(astImages);
 
-                if (astObject.type === 'RADIO' || astObject.type === 'CHECK' || astObject.type === 'SOLUTION') {
-                    return {
-                        ...result,
-                        ast: [...result.ast.slice(0, index), {
-                            ...astObject,
-                            content: await asyncReduce(astObject.content, async (result: (Variable | Content | Image)[], astObject: Variable | Content, index: number) => {
-                                if (astObject.type === 'VARIABLE') {
-                                    const newMin = await getPropertyValue(jsAst, {
-                                        type: 'AST',
-                                        ast: result
-                                    }, astObject.varName, 'min', 0);
-                                    const newMax = await getPropertyValue(jsAst, {
-                                        type: 'AST',
-                                        ast: result
-                                    }, astObject.varName, 'max', 100);
-                                    const newPrecision = await getPropertyValue(jsAst, {
-                                        type: 'AST',
-                                        ast: result
-                                    }, astObject.varName, 'precision', 0);
-                                    const randomVariable = (Math.random() * (+newMax - +newMin + 1)) + +newMin;
-                                    const newValue = await getAssignmentValue(jsAst, {
-                                        type: 'AST',
-                                        ast: result
-                                    }, astObject.varName);
-                                    const value = (newValue || newValue === 0) ? newValue : (astObject.value === undefined ? newPrecision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(newPrecision) : astObject.value);
+        //TODO finish all of the astobjects...it's working
 
-                                    return [...result.slice(0, index), {
-                                        ...astObject,
-                                        value
-                                    }, ...result.slice(index + 1)];
-                                }
+        const values = await secureEval(`
+            ${astVariablesString}
+            ${astImagesString}
+            ${code}
+            postMessage({
+                ${[[...astVariables, ...astImages].map((astObject: ASTObject) => astObject.varName)]}
+            });
+        `);
 
-                                return result;
-                            }, astObject.content)
-                        }, ...result.ast.slice(index + 1)]
-                    };
-                }
+        const newAmlAst: AST = await asyncReduce(originalAmlAst.ast, async (result: AST, astObject: ASTObject, index: number) => {
+            if (astObject.type === 'VARIABLE') {
+                return {
+                    ...result,
+                    ast: [...result.ast.slice(0, index), {
+                        ...astObject,
+                        value: values[astObject.varName] || generateRandomInteger(0, 10)
+                    }, ...result.ast.slice(index + 1)]
+                };
+            }
 
-                return result;
-            }, originalAmlAst);
+            if (astObject.type === 'IMAGE') {
+                return {
+                    ...result,
+                    ast: [...result.ast.slice(0, index), {
+                        ...astObject,
+                        src: values[astObject.varName] ? values[astObject.varName].src : ''
+                    }, ...result.ast.slice(index + 1)]
+                };
+            }
 
-        const normalizedInitialVariablesSetAmlAst = normalizeVariables(initialVariablesSetAmlAst);
+            return result;
+        }, originalAmlAst);
 
-        const newAmlAst = await asyncReduce(normalizedInitialVariablesSetAmlAst.ast, async (result: AST, astObject: ASTObject, index: number) => {
-                if (astObject.type === 'VARIABLE') {
-                    const newMin = await getPropertyValue(jsAst, result, astObject.varName, 'min', 0);
-                    const newMax = await getPropertyValue(jsAst, result, astObject.varName, 'max', 100);
-                    const newPrecision = await getPropertyValue(jsAst, result, astObject.varName, 'precision', 0);
-                    const randomVariable = (Math.random() * (newMax - newMin + 1)) + newMin;
-                    const newValue = await getAssignmentValue(jsAst, result, astObject.varName);
-                    const value = (newValue || newValue === 0) ? newValue : (astObject.value === undefined ? newPrecision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(newPrecision) : astObject.value);
-
-                    return {
-                        ...result,
-                        ast: [...result.ast.slice(0, index), {
-                            ...astObject,
-                            value
-                        }, ...result.ast.slice(index + 1)]
-                    };
-                }
-
-                if (astObject.type === 'IMAGE') {
-                    return {
-                        ...result,
-                        ast: [...result.ast.slice(0, index), {
-                            ...astObject,
-                            src: await getPropertyValue(jsAst, result, astObject.varName, 'src', '')
-                        }, ...result.ast.slice(index + 1)]
-                    };
-                }
-
-                if (astObject.type === 'RADIO' || astObject.type === 'CHECK' || astObject.type === 'SOLUTION') {
-                    return {
-                        ...result,
-                        ast: [...result.ast.slice(0, index), {
-                            ...astObject,
-                            content: await asyncReduce(astObject.content, async (result: (Variable | Content | Image)[], astObject: Variable | Content | Image, index: number) => {
-                                if (astObject.type === 'VARIABLE') {
-                                    const newMin = await getPropertyValue(jsAst, {
-                                        type: 'AST',
-                                        ast: result
-                                    }, astObject.varName, 'min', 0);
-                                    const newMax = await getPropertyValue(jsAst, {
-                                        type: 'AST',
-                                        ast: result
-                                    }, astObject.varName, 'max', 100);
-                                    const newPrecision = await getPropertyValue(jsAst, {
-                                        type: 'AST',
-                                        ast: result
-                                    }, astObject.varName, 'precision', 0);
-                                    const randomVariable = (Math.random() * (+newMax - +newMin + 1)) + +newMin;
-                                    const newValue = await getAssignmentValue(jsAst, {
-                                        type: 'AST',
-                                        ast: result
-                                    }, astObject.varName);
-                                    const value = (newValue || newValue === 0) ? newValue : (astObject.value === undefined ? newPrecision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(newPrecision) : astObject.value);
-
-                                    return [...result.slice(0, index), {
-                                        ...astObject,
-                                        value
-                                    }, ...result.slice(index + 1)];
-                                }
-
-                                if (astObject.type === 'IMAGE') {
-                                    return [...result.slice(0, index), {
-                                        ...astObject,
-                                        src: await getPropertyValue(jsAst, {
-                                            type: 'AST',
-                                            ast: result
-                                        }, astObject.varName, 'src', '')
-                                    }, ...result.slice(index + 1)];
-                                }
-
-                                return result;
-                            }, astObject.content)
-                        }, ...result.ast.slice(index + 1)]
-                    };
-                }
-
-                return result;
-            }, normalizedInitialVariablesSetAmlAst);
-
-        const normalizedAmlAst = normalizeVariables(newAmlAst);
+        const normalizedAmlAst: AST = normalizeVariables(newAmlAst);
 
         return {
-            html: compileToHTML(normalizedAmlAst, () => generateRandomInteger(0, 100), () => ''),
+            html: compileToHTML(normalizedAmlAst, () => generateRandomInteger(0, 10), () => ''),
             ast: normalizedAmlAst
         };
     }
@@ -181,15 +235,13 @@ async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, pr
     if (objectsWithProperty.length > 0) {
         const astVariables: Variable[] = <Variable[]> getAstObjects(amlAst, 'VARIABLE');
         const astImages: Image[] = <Image[]> getAstObjects(amlAst, 'IMAGE');
-        const defineUserVariablesString = normalizeUserVariables(astVariables).reduce((result: string, astVariable: Variable) => {
-            return `${result}let ${astVariable.varName} = ${typeof astVariable.value === 'number' ? `new Number(${astVariable.value})` : typeof astVariable.value === 'string' ? `new String('${astVariable.value}')` : NaN};`;
-        }, '');
+        const userVariablesString = createUserVariablesString(astVariables);
         const defineUserImagesString = astImages.reduce((result: string, astImage: Image) => {
             return `${result}let ${astImage.varName} = {};`;
         }, '');
 
         return (await secureEval(`
-            ${defineUserVariablesString}
+            ${userVariablesString}
             ${defineUserImagesString}
             ${escodegen.generate(jsAst)}
 
@@ -203,19 +255,17 @@ async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, pr
     }
 }
 
-async function getAssignmentValue(jsAst: Program, amlAst: AST, varName: string): Promise<number | string | undefined> {
+async function getAssignmentValue(jsAst: Program, amlAst: AST, varName: string, defaultValue: number | string): Promise<number | string> {
     const objectsWithAssignment = jsAst.body.filter((bodyObj) => {
         return bodyObj.type === 'ExpressionStatement' && bodyObj.expression.type === 'AssignmentExpression' && bodyObj.expression.left.type === 'Identifier' && bodyObj.expression.left.name === varName;
     });
 
     if (objectsWithAssignment.length > 0) {
         const astVariables: Variable[] = <Variable[]> getAstObjects(amlAst, 'VARIABLE');
-        const defineUserVariablesString = normalizeUserVariables(astVariables).reduce((result: string, astVariable: Variable) => {
-            return `${result}let ${astVariable.varName} = ${typeof astVariable.value === 'number' ? `new Number(${astVariable.value})` : typeof astVariable.value === 'string' ? `new String('${astVariable.value}')` : NaN};`;
-        }, '');
+        const userVariablesString = createUserVariablesString(astVariables);
 
         return (await secureEval(`
-            ${defineUserVariablesString}
+            ${userVariablesString}
             ${escodegen.generate(jsAst)}
 
             postMessage({
@@ -224,14 +274,12 @@ async function getAssignmentValue(jsAst: Program, amlAst: AST, varName: string):
         `)).result;
     }
     else {
-        return undefined;
+        return defaultValue;
     }
 }
 
 export async function checkAnswer(code: string, userVariables: UserVariable[], userInputs: UserInput[], userEssays: UserEssay[], userChecks: UserCheck[], userRadios: UserRadio[]) {
-    const defineUserVariablesString = normalizeUserVariables(userVariables).reduce((result: string, userVariable) => {
-        return `${result}let ${userVariable.varName} = new Number(${userVariable.value});`;
-    }, '');
+    const userVariablesString = createUserVariablesString(userVariables);
     const defineUserInputsString = userInputs.reduce((result: string, userInput) => {
         return `${result}let ${userInput.varName} = '${userInput.value.replace(/\\/g, '\\\\').replace(/'/g, '\\\'').replace(/\n/g, '\\n')}';`;
     }, '');
@@ -247,7 +295,7 @@ export async function checkAnswer(code: string, userVariables: UserVariable[], u
 
     const codeToEval = `
         let answer;
-        ${defineUserVariablesString}
+        ${userVariablesString}
         ${defineUserInputsString}
         ${defineUserEssaysString}
         ${defineUserChecksString}
@@ -262,13 +310,25 @@ export async function checkAnswer(code: string, userVariables: UserVariable[], u
     return await secureEval(codeToEval);
 }
 
+function createUserVariablesString(userVariables: UserVariable[] | Variable[]) {
+    return normalizeUserVariables(userVariables).reduce((result: string, userVariable) => {
+        return `${result}let ${userVariable.varName} = ${typeof userVariable.value === 'number' ? `new Number(${userVariable.value})` : typeof userVariable.value === 'string' ? `new String('${userVariable.value}')` : NaN};`;
+    }, '');
+}
+
+function createUserImagesString(astImages: Image[]) {
+    return astImages.reduce((result: string, astImage: Image) => {
+        return `${result}let ${astImage.varName} = {};`;
+    }, '');
+}
+
 function generateRandomInteger(min: number, max: number): number {
     //returns a random integer between min (included) and max (included)
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function normalizeUserVariables(userVariables: UserVariable[]): UserVariable[] {
-    return userVariables.reduce((result: UserVariable[], outerUserVariable: UserVariable, index: number) => {
+function normalizeUserVariables(userVariables: UserVariable[] | Variable[]): UserVariable[] | Variable[] {
+    return userVariables.reduce((result: UserVariable[] | Variable[], outerUserVariable: UserVariable | Variable, index: number) => {
         return [userVariables[index], ...result.filter((innerUserVariable) => outerUserVariable.varName !== innerUserVariable.varName)];
     }, userVariables);
 }

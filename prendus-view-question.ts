@@ -152,7 +152,7 @@ export class PrendusViewQuestion extends Polymer.Element {
             };
         });
 
-        const checkAnswerInfo = await checkAnswer(this._question.code, userVariables, userInputs, userEssays, userChecks, userRadios);
+        const checkAnswerInfo = await checkAnswer(this._question.code, this.builtQuestion.originalVariableValues, userVariables, userInputs, userEssays, userChecks, userRadios);
 
         this.dispatchEvent(new CustomEvent('question-response', {
             bubbles: false,

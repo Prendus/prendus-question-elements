@@ -2,7 +2,7 @@ import {parse, compileToHTML, getAstObjects, generateRandomInteger} from '../../
 import {asyncMap, asyncReduce} from '../../prendus-shared/services/utilities-service';
 import {secureEval} from '../../secure-eval/secure-eval';
 import {AST, ASTObject, Variable, Input, Essay, Check, Radio, Content, Drag, Drop, Image, Solution} from '../../assessml/assessml.d';
-import {Program, ExpressionStatement, MemberExpression, Identifier, AssignmentExpression, Literal, BinaryExpression} from 'estree';
+import {Program, ExpressionStatement, MemberExpression, Identifier, AssignmentExpression, Literal, BinaryExpression, VariableDeclaration, CallExpression} from 'estree';
 import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay} from '../prendus-question-elements.d';
 import {normalizeVariables} from '../../assessml/assessml';
 
@@ -10,6 +10,7 @@ import {normalizeVariables} from '../../assessml/assessml';
 export async function buildQuestion(text: string, code: string): Promise<{
     html: string;
     ast: AST;
+    originalVariableValues;
 }> {
     try {
         // const jsAst: Program = esprima.parse(code);
@@ -170,18 +171,23 @@ export async function buildQuestion(text: string, code: string): Promise<{
 
         const astVariables: Variable[] = <Variable[]> getAstObjects(originalAmlAst, 'VARIABLE');
         const astImages: Image[] = <Image[]> getAstObjects(originalAmlAst, 'IMAGE');
+        const astInputs: Input[] = <Input[]> getAstObjects(originalAmlAst, 'INPUT');
+        const astEssays: Essay[] = <Essay[]> getAstObjects(originalAmlAst, 'ESSAY');
+        const astChecks: Check[] = <Check[]> getAstObjects(originalAmlAst, 'CHECK');
+        const astRadios: Radio[] = <Radio[]> getAstObjects(originalAmlAst, 'RADIO');
 
         const astVariablesString = createUserVariablesString(astVariables);
         const astImagesString = createUserImagesString(astImages);
 
         //TODO finish all of the astobjects...it's working
 
-        const values = await secureEval(`
+        const originalVariableValues = await secureEval(`
+            let answer;
             ${astVariablesString}
             ${astImagesString}
             ${code}
             postMessage({
-                ${[[...astVariables, ...astImages].map((astObject: ASTObject) => astObject.varName)]}
+                ${getAssignedToVariableNames(esprima.parse(code), astInputs, astEssays, astChecks, astRadios)}
             });
         `);
 
@@ -191,7 +197,7 @@ export async function buildQuestion(text: string, code: string): Promise<{
                     ...result,
                     ast: [...result.ast.slice(0, index), {
                         ...astObject,
-                        value: values[astObject.varName] || generateRandomInteger(0, 10)
+                        value: originalVariableValues[astObject.varName] || generateRandomInteger(0, 10)
                     }, ...result.ast.slice(index + 1)]
                 };
             }
@@ -201,7 +207,7 @@ export async function buildQuestion(text: string, code: string): Promise<{
                     ...result,
                     ast: [...result.ast.slice(0, index), {
                         ...astObject,
-                        src: values[astObject.varName] ? values[astObject.varName].src : ''
+                        src: originalVariableValues[astObject.varName] ? originalVariableValues[astObject.varName].src : ''
                     }, ...result.ast.slice(index + 1)]
                 };
             }
@@ -213,7 +219,8 @@ export async function buildQuestion(text: string, code: string): Promise<{
 
         return {
             html: compileToHTML(normalizedAmlAst, () => generateRandomInteger(0, 10), () => ''),
-            ast: normalizedAmlAst
+            ast: normalizedAmlAst,
+            originalVariableValues
         };
     }
     catch(error) {
@@ -225,6 +232,168 @@ export async function buildQuestion(text: string, code: string): Promise<{
             ast: parse(text, () => generateRandomInteger(0, 100), () => '')
         };
     }
+}
+
+// returns the names of all variables that have been assigned to in an Esprima JavaScript AST
+function getAssignedToVariableNames(jsAst: Program, astInputs: Input[], astEssays: Essay[], astChecks: Check[], astRadios: Radio[]): string[] {
+    return jsAst.body.reduce((result: string[], astObject) => {
+        if (astObject.type === 'ExpressionStatement') {
+            if (astObject.expression.type === 'AssignmentExpression') {
+                if (astObject.expression.left.type === 'Identifier') {
+                    if (
+                        astInputs.filter((astInput: Input) => astInput.varName === astObject.expression.left.name).length === 0 &&
+                        astEssays.filter((astEssay: Essay) => astEssay.varName === astObject.expression.left.name).length === 0 &&
+                        astChecks.filter((astCheck: Check) => astCheck.varName === astObject.expression.left.name).length === 0 &&
+                        astRadios.filter((astRadio: Radio) => astRadio.varName === astObject.expression.left.name).length === 0
+                    ) {
+                        //TODO put in the checks for dependence on the input, essay, check, and radio global variables
+                        //isDependentOnGlobalVariable
+                        return [...result, astObject.expression.left.name];
+                    }
+                }
+            }
+        }
+
+        if (astObject.type === 'VariableDeclaration') {
+            if (astObject.declarations[0].id.type === 'Identifier') {
+                if (
+                    astInputs.filter((astInput: Input) => astInput.varName === astObject.declarations[0].id.name).length === 0 &&
+                    astEssays.filter((astEssay: Essay) => astEssay.varName === astObject.declarations[0].id.name).length === 0 &&
+                    astChecks.filter((astCheck: Check) => astCheck.varName === astObject.declarations[0].id.name).length === 0 &&
+                    astRadios.filter((astRadio: Radio) => astRadio.varName === astObject.declarations[0].id.name).length === 0
+                ) {
+                    return [...result, astObject.declarations[0].id.name];
+                }
+            }
+        }
+
+        return result;
+    }, []);
+}
+
+function isDependentOnGlobalVariable(expression: BinaryExpression, globalVarName: string): boolean {
+    return false;
+}
+
+function substituteVariablesForValues(jsAst: Program, originalVariableValues) {
+    return {
+        ...jsAst,
+        body: jsAst.body.map((astObject) => {
+            if (astObject.type === 'ExpressionStatement') {
+                if (astObject.expression.type === 'AssignmentExpression') {
+                    return {
+                        ...astObject,
+                        expression: substituteVariablesInAssignmentExpression(astObject.expression, originalVariableValues)
+                    };
+                }
+            }
+
+            return astObject;
+        })
+    };
+}
+
+function substituteVariablesInAssignmentExpression(assignmentExpression: AssignmentExpression, originalVariableValues) {
+    if (assignmentExpression.right.type === 'Identifier') {
+        return {
+            ...assignmentExpression,
+            right: substituteVariablesInIdentifier(assignmentExpression.right, originalVariableValues)
+        };
+    }
+
+    if (assignmentExpression.right.type === 'BinaryExpression') {
+        return {
+            ...assignmentExpression,
+            right: substituteVariablesInBinaryExpression(assignmentExpression.right, originalVariableValues)
+        };
+    }
+
+    if (assignmentExpression.right.type === 'CallExpression') {
+        return {
+            ...assignmentExpression,
+            right: substituteVariablesInCallExpression(assignmentExpression.right, originalVariableValues)
+        };
+    }
+
+    return assignmentExpression;
+}
+
+function substituteVariablesInCallExpression(callExpression: CallExpression, originalVariableValues) {
+    return {
+        ...callExpression,
+        arguments: callExpression.arguments.map((argument) => {
+            if (argument.type === 'Identifier') {
+                return substituteVariablesInIdentifier(argument, originalVariableValues);
+            }
+
+            if (argument.type === 'BinaryExpression') {
+                return substituteVariablesInBinaryExpression(argument, originalVariableValues);
+            }
+
+            if (argument.type === 'CallExpression') {
+                return substituteVariablesInCallExpression(argument, originalVariableValues);
+            }
+
+            return argument;
+        })
+    };
+}
+
+function substituteVariablesInIdentifier(identifier: Identifier, originalVariableValues) {
+    if (
+        Object.keys(originalVariableValues).includes(identifier.name)
+    ) {
+        return {
+            type: 'Literal',
+            value: originalVariableValues[identifier.name]
+        };
+    }
+
+    return identifier;
+}
+
+function substituteVariablesInBinaryExpression(binaryExpression: BinaryExpression, originalVariableValues): BinaryExpression {
+    return {
+        ...binaryExpression,
+        left: (() => {
+            if (binaryExpression.left.type === 'Identifier') {
+                if (
+                    Object.keys(originalVariableValues).includes(binaryExpression.left.name)
+                ) {
+                    return {
+                        type: 'Literal',
+                        value: originalVariableValues[binaryExpression.left.name],
+                        raw: originalVariableValues[binaryExpression.left.name].toString()
+                    };
+                }
+            }
+
+            if (binaryExpression.left.type === 'BinaryExpression') {
+                return substituteVariablesInBinaryExpression(binaryExpression.left, originalVariableValues);
+            }
+
+            return binaryExpression.left;
+        })(),
+        right: (() => {
+            if (binaryExpression.right.type === 'Identifier') {
+                if (
+                    Object.keys(originalVariableValues).includes(binaryExpression.right.name)
+                ) {
+                    return {
+                        type: 'Literal',
+                        value: originalVariableValues[binaryExpression.right.name],
+                        raw: originalVariableValues[binaryExpression.right.name].toString()
+                    };
+                }
+            }
+
+            if (binaryExpression.left.type === 'BinaryExpression') {
+                return substituteVariablesInBinaryExpression(binaryExpression.right, originalVariableValues);
+            }
+
+            return binaryExpression.right;
+        })()
+    };
 }
 
 async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, propertyName: string, defaultValue: number | string): Promise<number | string> {
@@ -241,6 +410,7 @@ async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, pr
         }, '');
 
         return (await secureEval(`
+            let answer;
             ${userVariablesString}
             ${defineUserImagesString}
             ${escodegen.generate(jsAst)}
@@ -278,29 +448,33 @@ async function getAssignmentValue(jsAst: Program, amlAst: AST, varName: string, 
     }
 }
 
-export async function checkAnswer(code: string, userVariables: UserVariable[], userInputs: UserInput[], userEssays: UserEssay[], userChecks: UserCheck[], userRadios: UserRadio[]) {
+export async function checkAnswer(code: string, originalVariableValues, userVariables: UserVariable[], userInputs: UserInput[], userEssays: UserEssay[], userChecks: UserCheck[], userRadios: UserRadio[]) {
     const userVariablesString = createUserVariablesString(userVariables);
-    const defineUserInputsString = userInputs.reduce((result: string, userInput) => {
-        return `${result}let ${userInput.varName} = '${userInput.value.replace(/\\/g, '\\\\').replace(/'/g, '\\\'').replace(/\n/g, '\\n')}';`;
-    }, '');
-    const defineUserEssaysString = userEssays.reduce((result: string, userEssay) => {
-        return `${result}let ${userEssay.varName} = '${userEssay.value.replace(/\\/g, '\\\\').replace(/'/g, '\\\'').replace(/\n/g, '\\n')}';`;
-    }, '');
-    const defineUserChecksString = userChecks.reduce((result: string, userCheck) => {
-        return `${result}let ${userCheck.varName} = ${userCheck.checked};`;
-    }, '');
-    const defineUserRadiosString = userRadios.reduce((result: string, userRadio) => {
-        return `${result}let ${userRadio.varName} = ${userRadio.checked};`;
-    }, '');
+    const userInputsString = createUserInputsString(userInputs);
+    // const defineUserInputsString = userInputs.reduce((result: string, userInput) => {
+    //     return `${result}let ${userInput.varName} = '${userInput.value.replace(/\\/g, '\\\\').replace(/'/g, '\\\'').replace(/\n/g, '\\n')}';`;
+    // }, '');
+    // const defineUserEssaysString = userEssays.reduce((result: string, userEssay) => {
+    //     return `${result}let ${userEssay.varName} = '${userEssay.value.replace(/\\/g, '\\\\').replace(/'/g, '\\\'').replace(/\n/g, '\\n')}';`;
+    // }, '');
+    // const defineUserChecksString = userChecks.reduce((result: string, userCheck) => {
+    //     return `${result}let ${userCheck.varName} = ${userCheck.checked};`;
+    // }, '');
+    // const defineUserRadiosString = userRadios.reduce((result: string, userRadio) => {
+    //     return `${result}let ${userRadio.varName} = ${userRadio.checked};`;
+    // }, '');
+
+    const jsAst = esprima.parse(code);
+    const jsAstReplacedVariables = substituteVariablesForValues(jsAst, originalVariableValues);
+    const codeReplacedVariables = escodegen.generate(jsAstReplacedVariables);
+
+    console.log(codeReplacedVariables);
 
     const codeToEval = `
         let answer;
         ${userVariablesString}
-        ${defineUserInputsString}
-        ${defineUserEssaysString}
-        ${defineUserChecksString}
-        ${defineUserRadiosString}
-        ${code}
+        ${userInputsString}
+        ${codeReplacedVariables}
 
         postMessage({
             answer
@@ -319,6 +493,12 @@ function createUserVariablesString(userVariables: UserVariable[] | Variable[]) {
 function createUserImagesString(astImages: Image[]) {
     return astImages.reduce((result: string, astImage: Image) => {
         return `${result}let ${astImage.varName} = {};`;
+    }, '');
+}
+
+function createUserInputsString(userInputs: UserInput[]) {
+    return userInputs.reduce((result: string, userInput) => {
+        return `${result}let ${userInput.varName} = '${userInput.value.replace(/\\/g, '\\\\').replace(/'/g, '\\\'').replace(/\n/g, '\\n')}';`;
     }, '');
 }
 

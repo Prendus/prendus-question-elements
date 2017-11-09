@@ -2,7 +2,7 @@ import {parse, compileToHTML, getAstObjects, generateRandomInteger} from '../../
 import {asyncMap, asyncReduce} from '../../prendus-shared/services/utilities-service';
 import {secureEval} from '../../secure-eval/secure-eval';
 import {AST, ASTObject, Variable, Input, Essay, Check, Radio, Content, Drag, Drop, Image, Solution} from '../../assessml/assessml.d';
-import {Program, ExpressionStatement, MemberExpression, Identifier, AssignmentExpression, Literal, BinaryExpression, VariableDeclaration, CallExpression} from 'estree';
+import {Program, ExpressionStatement, MemberExpression, Identifier, AssignmentExpression, Literal, BinaryExpression, VariableDeclaration, CallExpression, ArrayExpression, VariableDeclarator} from 'estree';
 import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay} from '../prendus-question-elements.d';
 import {normalizeVariables} from '../../assessml/assessml';
 
@@ -13,161 +13,7 @@ export async function buildQuestion(text: string, code: string): Promise<{
     originalVariableValues;
 }> {
     try {
-        // const jsAst: Program = esprima.parse(code);
-
-        // const initialVariablesSetAmlAst = await asyncReduce(originalAmlAst.ast, async (result: AST, astObject: ASTObject, index: number) => {
-                // if (astObject.type === 'VARIABLE') {
-                    // const newMin = await getPropertyValue(jsAst, result, astObject.varName, 'min', 0);
-                    // const newMax = await getPropertyValue(jsAst, result, astObject.varName, 'max', 100);
-                    // const newPrecision = await getPropertyValue(jsAst, result, astObject.varName, 'precision', 0);
-                    // const randomVariable = (Math.random() * (newMax - newMin + 1)) + newMin;
-                    // const newValue = await getAssignmentValue(jsAst, result, astObject.varName);
-                    // const value = (newValue || newValue === 0) ? newValue : (astObject.value === undefined ? newPrecision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(newPrecision) : astObject.value);
-                    //
-                //     return {
-                //         ...result,
-                //         ast: [...result.ast.slice(0, index), {
-                //             ...astObject,
-                //             value: await getAssignmentValue(jsAst, result, astObject.varName, generateRandomInteger(0, 10))
-                //         }, ...result.ast.slice(index + 1)]
-                //     };
-                // }
-
-                // if (astObject.type === 'IMAGE') {
-                //     return {
-                //         ...result,
-                //         ast: [...result.ast.slice(0, index), {
-                //             ...astObject,
-                //             src: await getPropertyValue(jsAst, result, astObject.varName, 'src', '')
-                //         }, ...result.ast.slice(index + 1)]
-                //     };
-                // }
-
-                // if (astObject.type === 'RADIO' || astObject.type === 'CHECK' || astObject.type === 'SOLUTION') {
-                //     return {
-                //         ...result,
-                //         ast: [...result.ast.slice(0, index), {
-                //             ...astObject,
-                //             content: await asyncReduce(astObject.content, async (result: (Variable | Content | Image)[], astObject: Variable | Content, index: number) => {
-                //                 if (astObject.type === 'VARIABLE') {
-                //                     const newMin = await getPropertyValue(jsAst, {
-                //                         type: 'AST',
-                //                         ast: result
-                //                     }, astObject.varName, 'min', 0);
-                //                     const newMax = await getPropertyValue(jsAst, {
-                //                         type: 'AST',
-                //                         ast: result
-                //                     }, astObject.varName, 'max', 100);
-                //                     const newPrecision = await getPropertyValue(jsAst, {
-                //                         type: 'AST',
-                //                         ast: result
-                //                     }, astObject.varName, 'precision', 0);
-                //                     const randomVariable = (Math.random() * (+newMax - +newMin + 1)) + +newMin;
-                //                     const newValue = await getAssignmentValue(jsAst, {
-                //                         type: 'AST',
-                //                         ast: result
-                //                     }, astObject.varName);
-                //                     const value = (newValue || newValue === 0) ? newValue : (astObject.value === undefined ? newPrecision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(newPrecision) : astObject.value);
-                //
-                //                     return [...result.slice(0, index), {
-                //                         ...astObject,
-                //                         value
-                //                     }, ...result.slice(index + 1)];
-                //                 }
-                //
-                //                 return result;
-                //             }, astObject.content)
-                //         }, ...result.ast.slice(index + 1)]
-                //     };
-                // }
-
-        //         return result;
-        //     }, originalAmlAst);
-        //
-        // const normalizedInitialVariablesSetAmlAst = normalizeVariables(initialVariablesSetAmlAst);
-
-        // const newAmlAst = await asyncReduce(normalizedInitialVariablesSetAmlAst.ast, async (result: AST, astObject: ASTObject, index: number) => {
-        //         if (astObject.type === 'VARIABLE') {
-        //             const newMin = await getPropertyValue(jsAst, result, astObject.varName, 'min', 0);
-        //             const newMax = await getPropertyValue(jsAst, result, astObject.varName, 'max', 100);
-        //             const newPrecision = await getPropertyValue(jsAst, result, astObject.varName, 'precision', 0);
-        //             const randomVariable = (Math.random() * (newMax - newMin + 1)) + newMin;
-        //             const newValue = await getAssignmentValue(jsAst, result, astObject.varName);
-        //             const value = (newValue || newValue === 0) ? newValue : (astObject.value === undefined ? newPrecision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(newPrecision) : astObject.value);
-        //
-        //             return {
-        //                 ...result,
-        //                 ast: [...result.ast.slice(0, index), {
-        //                     ...astObject,
-        //                     value
-        //                 }, ...result.ast.slice(index + 1)]
-        //             };
-        //         }
-        //
-        //         if (astObject.type === 'IMAGE') {
-        //             return {
-        //                 ...result,
-        //                 ast: [...result.ast.slice(0, index), {
-        //                     ...astObject,
-        //                     src: await getPropertyValue(jsAst, result, astObject.varName, 'src', '')
-        //                 }, ...result.ast.slice(index + 1)]
-        //             };
-        //         }
-        //
-        //         if (astObject.type === 'RADIO' || astObject.type === 'CHECK' || astObject.type === 'SOLUTION') {
-        //             return {
-        //                 ...result,
-        //                 ast: [...result.ast.slice(0, index), {
-        //                     ...astObject,
-        //                     content: await asyncReduce(astObject.content, async (result: (Variable | Content | Image)[], astObject: Variable | Content | Image, index: number) => {
-        //                         if (astObject.type === 'VARIABLE') {
-        //                             const newMin = await getPropertyValue(jsAst, {
-        //                                 type: 'AST',
-        //                                 ast: result
-        //                             }, astObject.varName, 'min', 0);
-        //                             const newMax = await getPropertyValue(jsAst, {
-        //                                 type: 'AST',
-        //                                 ast: result
-        //                             }, astObject.varName, 'max', 100);
-        //                             const newPrecision = await getPropertyValue(jsAst, {
-        //                                 type: 'AST',
-        //                                 ast: result
-        //                             }, astObject.varName, 'precision', 0);
-        //                             const randomVariable = (Math.random() * (+newMax - +newMin + 1)) + +newMin;
-        //                             const newValue = await getAssignmentValue(jsAst, {
-        //                                 type: 'AST',
-        //                                 ast: result
-        //                             }, astObject.varName);
-        //                             const value = (newValue || newValue === 0) ? newValue : (astObject.value === undefined ? newPrecision === 0 ? Math.floor(randomVariable) : +randomVariable.toPrecision(newPrecision) : astObject.value);
-        //
-        //                             return [...result.slice(0, index), {
-        //                                 ...astObject,
-        //                                 value
-        //                             }, ...result.slice(index + 1)];
-        //                         }
-        //
-        //                         if (astObject.type === 'IMAGE') {
-        //                             return [...result.slice(0, index), {
-        //                                 ...astObject,
-        //                                 src: await getPropertyValue(jsAst, {
-        //                                     type: 'AST',
-        //                                     ast: result
-        //                                 }, astObject.varName, 'src', '')
-        //                             }, ...result.slice(index + 1)];
-        //                         }
-        //
-        //                         return result;
-        //                     }, astObject.content)
-        //                 }, ...result.ast.slice(index + 1)]
-        //             };
-        //         }
-        //
-        //         return result;
-        //     }, normalizedInitialVariablesSetAmlAst);
-        //
-        // const normalizedAmlAst = normalizeVariables(newAmlAst);
-
-        const originalAmlAst = parse(text, () => undefined, () => '');
+        const originalAmlAst = parse(text, () => generateRandomInteger(0, 10), () => '');
 
         const astVariables: Variable[] = <Variable[]> getAstObjects(originalAmlAst, 'VARIABLE');
         const astImages: Image[] = <Image[]> getAstObjects(originalAmlAst, 'IMAGE');
@@ -178,16 +24,22 @@ export async function buildQuestion(text: string, code: string): Promise<{
 
         const astVariablesString = createUserVariablesString(astVariables);
         const astImagesString = createUserImagesString(astImages);
-
-        //TODO finish all of the astobjects...it's working
+        const astInputsString = createUserInputsString(astInputs);
+        const astEssaysString = createUserEssaysString(astEssays);
+        const astChecksString = createUserChecksString(astChecks);
+        const astRadiosString = createUserRadiosString(astRadios);
 
         const originalVariableValues = await secureEval(`
             let answer;
             ${astVariablesString}
             ${astImagesString}
+            ${astInputsString}
+            ${astEssaysString}
+            ${astChecksString}
+            ${astRadiosString}
             ${code}
             postMessage({
-                ${getAssignedToVariableNames(esprima.parse(code), astInputs, astEssays, astChecks, astRadios)}
+                ${[...astVariables.map((astVariable: Variable) => astVariable.varName), ...astImages.map((astImage: Image) => astImage.varName), getAssignedToVariableNames(esprima.parse(code), astInputs, astEssays, astChecks, astRadios)]}
             });
         `);
 
@@ -212,6 +64,32 @@ export async function buildQuestion(text: string, code: string): Promise<{
                 };
             }
 
+            if (astObject.type === 'RADIO' || astObject.type === 'CHECK' || astObject.type === 'SOLUTION') {
+                return {
+                    ...result,
+                    ast: [...result.ast.slice(0, index), {
+                        ...astObject,
+                        content: await asyncReduce(astObject.content, async (result: (Variable | Content | Image)[], astObject: Variable | Content, index: number) => {
+                            if (astObject.type === 'VARIABLE') {
+                                return [...result.slice(0, index), {
+                                    ...astObject,
+                                    value: originalVariableValues[astObject.varName] || generateRandomInteger(0, 10)
+                                }, ...result.slice(index + 1)];
+                            }
+
+                            if (astObject.type === 'IMAGE') {
+                                return [...result.slice(0, index), {
+                                    ...astObject,
+                                    src: originalVariableValues[astObject.varName] ? originalVariableValues[astObject.varName].src : ''
+                                }, ...result.slice(index + 1)];
+                            }
+
+                            return result;
+                        }, astObject.content)
+                    }, ...result.ast.slice(index + 1)]
+                };
+            }
+
             return result;
         }, originalAmlAst);
 
@@ -229,7 +107,8 @@ export async function buildQuestion(text: string, code: string): Promise<{
         // There will be many intermediate JavaScript parsing errors while the user is typing. If that happens, do nothing
         return {
             html: compileToHTML(text, () => generateRandomInteger(0, 100), () => ''),
-            ast: parse(text, () => generateRandomInteger(0, 100), () => '')
+            ast: parse(text, () => generateRandomInteger(0, 100), () => ''),
+            originalVariableValues: {}
         };
     }
 }
@@ -288,34 +167,104 @@ function substituteVariablesForValues(jsAst: Program, originalVariableValues) {
                 }
             }
 
+            if (astObject.type === 'VariableDeclaration') {
+                return {
+                    ...astObject,
+                    declarations: astObject.declarations.map((variableDeclarator: VariableDeclarator) => {
+                        const substitutionFunctions = {
+                            'Identifier': substituteVariablesInIdentifier,
+                            'ArrayExpression': substituteVariablesinArrayExpression,
+                            'BinaryExpression': substituteVariablesInBinaryExpression,
+                            'CallExpression': substituteVariablesInCallExpression,
+                            'ObjectExpression': substituteVariablesInObjectExpression
+                        };
+                        const substitutionFunction = substitutionFunctions[variableDeclarator.init.type];
+                        return {
+                            ...variableDeclarator,
+                            init: substitutionFunction ? substitutionFunction(variableDeclarator.init, originalVariableValues) : variableDeclarator.init
+                        };
+                    })
+                };
+            }
+
             return astObject;
         })
     };
 }
 
 function substituteVariablesInAssignmentExpression(assignmentExpression: AssignmentExpression, originalVariableValues) {
-    if (assignmentExpression.right.type === 'Identifier') {
+    const substitutionFunctions = {
+        'Identifier': substituteVariablesInIdentifier,
+        'ArrayExpression': substituteVariablesinArrayExpression,
+        'BinaryExpression': substituteVariablesInBinaryExpression,
+        'CallExpression': substituteVariablesInCallExpression,
+        'ObjectExpression': substituteVariablesInObjectExpression
+    };
+    const substitutionFunction = substitutionFunctions[assignmentExpression.right.type];
+    if (substitutionFunction) {
         return {
             ...assignmentExpression,
-            right: substituteVariablesInIdentifier(assignmentExpression.right, originalVariableValues)
+            right: substitutionFunction(assignmentExpression.right, originalVariableValues)
         };
     }
-
-    if (assignmentExpression.right.type === 'BinaryExpression') {
-        return {
-            ...assignmentExpression,
-            right: substituteVariablesInBinaryExpression(assignmentExpression.right, originalVariableValues)
-        };
+    else {
+        return assignmentExpression;
     }
+}
 
-    if (assignmentExpression.right.type === 'CallExpression') {
-        return {
-            ...assignmentExpression,
-            right: substituteVariablesInCallExpression(assignmentExpression.right, originalVariableValues)
-        };
+function substituteVariablesinArrayExpression(arrayExpression: ArrayExpression, originalVariableValues) {
+    return {
+        ...arrayExpression,
+        elements: arrayExpression.elements.map((element) => {
+            // if (element.type === 'Identifier') {
+            //     return substituteVariablesInIdentifier(element, originalVariableValues);
+            // }
+            //
+            // if (element.type === 'ArrayExpression') {
+            //     return substituteVariablesinArrayExpression(element, originalVariableValues);
+            // }
+            //
+            // if (element.type === 'BinaryExpression') {
+            //     return substituteVariablesInBinaryExpression(element, originalVariableValues);
+            // }
+            //
+            // if (element.type === 'CallExpression') {
+            //     return substituteVariablesInCallExpression(element, originalVariableValues);
+            // }
+            //
+            // return element;
+            //
+            const substitutionFunctions = {
+                'Identifier': substituteVariablesInIdentifier,
+                'ArrayExpression': substituteVariablesinArrayExpression,
+                'BinaryExpression': substituteVariablesInBinaryExpression,
+                'CallExpression': substituteVariablesInCallExpression,
+                'ObjectExpression': substituteVariablesInObjectExpression
+            };
+            const substitutionFunction = substitutionFunctions[element.type];
+            return substitutionFunction ? substitutionFunction(element, originalVariableValues) : element;
+        })
     }
+}
 
-    return assignmentExpression;
+function substituteVariablesInObjectExpression(objectExpression: ObjectExpression, originalVariableValues) {
+    return {
+        ...objectExpression,
+        properties: objectExpression.properties.map((property) => {
+            const substitutionFunctions = {
+                'Identifier': substituteVariablesInIdentifier,
+                'ArrayExpression': substituteVariablesinArrayExpression,
+                'BinaryExpression': substituteVariablesInBinaryExpression,
+                'CallExpression': substituteVariablesInCallExpression,
+                'ObjectExpression': substituteVariablesInObjectExpression
+            };
+            const substitutionFunction = substitutionFunctions[property.value.type];
+            return {
+                ...property,
+                value: substitutionFunction ? substitutionFunction(property.value, originalVariableValues) : property.value
+            };
+        })
+    };
 }
 
 function substituteVariablesInCallExpression(callExpression: CallExpression, originalVariableValues) {
@@ -324,6 +273,10 @@ function substituteVariablesInCallExpression(callExpression: CallExpression, ori
         arguments: callExpression.arguments.map((argument) => {
             if (argument.type === 'Identifier') {
                 return substituteVariablesInIdentifier(argument, originalVariableValues);
+            }
+
+            if (argument.type === 'ArrayExpression') {
+                return substituteVariablesinArrayExpression(argument, originalVariableValues);
             }
 
             if (argument.type === 'BinaryExpression') {
@@ -340,9 +293,7 @@ function substituteVariablesInCallExpression(callExpression: CallExpression, ori
 }
 
 function substituteVariablesInIdentifier(identifier: Identifier, originalVariableValues) {
-    if (
-        Object.keys(originalVariableValues).includes(identifier.name)
-    ) {
+    if (Object.keys(originalVariableValues).includes(identifier.name)) {
         return {
             type: 'Literal',
             value: originalVariableValues[identifier.name]
@@ -357,15 +308,7 @@ function substituteVariablesInBinaryExpression(binaryExpression: BinaryExpressio
         ...binaryExpression,
         left: (() => {
             if (binaryExpression.left.type === 'Identifier') {
-                if (
-                    Object.keys(originalVariableValues).includes(binaryExpression.left.name)
-                ) {
-                    return {
-                        type: 'Literal',
-                        value: originalVariableValues[binaryExpression.left.name],
-                        raw: originalVariableValues[binaryExpression.left.name].toString()
-                    };
-                }
+                return substituteVariablesInIdentifier(binaryExpression.left, originalVariableValues);
             }
 
             if (binaryExpression.left.type === 'BinaryExpression') {
@@ -376,18 +319,10 @@ function substituteVariablesInBinaryExpression(binaryExpression: BinaryExpressio
         })(),
         right: (() => {
             if (binaryExpression.right.type === 'Identifier') {
-                if (
-                    Object.keys(originalVariableValues).includes(binaryExpression.right.name)
-                ) {
-                    return {
-                        type: 'Literal',
-                        value: originalVariableValues[binaryExpression.right.name],
-                        raw: originalVariableValues[binaryExpression.right.name].toString()
-                    };
-                }
+                return substituteVariablesInIdentifier(binaryExpression.right, originalVariableValues);
             }
 
-            if (binaryExpression.left.type === 'BinaryExpression') {
+            if (binaryExpression.right.type === 'BinaryExpression') {
                 return substituteVariablesInBinaryExpression(binaryExpression.right, originalVariableValues);
             }
 
@@ -451,29 +386,21 @@ async function getAssignmentValue(jsAst: Program, amlAst: AST, varName: string, 
 export async function checkAnswer(code: string, originalVariableValues, userVariables: UserVariable[], userInputs: UserInput[], userEssays: UserEssay[], userChecks: UserCheck[], userRadios: UserRadio[]) {
     const userVariablesString = createUserVariablesString(userVariables);
     const userInputsString = createUserInputsString(userInputs);
-    // const defineUserInputsString = userInputs.reduce((result: string, userInput) => {
-    //     return `${result}let ${userInput.varName} = '${userInput.value.replace(/\\/g, '\\\\').replace(/'/g, '\\\'').replace(/\n/g, '\\n')}';`;
-    // }, '');
-    // const defineUserEssaysString = userEssays.reduce((result: string, userEssay) => {
-    //     return `${result}let ${userEssay.varName} = '${userEssay.value.replace(/\\/g, '\\\\').replace(/'/g, '\\\'').replace(/\n/g, '\\n')}';`;
-    // }, '');
-    // const defineUserChecksString = userChecks.reduce((result: string, userCheck) => {
-    //     return `${result}let ${userCheck.varName} = ${userCheck.checked};`;
-    // }, '');
-    // const defineUserRadiosString = userRadios.reduce((result: string, userRadio) => {
-    //     return `${result}let ${userRadio.varName} = ${userRadio.checked};`;
-    // }, '');
+    const userEssaysString = createUserEssaysString(userEssays);
+    const userChecksString = createUserChecksString(userChecks);
+    const userRadiosString = createUserRadiosString(userRadios);
 
     const jsAst = esprima.parse(code);
     const jsAstReplacedVariables = substituteVariablesForValues(jsAst, originalVariableValues);
     const codeReplacedVariables = escodegen.generate(jsAstReplacedVariables);
 
-    console.log(codeReplacedVariables);
-
     const codeToEval = `
         let answer;
         ${userVariablesString}
         ${userInputsString}
+        ${userEssaysString}
+        ${userChecksString}
+        ${userRadiosString}
         ${codeReplacedVariables}
 
         postMessage({
@@ -491,14 +418,44 @@ function createUserVariablesString(userVariables: UserVariable[] | Variable[]) {
 }
 
 function createUserImagesString(astImages: Image[]) {
-    return astImages.reduce((result: string, astImage: Image) => {
+    return normalizeUserImages(astImages).reduce((result: string, astImage: Image) => {
         return `${result}let ${astImage.varName} = {};`;
     }, '');
 }
 
 function createUserInputsString(userInputs: UserInput[]) {
-    return userInputs.reduce((result: string, userInput) => {
+    return userInputs.map((userInput) => Object.keys(userInput).includes('value') ? userInput : {
+        ...userInput,
+        value: ''
+    }).reduce((result: string, userInput) => {
         return `${result}let ${userInput.varName} = '${userInput.value.replace(/\\/g, '\\\\').replace(/'/g, '\\\'').replace(/\n/g, '\\n')}';`;
+    }, '');
+}
+
+function createUserEssaysString(userEssays: UserEssay[]) {
+    return userEssays.map((userEssay) => Object.keys(userEssay).includes('value') ? userEssay : {
+        ...userEssay,
+        value: ''
+    }).reduce((result: string, userEssay) => {
+        return `${result}let ${userEssay.varName} = '${userEssay.value.replace(/\\/g, '\\\\').replace(/'/g, '\\\'').replace(/\n/g, '\\n')}';`;
+    }, '');
+}
+
+function createUserChecksString(userChecks: UserCheck[]) {
+    return userChecks.map((userCheck) => Object.keys(userCheck).includes('checked') ? userCheck : {
+        ...userCheck,
+        checked: false
+    }).reduce((result: string, userCheck) => {
+        return `${result}let ${userCheck.varName} = ${userCheck.checked};`;
+    }, '');
+}
+
+function createUserRadiosString(userRadios: UserRadio[]) {
+    return userRadios.map((userRadio) => Object.keys(userRadio).includes('checked') ? userRadio : {
+        ...userRadio,
+        checked: false
+    }).reduce((result: string, userRadio) => {
+        return `${result}let ${userRadio.varName} = ${userRadio.checked};`;
     }, '');
 }
 
@@ -513,17 +470,65 @@ function normalizeUserVariables(userVariables: UserVariable[] | Variable[]): Use
     }, userVariables);
 }
 
+function normalizeUserImages(userImages: UserImage[] | Image[]): UserVariable[] | Variable[] {
+    return userImages.reduce((result: UserVariable[] | Variable[], outerUserImage: UserVariable | Variable, index: number) => {
+        return [userImages[index], ...result.filter((innerUserImage) => outerUserImage.varName !== innerUserImage.varName)];
+    }, userImages);
+}
+
 export function insertVariableIntoCode(code: string, varName: string, minValue: string, maxValue: string, precisionValue: string) {
     const jsAst: Program = esprima.parse(code);
     return escodegen.generate({
         ...jsAst,
         body: [
-            createPropertyAssignment(varName, 'min', minValue),
-            createPropertyAssignment(varName, 'max', maxValue),
-            createPropertyAssignment(varName, 'precision', precisionValue),
+            createCallExpression('importScripts', [createLiteral(`https://cdn.rawgit.com/Prendus/functions/v0.0.3/functions.js`)]),
+            createAssignmentExpression(varName, createCallExpression('toPrecision', [createCallExpression('randFloat', [createLiteral(minValue), createLiteral(maxValue)]), createLiteral(precisionValue)])),
             ...jsAst.body
         ]
     });
+}
+
+//TODO I am not using this yet because the asynchronous nature of it causes some syncing issues in the editor, with the text wiping out the code or something
+async function getLatestFunctionsTagName(): Promise<string> {
+    const response = await window.fetch('https://api.github.com/repos/Prendus/functions/git/refs/tags');
+    const tags = await response.json();
+    const lastTag = tags[tags.length - 1];
+    const lastTagName = lastTag.ref.slice(lastTag.ref.lastIndexOf('/') + 1);
+    return lastTagName;
+}
+
+function createAssignmentExpression(varName: string, value) {
+    return {
+        type: 'ExpressionStatement',
+        expression: {
+            type: 'AssignmentExpression',
+            operator: '=',
+            left: {
+                type: 'Identifier',
+                name: varName
+            },
+            right: value
+        }
+    };
+}
+
+function createCallExpression(name: string, args) {
+    return {
+        type: 'CallExpression',
+        callee: {
+            type: 'Identifier',
+            name
+        },
+        arguments: args
+    };
+}
+
+function createLiteral(value: string | number) {
+    return {
+        type: 'Literal',
+        value,
+        raw: value.toString()
+    };
 }
 
 function createPropertyAssignment(varName: string, property: string, value: number | string) {

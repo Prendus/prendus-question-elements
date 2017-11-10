@@ -61,6 +61,8 @@ export async function buildQuestion(text: string, code: string): Promise<{
         const astChecksString = createUserChecksString(astChecks);
         const astRadiosString = createUserRadiosString(astRadios);
 
+        console.log(astImagesString);
+
         const originalVariableValues = await secureEval(`
             let answer;
             ${astVariablesString}
@@ -531,7 +533,7 @@ export function insertVariableIntoCode(code: string, varName: string, minValue: 
     return escodegen.generate({
         ...jsAst,
         body: [
-            createCallExpression('importScripts', [createLiteral(`https://cdn.rawgit.com/Prendus/functions/v0.0.3/functions.js`)]),
+            createCallExpression('importScripts', [createLiteral(`https://cdn.rawgit.com/Prendus/functions/v0.0.4/functions.js`)]),
             createAssignmentExpression(varName, createCallExpression('toPrecision', [createCallExpression('randFloat', [createLiteral(minValue), createLiteral(maxValue)]), createLiteral(precisionValue)])),
             ...jsAst.body
         ]

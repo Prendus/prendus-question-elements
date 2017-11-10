@@ -28,7 +28,10 @@ import {
     ArrayExpression,
     VariableDeclarator,
     IfStatement,
-    BlockStatement
+    BlockStatement,
+    WhileStatement,
+    DoWhileStatement,
+    ForStatement
 } from 'estree';
 import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay} from '../prendus-question-elements.d';
 import {normalizeVariables} from '../../assessml/assessml';
@@ -186,32 +189,46 @@ function substituteVariablesForValues(jsAst: Program, substitutionFunctions, ori
         ...jsAst,
         body: jsAst.body.map((astObject) => {
             if (astObject.type === 'ExpressionStatement') {
-                if (astObject.expression.type === 'AssignmentExpression') {
-                    return {
-                        ...astObject,
-                        expression: substituteVariablesInAssignmentExpression(astObject.expression, substitutionFunctions, originalVariableValues)
-                    };
-                }
+                return substituteVariablesInExpressionStatement(astObject, substitutionFunctions, originalVariableValues);
             }
 
             if (astObject.type === 'VariableDeclaration') {
-                return {
-                    ...astObject,
-                    declarations: astObject.declarations.map((variableDeclarator: VariableDeclarator) => {
-                        const substitutionFunction = substitutionFunctions[variableDeclarator.init.type];
-                        return {
-                            ...variableDeclarator,
-                            init: substitutionFunction ? substitutionFunction(variableDeclarator.init, substitutionFunctions, originalVariableValues) : variableDeclarator.init
-                        };
-                    })
-                };
+                return substituteVariablesInVariableDeclaration(astObject, substitutionFunctions, originalVariableValues);
             }
 
             if (astObject.type === 'IfStatement') {
                 return substituteVariablesInIfStatement(astObject, substitutionFunctions, originalVariableValues);
             }
 
+            if (astObject.type === 'WhileStatement' || astObject.type === 'DoWhileStatement') {
+                return substituteVariablesInWhileOrDoWhileStatement(astObject, substitutionFunctions, originalVariableValues);
+            }
+
             return astObject;
+        })
+    };
+}
+
+function substituteVariablesInExpressionStatement(expressionStatement: ExpressionStatement, substitutionFunctions, originalVariableValues) {
+    if (expressionStatement.expression.type === 'AssignmentExpression') {
+        return {
+            ...expressionStatement,
+            expression: substituteVariablesInAssignmentExpression(expressionStatement.expression, substitutionFunctions, originalVariableValues)
+        };
+    }
+
+    return expressionStatement;
+}
+
+function substituteVariablesInVariableDeclaration(variableDeclaration: VariableDeclaration, substitutionFunctions, originalVariableValues) {
+    return {
+        ...variableDeclaration,
+        declarations: variableDeclaration.declarations.map((variableDeclarator: VariableDeclarator) => {
+            const substitutionFunction = substitutionFunctions[variableDeclarator.init.type];
+            return {
+                ...variableDeclarator,
+                init: substitutionFunction ? substitutionFunction(variableDeclarator.init, substitutionFunctions, originalVariableValues) : variableDeclarator.init
+            };
         })
     };
 }
@@ -317,6 +334,20 @@ function substituteVariablesInBlockStatement(blockStatement: BlockStatement, sub
     };
 }
 
+function substituteVariablesInWhileOrDoWhileStatement(statement: WhileStatement | DoWhileStatement, substitutionFunctions, originalVariableValues) {
+    return {
+        ...statement,
+        test: (() => {
+            const substitutionFunction = substitutionFunctions[statement.test.type];
+            return substitutionFunction ? substitutionFunction(statement.test, substitutionFunctions, originalVariableValues) : statement.test;
+        })(),
+        body: (() => {
+            const substitutionFunction = substitutionFunctions[statement.body.type];
+            return substitutionFunction ? substitutionFunction(statement.body, substitutionFunctions, originalVariableValues) : statement.body;
+        })()
+    };
+}
+
 async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, propertyName: string, defaultValue: number | string): Promise<number | string> {
     const objectsWithProperty = jsAst.body.filter((bodyObj) => {
         return bodyObj.type === 'ExpressionStatement' && bodyObj.expression.type === 'AssignmentExpression' && (<MemberExpression> bodyObj.expression.left).object && (<Identifier> (<MemberExpression> bodyObj.expression.left).object).name === varName && (<Identifier> (<MemberExpression> bodyObj.expression.left).property).name === propertyName;
@@ -383,7 +414,11 @@ export async function checkAnswer(code: string, originalVariableValues, userVari
         'CallExpression': substituteVariablesInCallExpression,
         'ObjectExpression': substituteVariablesInObjectExpression,
         'IfStatement': substituteVariablesInIfStatement,
-        'BlockStatement': substituteVariablesInBlockStatement
+        'BlockStatement': substituteVariablesInBlockStatement,
+        'ExpressionStatement': substituteVariablesInExpressionStatement,
+        'VariableDeclaration': substituteVariablesInVariableDeclaration,
+        'WhileStatement': substituteVariablesInWhileOrDoWhileStatement,
+        'DoWhileStatement': substituteVariablesInWhileOrDoWhileStatement
     };
     const jsAst = esprima.parse(code);
     const jsAstReplacedVariables = substituteVariablesForValues(jsAst, substitutionFunctions, originalVariableValues);

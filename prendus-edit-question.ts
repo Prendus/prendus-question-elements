@@ -286,8 +286,14 @@ class PrendusEditQuestion extends Polymer.Element {
 
         const code = codeEditor.value;
 
-        const newTextNode = document.createTextNode(`[input]`);
+        const inputString = `[input]`;
+        const newTextNode = document.createTextNode(inputString);
         textEditor.range0.insertNode(newTextNode);
+        textEditor.range0.setStart(newTextNode, inputString.length);
+        textEditor.range0.collapse(true);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(textEditor.range0);
 
         this.action = fireLocalAction(this.componentId, 'question', {
             ...this._question,
@@ -306,8 +312,14 @@ class PrendusEditQuestion extends Polymer.Element {
 
         const code = codeEditor.value;
 
-        const newTextNode = document.createTextNode(`[essay]`);
+        const essayString = `[essay]`;
+        const newTextNode = document.createTextNode(essayString);
         textEditor.range0.insertNode(newTextNode);
+        textEditor.range0.setStart(newTextNode, essayString.length);
+        textEditor.range0.collapse(true);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(textEditor.range0);
 
         this.action = fireLocalAction(this.componentId, 'question', {
             ...this._question,
@@ -327,8 +339,14 @@ class PrendusEditQuestion extends Polymer.Element {
 
         const code = codeEditor.value;
 
-        const newTextNode = document.createTextNode(`[*]${content}[*]`);
+        const radioString = `[*]${content}[*]`;
+        const newTextNode = document.createTextNode(radioString);
         textEditor.range0.insertNode(newTextNode);
+        textEditor.range0.setStart(newTextNode, radioString.length);
+        textEditor.range0.collapse(true);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(textEditor.range0);
 
         this.action = fireLocalAction(this.componentId, 'question', {
             ...this._question,
@@ -348,8 +366,14 @@ class PrendusEditQuestion extends Polymer.Element {
 
         const code = codeEditor.value;
 
-        const newTextNode = document.createTextNode(`[x]${content}[x]`);
+        const checkString = `[x]${content}[x]`;
+        const newTextNode = document.createTextNode(checkString);
         textEditor.range0.insertNode(newTextNode);
+        textEditor.range0.setStart(newTextNode, checkString.length);
+        textEditor.range0.collapse(true);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(textEditor.range0);
 
         this.action = fireLocalAction(this.componentId, 'question', {
             ...this._question,
@@ -366,6 +390,11 @@ class PrendusEditQuestion extends Polymer.Element {
 
         const newTextNode = document.createTextNode(mathText);
         textEditor.range0.insertNode(newTextNode);
+        textEditor.range0.setStart(newTextNode, mathText.length);
+        textEditor.range0.collapse(true);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(textEditor.range0);
     }
 
     insertImage(e: CustomEvent) {
@@ -376,8 +405,16 @@ class PrendusEditQuestion extends Polymer.Element {
         const astImages: Image[] = <Image[]> getAstObjects(ast, 'IMAGE');
         const varName = `img${astImages.length + 1}`;
         const code = codeEditor.value;
-        const newTextNode = document.createTextNode(`[img${astImages.length + 1}]`);
+
+        const imageString = `[img${astImages.length + 1}]`;
+        const newTextNode = document.createTextNode(imageString);
         textEditor.range0.insertNode(newTextNode);
+        textEditor.range0.setStart(newTextNode, imageString.length);
+        textEditor.range0.collapse(true);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(textEditor.range0);
+
         this.action = fireLocalAction(this.componentId, 'question', {
             ...this._question,
             code: insertImageIntoCode(code, varName, dataUrl)

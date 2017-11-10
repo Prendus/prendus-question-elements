@@ -61,8 +61,6 @@ export async function buildQuestion(text: string, code: string): Promise<{
         const astChecksString = createUserChecksString(astChecks);
         const astRadiosString = createUserRadiosString(astRadios);
 
-        console.log(astImagesString);
-
         const originalVariableValues = await secureEval(`
             let answer;
             ${astVariablesString}

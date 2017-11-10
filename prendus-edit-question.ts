@@ -71,6 +71,10 @@ class PrendusEditQuestion extends Polymer.Element {
     }
 
     async textEditorChanged() {
+        if (this.textEditorLock) {
+            return;
+        }
+
         if (!this.shadowRoot.querySelector('#textEditor')) {
             return;
         }
@@ -98,6 +102,10 @@ class PrendusEditQuestion extends Polymer.Element {
     }
 
     async codeEditorChanged() {
+        if (this.codeEditorLock) {
+            return;
+        }
+
         const code = this.shadowRoot.querySelector('#codeEditor').value;
 
         this.action = fireLocalAction(this.componentId, 'question', {
@@ -398,6 +406,9 @@ class PrendusEditQuestion extends Polymer.Element {
     }
 
     insertImage(e: CustomEvent) {
+        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
+        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+
         const ast: AST = parse(this._question.text, () => 5, () => '');
         const { dataUrl } = e.detail;
         const textEditor = this.shadowRoot.querySelector('#textEditor');
@@ -415,10 +426,16 @@ class PrendusEditQuestion extends Polymer.Element {
         selection.removeAllRanges();
         selection.addRange(textEditor.range0);
 
+        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+
         this.action = fireLocalAction(this.componentId, 'question', {
             ...this._question,
+            text,
             code: insertImageIntoCode(code, varName, dataUrl)
         });
+
+        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
+        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
     }
 
     getAllowedTagNames() {
@@ -441,6 +458,8 @@ class PrendusEditQuestion extends Polymer.Element {
         if (Object.keys(state.components[this.componentId] || {}).includes('noSave')) this.noSave = state.components[this.componentId].noSave;
         if (Object.keys(state.components[this.componentId] || {}).includes('user')) this.user = state.components[this.componentId].user;
         if (Object.keys(state.components[this.componentId] || {}).includes('userToken')) this.userToken = state.components[this.componentId].userToken;
+        if (Object.keys(state.components[this.componentId] || {}).includes('textEditorLock')) this.textEditorLock = state.components[this.componentId].textEditorLock;
+        if (Object.keys(state.components[this.componentId] || {}).includes('codeEditorLock')) this.codeEditorLock = state.components[this.componentId].codeEditorLock;
     }
 }
 

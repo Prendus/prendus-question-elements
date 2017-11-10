@@ -28,6 +28,7 @@ class PrendusImageTool extends WysiwygTool {
             }));
         });
         reader.readAsDataURL(file);
+        e.target.value = null; //We do this so that the on change will work even if the same file is selected
     }
 }
 

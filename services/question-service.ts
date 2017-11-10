@@ -1,8 +1,35 @@
 import {parse, compileToHTML, getAstObjects, generateRandomInteger} from '../../assessml/assessml';
 import {asyncMap, asyncReduce} from '../../prendus-shared/services/utilities-service';
 import {secureEval} from '../../secure-eval/secure-eval';
-import {AST, ASTObject, Variable, Input, Essay, Check, Radio, Content, Drag, Drop, Image, Solution} from '../../assessml/assessml.d';
-import {Program, ExpressionStatement, MemberExpression, Identifier, AssignmentExpression, Literal, BinaryExpression, VariableDeclaration, CallExpression, ArrayExpression, VariableDeclarator} from 'estree';
+import {
+    AST,
+    ASTObject,
+    Variable,
+    Input,
+    Essay,
+    Check,
+    Radio,
+    Content,
+    Drag,
+    Drop,
+    Image,
+    Solution
+} from '../../assessml/assessml.d';
+import {
+    Program,
+    ExpressionStatement,
+    MemberExpression,
+    Identifier,
+    AssignmentExpression,
+    Literal,
+    BinaryExpression,
+    VariableDeclaration,
+    CallExpression,
+    ArrayExpression,
+    VariableDeclarator,
+    IfStatement,
+    BlockStatement
+} from 'estree';
 import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay} from '../prendus-question-elements.d';
 import {normalizeVariables} from '../../assessml/assessml';
 
@@ -180,6 +207,10 @@ function substituteVariablesForValues(jsAst: Program, substitutionFunctions, ori
                 };
             }
 
+            if (astObject.type === 'IfStatement') {
+                return substituteVariablesInIfStatement(astObject, substitutionFunctions, originalVariableValues);
+            }
+
             return astObject;
         })
     };
@@ -256,6 +287,36 @@ function substituteVariablesInBinaryExpression(binaryExpression: BinaryExpressio
     };
 }
 
+function substituteVariablesInIfStatement(ifStatement: IfStatement, substitutionFunctions, originalVariableValues) {
+    return {
+        ...ifStatement,
+        test: (() => {
+            const substitutionFunction = substitutionFunctions[ifStatement.test.type];
+            return substitutionFunction ? substitutionFunction(ifStatement.test, substitutionFunctions, originalVariableValues) : ifStatement.test;
+        })(),
+        consequent: (() => {
+            const substitutionFunction = substitutionFunctions[ifStatement.consequent.type];
+            return substitutionFunction ? substitutionFunction(ifStatement.consequent, substitutionFunctions, originalVariableValues) : ifStatement.consequent;
+        })(),
+        ...(ifStatement.alternate ? {
+            alternate: (() => {
+                const substitutionFunction = substitutionFunctions[ifStatement.alternate.type];
+                return substitutionFunction ? substitutionFunction(ifStatement.alternate, substitutionFunctions, originalVariableValues) : ifStatement.alternate;
+            })()
+        } : {})
+    };
+}
+
+function substituteVariablesInBlockStatement(blockStatement: BlockStatement, substitutionFunctions, originalVariableValues) {
+    return {
+        ...blockStatement,
+        body: substituteVariablesForValues({
+            type: 'Program',
+            body: blockStatement.body
+        }, substitutionFunctions, originalVariableValues).body
+    };
+}
+
 async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, propertyName: string, defaultValue: number | string): Promise<number | string> {
     const objectsWithProperty = jsAst.body.filter((bodyObj) => {
         return bodyObj.type === 'ExpressionStatement' && bodyObj.expression.type === 'AssignmentExpression' && (<MemberExpression> bodyObj.expression.left).object && (<Identifier> (<MemberExpression> bodyObj.expression.left).object).name === varName && (<Identifier> (<MemberExpression> bodyObj.expression.left).property).name === propertyName;
@@ -320,7 +381,9 @@ export async function checkAnswer(code: string, originalVariableValues, userVari
         'ArrayExpression': substituteVariablesinArrayExpression,
         'BinaryExpression': substituteVariablesInBinaryExpression,
         'CallExpression': substituteVariablesInCallExpression,
-        'ObjectExpression': substituteVariablesInObjectExpression
+        'ObjectExpression': substituteVariablesInObjectExpression,
+        'IfStatement': substituteVariablesInIfStatement,
+        'BlockStatement': substituteVariablesInBlockStatement
     };
     const jsAst = esprima.parse(code);
     const jsAstReplacedVariables = substituteVariablesForValues(jsAst, substitutionFunctions, originalVariableValues);

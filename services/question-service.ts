@@ -32,7 +32,8 @@ import {
     WhileStatement,
     DoWhileStatement,
     ForStatement,
-    updateExpression
+    UpdateExpression,
+    ConditionalExpression
 } from 'estree';
 import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay} from '../prendus-question-elements.d';
 import {normalizeVariables} from '../../assessml/assessml';
@@ -189,40 +190,18 @@ function substituteVariablesForValues(jsAst: Program, substitutionFunctions, ori
     return {
         ...jsAst,
         body: jsAst.body.map((astObject) => {
-            if (astObject.type === 'ExpressionStatement') {
-                return substituteVariablesInExpressionStatement(astObject, substitutionFunctions, originalVariableValues);
-            }
-
-            if (astObject.type === 'VariableDeclaration') {
-                return substituteVariablesInVariableDeclaration(astObject, substitutionFunctions, originalVariableValues);
-            }
-
-            if (astObject.type === 'IfStatement') {
-                return substituteVariablesInIfStatement(astObject, substitutionFunctions, originalVariableValues);
-            }
-
-            if (astObject.type === 'WhileStatement' || astObject.type === 'DoWhileStatement') {
-                return substituteVariablesInWhileOrDoWhileStatement(astObject, substitutionFunctions, originalVariableValues);
-            }
-
-            if (astObject.type === 'ForStatement') {
-                return substituteVariablesInForStatement(astObject, substitutionFunctions, originalVariableValues);
-            }
-
-            return astObject;
+            const substitutionFunction = substitutionFunctions[astObject.type];
+            return substitutionFunction ? substitutionFunction(astObject, substitutionFunctions, originalVariableValues) : astObject;
         })
     };
 }
 
 function substituteVariablesInExpressionStatement(expressionStatement: ExpressionStatement, substitutionFunctions, originalVariableValues) {
-    if (expressionStatement.expression.type === 'AssignmentExpression') {
-        return {
-            ...expressionStatement,
-            expression: substituteVariablesInAssignmentExpression(expressionStatement.expression, substitutionFunctions, originalVariableValues)
-        };
-    }
-
-    return expressionStatement;
+    const substitutionFunction = substitutionFunctions[expressionStatement.expression.type];
+    return {
+        ...expressionStatement,
+        expression: substitutionFunction ? substitutionFunction(expressionStatement.expression, substitutionFunctions, originalVariableValues) : expressionStatement.expression
+    };
 }
 
 function substituteVariablesInVariableDeclaration(variableDeclaration: VariableDeclaration, substitutionFunctions, originalVariableValues) {
@@ -309,21 +288,21 @@ function substituteVariablesInBinaryExpression(binaryExpression: BinaryExpressio
     };
 }
 
-function substituteVariablesInIfStatement(ifStatement: IfStatement, substitutionFunctions, originalVariableValues) {
+function substituteVariablesInIfStatementOrConditionalExpression(statementOrExpression: IfStatement | ConditionalExpression, substitutionFunctions, originalVariableValues) {
     return {
-        ...ifStatement,
+        ...statementOrExpression,
         test: (() => {
-            const substitutionFunction = substitutionFunctions[ifStatement.test.type];
-            return substitutionFunction ? substitutionFunction(ifStatement.test, substitutionFunctions, originalVariableValues) : ifStatement.test;
+            const substitutionFunction = substitutionFunctions[statementOrExpression.test.type];
+            return substitutionFunction ? substitutionFunction(statementOrExpression.test, substitutionFunctions, originalVariableValues) : statementOrExpression.test;
         })(),
         consequent: (() => {
-            const substitutionFunction = substitutionFunctions[ifStatement.consequent.type];
-            return substitutionFunction ? substitutionFunction(ifStatement.consequent, substitutionFunctions, originalVariableValues) : ifStatement.consequent;
+            const substitutionFunction = substitutionFunctions[statementOrExpression.consequent.type];
+            return substitutionFunction ? substitutionFunction(statementOrExpression.consequent, substitutionFunctions, originalVariableValues) : statementOrExpression.consequent;
         })(),
-        ...(ifStatement.alternate ? {
+        ...(statementOrExpression.alternate ? {
             alternate: (() => {
-                const substitutionFunction = substitutionFunctions[ifStatement.alternate.type];
-                return substitutionFunction ? substitutionFunction(ifStatement.alternate, substitutionFunctions, originalVariableValues) : ifStatement.alternate;
+                const substitutionFunction = substitutionFunctions[statementOrExpression.alternate.type];
+                return substitutionFunction ? substitutionFunction(statementOrExpression.alternate, substitutionFunctions, originalVariableValues) : statementOrExpression.alternate;
             })()
         } : {})
     };
@@ -450,7 +429,8 @@ export async function checkAnswer(code: string, originalVariableValues, userVari
         'BinaryExpression': substituteVariablesInBinaryExpression,
         'CallExpression': substituteVariablesInCallExpression,
         'ObjectExpression': substituteVariablesInObjectExpression,
-        'IfStatement': substituteVariablesInIfStatement,
+        'IfStatement': substituteVariablesInIfStatementOrConditionalExpression,
+        'ConditionalExpression': substituteVariablesInIfStatementOrConditionalExpression,
         'BlockStatement': substituteVariablesInBlockStatement,
         'ExpressionStatement': substituteVariablesInExpressionStatement,
         'VariableDeclaration': substituteVariablesInVariableDeclaration,

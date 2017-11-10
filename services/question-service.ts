@@ -256,6 +256,10 @@ function substituteVariablesInObjectExpression(objectExpression: ObjectExpressio
 function substituteVariablesInCallExpression(callExpression: CallExpression, substitutionFunctions, originalVariableValues) {
     return {
         ...callExpression,
+        callee: (() => {
+            const substitutionFunction = substitutionFunctions[callExpression.callee.type];
+            return substitutionFunction ? substitutionFunction(callExpression.callee, substitutionFunctions, originalVariableValues) : callExpression.callee;
+        })(),
         arguments: callExpression.arguments.map((argument) => {
             const substitutionFunction = substitutionFunctions[argument.type];
             return substitutionFunction ? substitutionFunction(argument, substitutionFunctions, originalVariableValues) : argument;
@@ -365,13 +369,22 @@ function substituteVariablesInUpdateExpression(updateExpression: UpdateExpressio
 }
 
 function substituteVariablesInMemberExpression(memberExpression: MemberExpression, substitutionFunctions, originalVariableValues) {
-    return memberExpression.computed ? {
+    return {
         ...memberExpression,
+        object: (() => {
+            const memberExpressionObjectSubstitutionFunctions = {
+                ...substitutionFunctions
+            };
+            delete memberExpressionObjectSubstitutionFunctions.Identifier;
+
+            const substitutionFunction = memberExpressionObjectSubstitutionFunctions[memberExpression.object.type];
+            return substitutionFunction ? substitutionFunction(memberExpression.object, substitutionFunctions, originalVariableValues) : memberExpression.object;
+        })(),
         property: (() => {
             const substitutionFunction = substitutionFunctions[memberExpression.property.type];
             return substitutionFunction ? substitutionFunction(memberExpression.property, substitutionFunctions, originalVariableValues) : memberExpression.property;
         })()
-    } : memberExpression;
+    };
 }
 
 async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, propertyName: string, defaultValue: number | string): Promise<number | string> {
@@ -453,6 +466,7 @@ export async function checkAnswer(code: string, originalVariableValues, userVari
         'MemberExpression': substituteVariablesInMemberExpression
     };
     const jsAst = esprima.parse(code);
+
     const jsAstReplacedVariables = substituteVariablesForValues(jsAst, substitutionFunctions, originalVariableValues);
     const codeReplacedVariables = escodegen.generate(jsAstReplacedVariables);
 

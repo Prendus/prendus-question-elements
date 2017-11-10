@@ -258,8 +258,14 @@ class PrendusEditQuestion extends Polymer.Element {
 
         const code = codeEditor.value;
 
-        const newTextNode = document.createTextNode(`[${varName}]`);
+        const varString = `[${varName}]`;
+        const newTextNode = document.createTextNode(varString);
         textEditor.range0.insertNode(newTextNode);
+        textEditor.range0.setStart(newTextNode, varString.length);
+        // textEditor.range0.collapse(true); //TODO I am not sure if this is needed
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(textEditor.range0);
 
         this.action = fireLocalAction(this.componentId, 'question', {
             ...this._question,

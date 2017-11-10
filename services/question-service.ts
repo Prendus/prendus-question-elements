@@ -526,19 +526,18 @@ function normalizeUserImages(userImages: UserImage[] | Image[]): UserVariable[] 
     }, userImages);
 }
 
-export function insertVariableIntoCode(code: string, varName: string, minValue: string, maxValue: string, precisionValue: string) {
+export async function insertVariableIntoCode(code: string, varName: string, minValue: string, maxValue: string, precisionValue: string) {
     const jsAst: Program = esprima.parse(code);
     return escodegen.generate({
         ...jsAst,
         body: [
-            createCallExpression('importScripts', [createLiteral(`https://cdn.rawgit.com/Prendus/functions/v0.0.4/functions.js`)]),
+            createCallExpression('importScripts', [createLiteral(`https://cdn.rawgit.com/Prendus/functions/${await getLatestFunctionsTagName()}/functions.js`)]),
             createAssignmentExpression(varName, createCallExpression('toPrecision', [createCallExpression('randFloat', [createLiteral(minValue), createLiteral(maxValue)]), createLiteral(precisionValue)])),
             ...jsAst.body
         ]
     });
 }
 
-//TODO I am not using this yet because the asynchronous nature of it causes some syncing issues in the editor, with the text wiping out the code or something
 async function getLatestFunctionsTagName(): Promise<string> {
     const response = await window.fetch('https://api.github.com/repos/Prendus/functions/git/refs/tags');
     const tags = await response.json();

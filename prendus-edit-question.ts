@@ -259,7 +259,10 @@ class PrendusEditQuestion extends Polymer.Element {
         this.action = fireLocalAction(this.componentId, 'selected', e.detail.value);
     }
 
-    insertVariable(e: CustomEvent) {
+    async insertVariable(e: CustomEvent) {
+        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
+        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+
         const { varName, maxValue, minValue, precisionValue } = e.detail;
         const textEditor = this.shadowRoot.querySelector('#textEditor');
         const codeEditor = this.shadowRoot.querySelector('#codeEditor');
@@ -275,14 +278,22 @@ class PrendusEditQuestion extends Polymer.Element {
         selection.removeAllRanges();
         selection.addRange(textEditor.range0);
 
+        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+
         this.action = fireLocalAction(this.componentId, 'question', {
             ...this._question,
-            code: insertVariableIntoCode(code, varName, minValue, maxValue, precisionValue)
+            text,
+            code: await insertVariableIntoCode(code, varName, minValue, maxValue, precisionValue)
         });
-        this.action = fireLocalAction(this.componentId, 'question', this._question); //TODO I am doing this because if not the code does not seem to run, thus not updating the variables correctly if for example a new variable is inserted with specific min and max
+
+        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
+        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
     }
 
     insertInput(e: CustomEvent) {
+        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
+        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+
         const ast: AST = parse(this._question.text, () => 5, () => '');
         const astInputs: Input[] = <Input[]> getAstObjects(ast, 'INPUT');
 
@@ -303,13 +314,22 @@ class PrendusEditQuestion extends Polymer.Element {
         selection.removeAllRanges();
         selection.addRange(textEditor.range0);
 
+        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+
         this.action = fireLocalAction(this.componentId, 'question', {
             ...this._question,
+            text,
             code: insertInputIntoCode(code, varName, answer)
         });
+
+        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
+        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
     }
 
     insertEssay(e: CustomEvent) {
+        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
+        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+
         const ast: AST = parse(this._question.text, () => 5, () => '');
         const astEssays: Essay[] = <Essay[]> getAstObjects(ast, 'ESSAY');
 
@@ -329,13 +349,22 @@ class PrendusEditQuestion extends Polymer.Element {
         selection.removeAllRanges();
         selection.addRange(textEditor.range0);
 
+        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+
         this.action = fireLocalAction(this.componentId, 'question', {
             ...this._question,
+            text,
             code: insertEssayIntoCode(code)
         });
+
+        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
+        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
     }
 
     insertRadio(e: CustomEvent) {
+        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
+        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+
         const ast: AST = parse(this._question.text, () => 5, () => '');
         const astRadios: Radio[] = <Radio[]> getAstObjects(ast, 'RADIO');
 
@@ -356,13 +385,22 @@ class PrendusEditQuestion extends Polymer.Element {
         selection.removeAllRanges();
         selection.addRange(textEditor.range0);
 
+        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+
         this.action = fireLocalAction(this.componentId, 'question', {
             ...this._question,
+            text,
             code: insertRadioOrCheckIntoCode(code, varName, correct)
         });
+
+        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
+        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
     }
 
     insertCheck(e: CustomEvent) {
+        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
+        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+
         const ast: AST = parse(this._question.text, () => 5, () => '');
         const astChecks: Check[] = <Check[]> getAstObjects(ast, 'CHECK');
 
@@ -383,18 +421,25 @@ class PrendusEditQuestion extends Polymer.Element {
         selection.removeAllRanges();
         selection.addRange(textEditor.range0);
 
+        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+
         this.action = fireLocalAction(this.componentId, 'question', {
             ...this._question,
+            text,
             code: insertRadioOrCheckIntoCode(code, varName, correct)
         });
+
+        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
+        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
     }
 
     insertMath(e: CustomEvent) {
+        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
+        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+
         const { mathText } = e.detail;
         const textEditor = this.shadowRoot.querySelector('#textEditor');
         const codeEditor = this.shadowRoot.querySelector('#codeEditor');
-
-        const text = textEditor.shadowRoot.querySelector('#layout').querySelector('#content').querySelector('#editable').textContent;
 
         const newTextNode = document.createTextNode(mathText);
         textEditor.range0.insertNode(newTextNode);
@@ -403,6 +448,16 @@ class PrendusEditQuestion extends Polymer.Element {
         const selection = window.getSelection();
         selection.removeAllRanges();
         selection.addRange(textEditor.range0);
+
+        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+
+        this.action = fireLocalAction(this.componentId, 'question', {
+            ...this._question,
+            text
+        });
+
+        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
+        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
     }
 
     insertImage(e: CustomEvent) {

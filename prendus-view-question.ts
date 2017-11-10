@@ -203,6 +203,12 @@ export class PrendusViewQuestion extends Polymer.Element {
                 });
             });
         }
+        else {
+            //TODO this seems to me to be a bad way to do this...the problem is that the contentDiv is not defined, and I do not know how to know when it will be defined. It is inside of a dom-if, and that gets stamped when the loaded property is true
+            setTimeout(() => {
+                this.stateChange(e);
+            });
+        }
     }
 }
 

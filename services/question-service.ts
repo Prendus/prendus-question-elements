@@ -31,7 +31,8 @@ import {
     BlockStatement,
     WhileStatement,
     DoWhileStatement,
-    ForStatement
+    ForStatement,
+    updateExpression
 } from 'estree';
 import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay} from '../prendus-question-elements.d';
 import {normalizeVariables} from '../../assessml/assessml';
@@ -204,6 +205,10 @@ function substituteVariablesForValues(jsAst: Program, substitutionFunctions, ori
                 return substituteVariablesInWhileOrDoWhileStatement(astObject, substitutionFunctions, originalVariableValues);
             }
 
+            if (astObject.type === 'ForStatement') {
+                return substituteVariablesInForStatement(astObject, substitutionFunctions, originalVariableValues);
+            }
+
             return astObject;
         })
     };
@@ -348,6 +353,38 @@ function substituteVariablesInWhileOrDoWhileStatement(statement: WhileStatement 
     };
 }
 
+function substituteVariablesInForStatement(forStatement: ForStatement, substitutionFunctions, originalVariableValues) {
+    return {
+        ...forStatement,
+        init: (() => {
+            const substitutionFunction = substitutionFunctions[forStatement.init.type];
+            return substitutionFunction ? substitutionFunction(forStatement.init, substitutionFunctions, originalVariableValues) : forStatement.init;
+        })(),
+        test: (() => {
+            const substitutionFunction = substitutionFunctions[forStatement.test.type];
+            return substitutionFunction ? substitutionFunction(forStatement.test, substitutionFunctions, originalVariableValues) : forStatement.test;
+        })(),
+        update: (() => {
+            const substitutionFunction = substitutionFunctions[forStatement.update.type];
+            return substitutionFunction ? substitutionFunction(forStatement.update, substitutionFunctions, originalVariableValues) : forStatement.update;
+        })(),
+        body: (() => {
+            const substitutionFunction = substitutionFunctions[forStatement.body.type];
+            return substitutionFunction ? substitutionFunction(forStatement.body, substitutionFunctions, originalVariableValues) : forStatement.body;
+        })()
+    };
+}
+
+function substituteVariablesInUpdateExpression(updateExpression: updateExpression, substitutionFunctions, originalVariableValues) {
+    return {
+        ...updateExpression,
+        argument: (() => {
+            const substitutionFunction = substitutionFunctions[updateExpression.argument.type];
+            return substitutionFunction ? substitutionFunction(updateExpression.argument, substitutionFunctions, originalVariableValues) : updateExpression.argument;
+        })()
+    };
+}
+
 async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, propertyName: string, defaultValue: number | string): Promise<number | string> {
     const objectsWithProperty = jsAst.body.filter((bodyObj) => {
         return bodyObj.type === 'ExpressionStatement' && bodyObj.expression.type === 'AssignmentExpression' && (<MemberExpression> bodyObj.expression.left).object && (<Identifier> (<MemberExpression> bodyObj.expression.left).object).name === varName && (<Identifier> (<MemberExpression> bodyObj.expression.left).property).name === propertyName;
@@ -418,7 +455,10 @@ export async function checkAnswer(code: string, originalVariableValues, userVari
         'ExpressionStatement': substituteVariablesInExpressionStatement,
         'VariableDeclaration': substituteVariablesInVariableDeclaration,
         'WhileStatement': substituteVariablesInWhileOrDoWhileStatement,
-        'DoWhileStatement': substituteVariablesInWhileOrDoWhileStatement
+        'DoWhileStatement': substituteVariablesInWhileOrDoWhileStatement,
+        'ForStatement': substituteVariablesInForStatement,
+        'AssignmentExpression': substituteVariablesInAssignmentExpression,
+        'UpdateExpression': substituteVariablesInUpdateExpression
     };
     const jsAst = esprima.parse(code);
     const jsAstReplacedVariables = substituteVariablesForValues(jsAst, substitutionFunctions, originalVariableValues);

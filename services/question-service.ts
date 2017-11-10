@@ -154,7 +154,7 @@ function isDependentOnGlobalVariable(expression: BinaryExpression, globalVarName
     return false;
 }
 
-function substituteVariablesForValues(jsAst: Program, originalVariableValues) {
+function substituteVariablesForValues(jsAst: Program, substitutionFunctions, originalVariableValues) {
     return {
         ...jsAst,
         body: jsAst.body.map((astObject) => {
@@ -162,7 +162,7 @@ function substituteVariablesForValues(jsAst: Program, originalVariableValues) {
                 if (astObject.expression.type === 'AssignmentExpression') {
                     return {
                         ...astObject,
-                        expression: substituteVariablesInAssignmentExpression(astObject.expression, originalVariableValues)
+                        expression: substituteVariablesInAssignmentExpression(astObject.expression, substitutionFunctions, originalVariableValues)
                     };
                 }
             }
@@ -171,17 +171,10 @@ function substituteVariablesForValues(jsAst: Program, originalVariableValues) {
                 return {
                     ...astObject,
                     declarations: astObject.declarations.map((variableDeclarator: VariableDeclarator) => {
-                        const substitutionFunctions = {
-                            'Identifier': substituteVariablesInIdentifier,
-                            'ArrayExpression': substituteVariablesinArrayExpression,
-                            'BinaryExpression': substituteVariablesInBinaryExpression,
-                            'CallExpression': substituteVariablesInCallExpression,
-                            'ObjectExpression': substituteVariablesInObjectExpression
-                        };
                         const substitutionFunction = substitutionFunctions[variableDeclarator.init.type];
                         return {
                             ...variableDeclarator,
-                            init: substitutionFunction ? substitutionFunction(variableDeclarator.init, originalVariableValues) : variableDeclarator.init
+                            init: substitutionFunction ? substitutionFunction(variableDeclarator.init, substitutionFunctions, originalVariableValues) : variableDeclarator.init
                         };
                     })
                 };
@@ -192,19 +185,12 @@ function substituteVariablesForValues(jsAst: Program, originalVariableValues) {
     };
 }
 
-function substituteVariablesInAssignmentExpression(assignmentExpression: AssignmentExpression, originalVariableValues) {
-    const substitutionFunctions = {
-        'Identifier': substituteVariablesInIdentifier,
-        'ArrayExpression': substituteVariablesinArrayExpression,
-        'BinaryExpression': substituteVariablesInBinaryExpression,
-        'CallExpression': substituteVariablesInCallExpression,
-        'ObjectExpression': substituteVariablesInObjectExpression
-    };
+function substituteVariablesInAssignmentExpression(assignmentExpression: AssignmentExpression, substitutionFunctions, originalVariableValues) {
     const substitutionFunction = substitutionFunctions[assignmentExpression.right.type];
     if (substitutionFunction) {
         return {
             ...assignmentExpression,
-            right: substitutionFunction(assignmentExpression.right, originalVariableValues)
+            right: substitutionFunction(assignmentExpression.right, substitutionFunctions, originalVariableValues)
         };
     }
     else {
@@ -212,87 +198,40 @@ function substituteVariablesInAssignmentExpression(assignmentExpression: Assignm
     }
 }
 
-function substituteVariablesinArrayExpression(arrayExpression: ArrayExpression, originalVariableValues) {
+function substituteVariablesinArrayExpression(arrayExpression: ArrayExpression, substitutionFunctions, originalVariableValues) {
     return {
         ...arrayExpression,
         elements: arrayExpression.elements.map((element) => {
-            // if (element.type === 'Identifier') {
-            //     return substituteVariablesInIdentifier(element, originalVariableValues);
-            // }
-            //
-            // if (element.type === 'ArrayExpression') {
-            //     return substituteVariablesinArrayExpression(element, originalVariableValues);
-            // }
-            //
-            // if (element.type === 'BinaryExpression') {
-            //     return substituteVariablesInBinaryExpression(element, originalVariableValues);
-            // }
-            //
-            // if (element.type === 'CallExpression') {
-            //     return substituteVariablesInCallExpression(element, originalVariableValues);
-            // }
-            //
-            // return element;
-            //
-            const substitutionFunctions = {
-                'Identifier': substituteVariablesInIdentifier,
-                'ArrayExpression': substituteVariablesinArrayExpression,
-                'BinaryExpression': substituteVariablesInBinaryExpression,
-                'CallExpression': substituteVariablesInCallExpression,
-                'ObjectExpression': substituteVariablesInObjectExpression
-            };
             const substitutionFunction = substitutionFunctions[element.type];
-            return substitutionFunction ? substitutionFunction(element, originalVariableValues) : element;
+            return substitutionFunction ? substitutionFunction(element, substitutionFunctions, originalVariableValues) : element;
         })
     }
 }
 
-function substituteVariablesInObjectExpression(objectExpression: ObjectExpression, originalVariableValues) {
+function substituteVariablesInObjectExpression(objectExpression: ObjectExpression, substitutionFunctions, originalVariableValues) {
     return {
         ...objectExpression,
         properties: objectExpression.properties.map((property) => {
-            const substitutionFunctions = {
-                'Identifier': substituteVariablesInIdentifier,
-                'ArrayExpression': substituteVariablesinArrayExpression,
-                'BinaryExpression': substituteVariablesInBinaryExpression,
-                'CallExpression': substituteVariablesInCallExpression,
-                'ObjectExpression': substituteVariablesInObjectExpression
-            };
             const substitutionFunction = substitutionFunctions[property.value.type];
             return {
                 ...property,
-                value: substitutionFunction ? substitutionFunction(property.value, originalVariableValues) : property.value
+                value: substitutionFunction ? substitutionFunction(property.value, substitutionFunctions, originalVariableValues) : property.value
             };
         })
     };
 }
 
-function substituteVariablesInCallExpression(callExpression: CallExpression, originalVariableValues) {
+function substituteVariablesInCallExpression(callExpression: CallExpression, substitutionFunctions, originalVariableValues) {
     return {
         ...callExpression,
         arguments: callExpression.arguments.map((argument) => {
-            if (argument.type === 'Identifier') {
-                return substituteVariablesInIdentifier(argument, originalVariableValues);
-            }
-
-            if (argument.type === 'ArrayExpression') {
-                return substituteVariablesinArrayExpression(argument, originalVariableValues);
-            }
-
-            if (argument.type === 'BinaryExpression') {
-                return substituteVariablesInBinaryExpression(argument, originalVariableValues);
-            }
-
-            if (argument.type === 'CallExpression') {
-                return substituteVariablesInCallExpression(argument, originalVariableValues);
-            }
-
-            return argument;
+            const substitutionFunction = substitutionFunctions[argument.type];
+            return substitutionFunction ? substitutionFunction(argument, substitutionFunctions, originalVariableValues) : argument;
         })
     };
 }
 
-function substituteVariablesInIdentifier(identifier: Identifier, originalVariableValues) {
+function substituteVariablesInIdentifier(identifier: Identifier, substitutionFunctions, originalVariableValues) {
     if (Object.keys(originalVariableValues).includes(identifier.name)) {
         return {
             type: 'Literal',
@@ -303,30 +242,16 @@ function substituteVariablesInIdentifier(identifier: Identifier, originalVariabl
     return identifier;
 }
 
-function substituteVariablesInBinaryExpression(binaryExpression: BinaryExpression, originalVariableValues): BinaryExpression {
+function substituteVariablesInBinaryExpression(binaryExpression: BinaryExpression, substitutionFunctions, originalVariableValues): BinaryExpression {
     return {
         ...binaryExpression,
         left: (() => {
-            if (binaryExpression.left.type === 'Identifier') {
-                return substituteVariablesInIdentifier(binaryExpression.left, originalVariableValues);
-            }
-
-            if (binaryExpression.left.type === 'BinaryExpression') {
-                return substituteVariablesInBinaryExpression(binaryExpression.left, originalVariableValues);
-            }
-
-            return binaryExpression.left;
+            const substitutionFunction = substitutionFunctions[binaryExpression.left.type];
+            return substitutionFunction ? substitutionFunction(binaryExpression.left, substitutionFunctions, originalVariableValues) : binaryExpression.left;
         })(),
         right: (() => {
-            if (binaryExpression.right.type === 'Identifier') {
-                return substituteVariablesInIdentifier(binaryExpression.right, originalVariableValues);
-            }
-
-            if (binaryExpression.right.type === 'BinaryExpression') {
-                return substituteVariablesInBinaryExpression(binaryExpression.right, originalVariableValues);
-            }
-
-            return binaryExpression.right;
+            const substitutionFunction = substitutionFunctions[binaryExpression.right.type];
+            return substitutionFunction ? substitutionFunction(binaryExpression.right, substitutionFunctions, originalVariableValues) : binaryExpression.right;
         })()
     };
 }
@@ -390,9 +315,18 @@ export async function checkAnswer(code: string, originalVariableValues, userVari
     const userChecksString = createUserChecksString(userChecks);
     const userRadiosString = createUserRadiosString(userRadios);
 
+    const substitutionFunctions = {
+        'Identifier': substituteVariablesInIdentifier,
+        'ArrayExpression': substituteVariablesinArrayExpression,
+        'BinaryExpression': substituteVariablesInBinaryExpression,
+        'CallExpression': substituteVariablesInCallExpression,
+        'ObjectExpression': substituteVariablesInObjectExpression
+    };
     const jsAst = esprima.parse(code);
-    const jsAstReplacedVariables = substituteVariablesForValues(jsAst, originalVariableValues);
+    const jsAstReplacedVariables = substituteVariablesForValues(jsAst, substitutionFunctions, originalVariableValues);
     const codeReplacedVariables = escodegen.generate(jsAstReplacedVariables);
+
+    console.log(codeReplacedVariables);
 
     const codeToEval = `
         let answer;

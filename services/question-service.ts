@@ -444,8 +444,6 @@ export async function checkAnswer(code: string, originalVariableValues, userVari
     const jsAstReplacedVariables = substituteVariablesForValues(jsAst, substitutionFunctions, originalVariableValues);
     const codeReplacedVariables = escodegen.generate(jsAstReplacedVariables);
 
-    console.log(codeReplacedVariables);
-
     const codeToEval = `
         let answer;
         ${userVariablesString}

@@ -265,6 +265,7 @@ class PrendusEditQuestion extends Polymer.Element {
             ...this._question,
             code: insertVariableIntoCode(code, varName, minValue, maxValue, precisionValue)
         });
+        this.action = fireLocalAction(this.componentId, 'question', this._question); //TODO I am doing this because if not the code does not seem to run, thus not updating the variables correctly if for example a new variable is inserted with specific min and max
     }
 
     insertInput(e: CustomEvent) {

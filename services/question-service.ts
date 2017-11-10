@@ -354,7 +354,7 @@ function substituteVariablesInForStatement(forStatement: ForStatement, substitut
     };
 }
 
-function substituteVariablesInUpdateExpression(updateExpression: updateExpression, substitutionFunctions, originalVariableValues) {
+function substituteVariablesInUpdateExpression(updateExpression: UpdateExpression, substitutionFunctions, originalVariableValues) {
     return {
         ...updateExpression,
         argument: (() => {
@@ -362,6 +362,16 @@ function substituteVariablesInUpdateExpression(updateExpression: updateExpressio
             return substitutionFunction ? substitutionFunction(updateExpression.argument, substitutionFunctions, originalVariableValues) : updateExpression.argument;
         })()
     };
+}
+
+function substituteVariablesInMemberExpression(memberExpression: MemberExpression, substitutionFunctions, originalVariableValues) {
+    return memberExpression.computed ? {
+        ...memberExpression,
+        property: (() => {
+            const substitutionFunction = substitutionFunctions[memberExpression.property.type];
+            return substitutionFunction ? substitutionFunction(memberExpression.property, substitutionFunctions, originalVariableValues) : memberExpression.property;
+        })()
+    } : memberExpression;
 }
 
 async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, propertyName: string, defaultValue: number | string): Promise<number | string> {
@@ -416,12 +426,13 @@ async function getAssignmentValue(jsAst: Program, amlAst: AST, varName: string, 
     }
 }
 
-export async function checkAnswer(code: string, originalVariableValues, userVariables: UserVariable[], userInputs: UserInput[], userEssays: UserEssay[], userChecks: UserCheck[], userRadios: UserRadio[]) {
+export async function checkAnswer(code: string, originalVariableValues, userVariables: UserVariable[], userInputs: UserInput[], userEssays: UserEssay[], userChecks: UserCheck[], userRadios: UserRadio[], userImages: UserImages[]) {
     const userVariablesString = createUserVariablesString(userVariables);
     const userInputsString = createUserInputsString(userInputs);
     const userEssaysString = createUserEssaysString(userEssays);
     const userChecksString = createUserChecksString(userChecks);
     const userRadiosString = createUserRadiosString(userRadios);
+    const userImagesString = createUserImagesString(userImages);
 
     const substitutionFunctions = {
         'Identifier': substituteVariablesInIdentifier,
@@ -438,7 +449,8 @@ export async function checkAnswer(code: string, originalVariableValues, userVari
         'DoWhileStatement': substituteVariablesInWhileOrDoWhileStatement,
         'ForStatement': substituteVariablesInForStatement,
         'AssignmentExpression': substituteVariablesInAssignmentExpression,
-        'UpdateExpression': substituteVariablesInUpdateExpression
+        'UpdateExpression': substituteVariablesInUpdateExpression,
+        'MemberExpression': substituteVariablesInMemberExpression
     };
     const jsAst = esprima.parse(code);
     const jsAstReplacedVariables = substituteVariablesForValues(jsAst, substitutionFunctions, originalVariableValues);
@@ -451,6 +463,7 @@ export async function checkAnswer(code: string, originalVariableValues, userVari
         ${userEssaysString}
         ${userChecksString}
         ${userRadiosString}
+        ${userImagesString}
         ${codeReplacedVariables}
 
         postMessage({

@@ -39,6 +39,7 @@ export class PrendusViewQuestion extends Polymer.Element {
     showEmbedCode: boolean;
     rootReducer: Reducer;
     checkAnswerResponse: string;
+    solutionButtonText: 'Solution' | 'Question';
 
     static get is() { return 'prendus-view-question'; }
     static get properties() {
@@ -64,6 +65,7 @@ export class PrendusViewQuestion extends Polymer.Element {
 
     async connectedCallback() {
         super.connectedCallback();
+        this.action = fireLocalAction(this.componentId, 'solutionButtonText', 'Solution');
         // this.action = checkForUserToken();
         // this.action = await getAndSetUser();
     }
@@ -196,9 +198,11 @@ export class PrendusViewQuestion extends Polymer.Element {
 
         if (solutionTemplate) {
             this.action = fireLocalAction(this.componentId, 'builtQuestion', await buildQuestion(solutionTemplate.innerHTML, this._question.code));
+            this.action = fireLocalAction(this.componentId, 'solutionButtonText', 'Question');
         }
         else {
             this.action = fireLocalAction(this.componentId, 'builtQuestion', await buildQuestion(this._question.text, this._question.code));
+            this.action = fireLocalAction(this.componentId, 'solutionButtonText', 'Solution');
         }
     }
 
@@ -212,6 +216,7 @@ export class PrendusViewQuestion extends Polymer.Element {
         if (Object.keys(state.components[this.componentId] || {}).includes('showEmbedCode')) this.showEmbedCode = state.components[this.componentId].showEmbedCode;
         if (Object.keys(state.components[this.componentId] || {}).includes('checkAnswerResponse')) this.checkAnswerResponse = state.components[this.componentId].checkAnswerResponse;
         if (Object.keys(state.components[this.componentId] || {}).includes('showSolution')) this.showSolution = state.components[this.componentId].showSolution;
+        if (Object.keys(state.components[this.componentId] || {}).includes('solutionButtonText')) this.solutionButtonText = state.components[this.componentId].solutionButtonText;
         this.userToken = state.userToken;
 
         const contentDiv = this.shadowRoot.querySelector('#contentDiv');

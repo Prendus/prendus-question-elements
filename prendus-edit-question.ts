@@ -79,26 +79,29 @@ class PrendusEditQuestion extends Polymer.Element {
             return;
         }
 
-        const text = this.shadowRoot.querySelector('#textEditor').value;
-
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text,
-            code: this._question ? this._question.code : ''
-        });
-
         this.action = fireLocalAction(this.componentId, 'saving', true);
 
-        await this.save();
+        debounce(async () => {
+            const text = this.shadowRoot.querySelector('#textEditor').value;
 
-        this.action = fireLocalAction(this.componentId, 'saving', false);
+            this.action = fireLocalAction(this.componentId, 'question', {
+                ...this._question,
+                text,
+                code: this._question ? this._question.code : ''
+            });
 
-        this.dispatchEvent(new CustomEvent('text-changed', {
-            detail: {
-                text
-            },
-            bubbles: false
-        }));
+
+            await this.save();
+
+            this.action = fireLocalAction(this.componentId, 'saving', false);
+
+            this.dispatchEvent(new CustomEvent('text-changed', {
+                detail: {
+                    text
+                },
+                bubbles: false
+            }));
+        }, 200);
     }
 
     async codeEditorChanged() {
@@ -106,26 +109,28 @@ class PrendusEditQuestion extends Polymer.Element {
             return;
         }
 
-        const code = this.shadowRoot.querySelector('#codeEditor').value;
-
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text: this._question ? this._question.text : '',
-            code
-        });
-
         this.action = fireLocalAction(this.componentId, 'saving', true);
 
-        await this.save();
+        debounce(async () => {
+            const code = this.shadowRoot.querySelector('#codeEditor').value;
 
-        this.action = fireLocalAction(this.componentId, 'saving', false);
-
-        this.dispatchEvent(new CustomEvent('code-changed', {
-            detail: {
+            this.action = fireLocalAction(this.componentId, 'question', {
+                ...this._question,
+                text: this._question ? this._question.text : '',
                 code
-            },
-            bubbles: false
-        }));
+            });
+
+            await this.save();
+
+            this.action = fireLocalAction(this.componentId, 'saving', false);
+
+            this.dispatchEvent(new CustomEvent('code-changed', {
+                detail: {
+                    code
+                },
+                bubbles: false
+            }));
+        }, 200);
     }
 
     async questionChanged() {
@@ -497,8 +502,7 @@ class PrendusEditQuestion extends Polymer.Element {
         return [
             'br',
 			'p',
-			'span',
-            'img'
+			'span'
         ];
     }
 
@@ -519,3 +523,9 @@ class PrendusEditQuestion extends Polymer.Element {
 }
 
 window.customElements.define(PrendusEditQuestion.is, PrendusEditQuestion);
+
+let currentTimeoutId: any;
+function debounce(func: () => any, delay: number) {
+    clearTimeout(currentTimeoutId);
+    currentTimeoutId = setTimeout(func, delay);
+}

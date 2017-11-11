@@ -75,6 +75,14 @@ export async function buildQuestion(text: string, code: string): Promise<{
             });
         `);
 
+        if (originalVariableValues.error) {
+            return {
+                html: compileToHTML(originalVariableValues.error, () => generateRandomInteger(0, 100), () => ''),
+                ast: parse(text, () => generateRandomInteger(0, 100), () => ''),
+                originalVariableValues: {}
+            };
+        }
+
         const newAmlAst: AST = await asyncReduce(originalAmlAst.ast, async (result: AST, astObject: ASTObject, index: number) => {
             if (astObject.type === 'VARIABLE') {
                 return {

@@ -131,7 +131,8 @@ export class PrendusViewQuestion extends Polymer.Element {
 
     getSanitizedHTML(html: string) {
         const sanitizedHTML = DOMPurify.sanitize(html, {
-            ADD_ATTR: ['contenteditable'],
+            ADD_ATTR: ['contenteditable', 'fontsize'],
+            ADD_TAGS: ['juicy-ace-editor'],
             SANITIZE_DOM: false // This allows DOMPurify.sanitize to be called multiple times in succession without changing the output (it was removing ids before)
         });
 
@@ -142,6 +143,7 @@ export class PrendusViewQuestion extends Polymer.Element {
         const astVariables: Variable[] = getAstObjects(this.builtQuestion.ast, 'VARIABLE');
         const astInputs: Input[] = getAstObjects(this.builtQuestion.ast, 'INPUT');
         const astEssays: Essay[] = getAstObjects(this.builtQuestion.ast, 'ESSAY');
+        const astCodes: Code[] = getAstObjects(this.builtQuestion.ast, 'CODE');
         const astChecks: Check[] = getAstObjects(this.builtQuestion.ast, 'CHECK');
         const astRadios: Radio[] = getAstObjects(this.builtQuestion.ast, 'RADIO');
         const astDrags: Drag[] = getAstObjects(this.builtQuestion.ast, 'DRAG');
@@ -162,6 +164,12 @@ export class PrendusViewQuestion extends Polymer.Element {
                 value: this.shadowRoot.querySelector(`#${astEssay.varName}`).value
             };
         });
+        const userCodes: UserCode[] = astCodes.map((astCode) => {
+            return {
+                varName: astCode.varName,
+                value: this.shadowRoot.querySelector(`#${astCode.varName}`).value
+            };
+        });
         const userChecks: UserCheck[] = astChecks.map((astCheck) => {
             return {
                 varName: astCheck.varName,
@@ -175,7 +183,7 @@ export class PrendusViewQuestion extends Polymer.Element {
             };
         });
 
-        const checkAnswerInfo = await checkAnswer(this._question.code, this.builtQuestion.originalVariableValues, userVariables, userInputs, userEssays, userChecks, userRadios, userImages);
+        const checkAnswerInfo = await checkAnswer(this._question.code, this.builtQuestion.originalVariableValues, userVariables, userInputs, userEssays, userCodes, userChecks, userRadios, userImages);
 
         this.dispatchEvent(new CustomEvent('question-response', {
             bubbles: false,
@@ -184,7 +192,8 @@ export class PrendusViewQuestion extends Polymer.Element {
                 userInputs,
                 userEssays,
                 userChecks,
-                userRadios
+                userRadios,
+                userCodes
             }
         }));
 

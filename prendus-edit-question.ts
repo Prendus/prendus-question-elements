@@ -6,8 +6,8 @@ import {User} from './prendus-question-elements.d';
 import {RootReducer} from './redux/reducers';
 import {Reducer} from './prendus-question-elements.d';
 import {parse, getAstObjects} from '../assessml/assessml';
-import {AST, Input, Image, Radio, Check, Essay} from '../assessml/assessml.d';
-import {insertEssayIntoCode, insertInputIntoCode, insertRadioOrCheckIntoCode, insertVariableIntoCode, insertImageIntoCode} from './services/question-service';
+import {AST, Input, Image, Radio, Check, Essay, Code} from '../assessml/assessml.d';
+import {insertEssayIntoCode, insertCodeIntoCode, insertInputIntoCode, insertRadioOrCheckIntoCode, insertVariableIntoCode, insertImageIntoCode} from './services/question-service';
 
 class PrendusEditQuestion extends Polymer.Element {
     componentId: string;
@@ -360,6 +360,41 @@ class PrendusEditQuestion extends Polymer.Element {
             ...this._question,
             text,
             code: insertEssayIntoCode(code)
+        });
+
+        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
+        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
+    }
+
+    insertCode(e: CustomEvent) {
+        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
+        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+
+        const ast: AST = parse(this._question.text, () => 5, () => '');
+        const astCodes: Code[] = <Code[]> getAstObjects(ast, 'CODE');
+
+        const varName = `code${astCodes.length + 1}`;
+
+        const textEditor = this.shadowRoot.querySelector('#textEditor');
+        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+
+        const code = codeEditor.value;
+
+        const codeString = `[code]`;
+        const newTextNode = document.createTextNode(codeString);
+        textEditor.range0.insertNode(newTextNode);
+        textEditor.range0.setStart(newTextNode, codeString.length);
+        textEditor.range0.collapse(true);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(textEditor.range0);
+
+        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+
+        this.action = fireLocalAction(this.componentId, 'question', {
+            ...this._question,
+            text,
+            code: insertCodeIntoCode(code)
         });
 
         this.action = fireLocalAction(this.componentId, 'textEditorLock', false);

@@ -256,6 +256,10 @@ function substituteVariablesInObjectExpression(objectExpression: ObjectExpressio
 function substituteVariablesInCallExpression(callExpression: CallExpression, substitutionFunctions, originalVariableValues) {
     return {
         ...callExpression,
+        callee: (() => {
+            const substitutionFunction = substitutionFunctions[callExpression.callee.type];
+            return substitutionFunction ? substitutionFunction(callExpression.callee, substitutionFunctions, originalVariableValues) : callExpression.callee;
+        })(),
         arguments: callExpression.arguments.map((argument) => {
             const substitutionFunction = substitutionFunctions[argument.type];
             return substitutionFunction ? substitutionFunction(argument, substitutionFunctions, originalVariableValues) : argument;
@@ -354,12 +358,31 @@ function substituteVariablesInForStatement(forStatement: ForStatement, substitut
     };
 }
 
-function substituteVariablesInUpdateExpression(updateExpression: updateExpression, substitutionFunctions, originalVariableValues) {
+function substituteVariablesInUpdateExpression(updateExpression: UpdateExpression, substitutionFunctions, originalVariableValues) {
     return {
         ...updateExpression,
         argument: (() => {
             const substitutionFunction = substitutionFunctions[updateExpression.argument.type];
             return substitutionFunction ? substitutionFunction(updateExpression.argument, substitutionFunctions, originalVariableValues) : updateExpression.argument;
+        })()
+    };
+}
+
+function substituteVariablesInMemberExpression(memberExpression: MemberExpression, substitutionFunctions, originalVariableValues) {
+    return {
+        ...memberExpression,
+        object: (() => {
+            const memberExpressionObjectSubstitutionFunctions = {
+                ...substitutionFunctions
+            };
+            delete memberExpressionObjectSubstitutionFunctions.Identifier;
+
+            const substitutionFunction = memberExpressionObjectSubstitutionFunctions[memberExpression.object.type];
+            return substitutionFunction ? substitutionFunction(memberExpression.object, substitutionFunctions, originalVariableValues) : memberExpression.object;
+        })(),
+        property: (() => {
+            const substitutionFunction = substitutionFunctions[memberExpression.property.type];
+            return substitutionFunction ? substitutionFunction(memberExpression.property, substitutionFunctions, originalVariableValues) : memberExpression.property;
         })()
     };
 }
@@ -416,12 +439,13 @@ async function getAssignmentValue(jsAst: Program, amlAst: AST, varName: string, 
     }
 }
 
-export async function checkAnswer(code: string, originalVariableValues, userVariables: UserVariable[], userInputs: UserInput[], userEssays: UserEssay[], userChecks: UserCheck[], userRadios: UserRadio[]) {
+export async function checkAnswer(code: string, originalVariableValues, userVariables: UserVariable[], userInputs: UserInput[], userEssays: UserEssay[], userChecks: UserCheck[], userRadios: UserRadio[], userImages: UserImages[]) {
     const userVariablesString = createUserVariablesString(userVariables);
     const userInputsString = createUserInputsString(userInputs);
     const userEssaysString = createUserEssaysString(userEssays);
     const userChecksString = createUserChecksString(userChecks);
     const userRadiosString = createUserRadiosString(userRadios);
+    const userImagesString = createUserImagesString(userImages);
 
     const substitutionFunctions = {
         'Identifier': substituteVariablesInIdentifier,
@@ -438,9 +462,11 @@ export async function checkAnswer(code: string, originalVariableValues, userVari
         'DoWhileStatement': substituteVariablesInWhileOrDoWhileStatement,
         'ForStatement': substituteVariablesInForStatement,
         'AssignmentExpression': substituteVariablesInAssignmentExpression,
-        'UpdateExpression': substituteVariablesInUpdateExpression
+        'UpdateExpression': substituteVariablesInUpdateExpression,
+        'MemberExpression': substituteVariablesInMemberExpression
     };
     const jsAst = esprima.parse(code);
+
     const jsAstReplacedVariables = substituteVariablesForValues(jsAst, substitutionFunctions, originalVariableValues);
     const codeReplacedVariables = escodegen.generate(jsAstReplacedVariables);
 
@@ -451,6 +477,7 @@ export async function checkAnswer(code: string, originalVariableValues, userVari
         ${userEssaysString}
         ${userChecksString}
         ${userRadiosString}
+        ${userImagesString}
         ${codeReplacedVariables}
 
         postMessage({

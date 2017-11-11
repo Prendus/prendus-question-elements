@@ -1,10 +1,30 @@
 import {GQLRequest} from '../prendus-shared/services/graphql-service';
-import {SetComponentPropertyAction, Question, BuiltQuestion, Reducer, UserInput, UserVariable, UserCheck, UserRadio, UserEssay} from './prendus-question-elements.d';
+import {
+    SetComponentPropertyAction,
+    Question,
+    BuiltQuestion,
+    Reducer,
+    UserInput,
+    UserVariable,
+    UserCheck,
+    UserRadio,
+    UserEssay
+} from './prendus-question-elements.d';
 import {buildQuestion, checkAnswer} from './services/question-service';
 import {createUUID, fireLocalAction} from '../prendus-shared/services/utilities-service';
 import {getAstObjects} from '../assessml/assessml';
 import {RootReducer} from './redux/reducers';
-import {AST, Variable, Input, Essay, Radio, Check, Drag, Drop} from '../assessml/assessml.d';
+import {
+    AST,
+    Variable,
+    Input,
+    Essay,
+    Radio,
+    Check,
+    Drag,
+    Drop,
+    Image
+} from '../assessml/assessml.d';
 
 export class PrendusViewQuestion extends Polymer.Element {
     shadowRoot: ShadowRoot;
@@ -125,8 +145,10 @@ export class PrendusViewQuestion extends Polymer.Element {
         const astRadios: Radio[] = getAstObjects(this.builtQuestion.ast, 'RADIO');
         const astDrags: Drag[] = getAstObjects(this.builtQuestion.ast, 'DRAG');
         const astDrops: Drop[] = getAstObjects(this.builtQuestion.ast, 'DROP');
+        const astImages: Image[] = getAstObjects(this.builtQuestion.ast, 'IMAGE');
 
         const userVariables: UserVariable[] = astVariables;
+        const userImages: UserImage[] = astImages;
         const userInputs: UserInput[] = astInputs.map((astInput) => {
             return {
                 varName: astInput.varName,
@@ -152,7 +174,7 @@ export class PrendusViewQuestion extends Polymer.Element {
             };
         });
 
-        const checkAnswerInfo = await checkAnswer(this._question.code, this.builtQuestion.originalVariableValues, userVariables, userInputs, userEssays, userChecks, userRadios);
+        const checkAnswerInfo = await checkAnswer(this._question.code, this.builtQuestion.originalVariableValues, userVariables, userInputs, userEssays, userChecks, userRadios, userImages);
 
         this.dispatchEvent(new CustomEvent('question-response', {
             bubbles: false,

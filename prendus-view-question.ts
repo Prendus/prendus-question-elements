@@ -31,7 +31,6 @@ export class PrendusViewQuestion extends Polymer.Element {
     componentId: string;
     action: SetComponentPropertyAction;
     questionId: string;
-    question: Question;
     _questionId: string;
     _question: Question;
     builtQuestion: BuiltQuestion;
@@ -196,10 +195,10 @@ export class PrendusViewQuestion extends Polymer.Element {
         const solutionTemplate = <HTMLTemplateElement> this.shadowRoot.querySelector('#solution1');
 
         if (solutionTemplate) {
-            this.action = fireLocalAction(this.componentId, 'builtQuestion', await buildQuestion(solutionTemplate.innerHTML, this.question.code));
+            this.action = fireLocalAction(this.componentId, 'builtQuestion', await buildQuestion(solutionTemplate.innerHTML, this._question.code));
         }
         else {
-            this.action = fireLocalAction(this.componentId, 'builtQuestion', await buildQuestion(this.question.text, this.question.code));
+            this.action = fireLocalAction(this.componentId, 'builtQuestion', await buildQuestion(this._question.text, this._question.code));
         }
     }
 

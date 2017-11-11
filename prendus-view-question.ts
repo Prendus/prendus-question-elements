@@ -31,7 +31,6 @@ export class PrendusViewQuestion extends Polymer.Element {
     componentId: string;
     action: SetComponentPropertyAction;
     questionId: string;
-    question: Question;
     _questionId: string;
     _question: Question;
     builtQuestion: BuiltQuestion;
@@ -40,6 +39,7 @@ export class PrendusViewQuestion extends Polymer.Element {
     showEmbedCode: boolean;
     rootReducer: Reducer;
     checkAnswerResponse: string;
+    solutionButtonText: 'Solution' | 'Question';
 
     static get is() { return 'prendus-view-question'; }
     static get properties() {
@@ -65,6 +65,7 @@ export class PrendusViewQuestion extends Polymer.Element {
 
     async connectedCallback() {
         super.connectedCallback();
+        this.action = fireLocalAction(this.componentId, 'solutionButtonText', 'Solution');
         // this.action = checkForUserToken();
         // this.action = await getAndSetUser();
     }
@@ -130,7 +131,8 @@ export class PrendusViewQuestion extends Polymer.Element {
 
     getSanitizedHTML(html: string) {
         const sanitizedHTML = DOMPurify.sanitize(html, {
-            ADD_ATTR: ['contenteditable'],
+            ADD_ATTR: ['contenteditable', 'fontsize'],
+            ADD_TAGS: ['juicy-ace-editor'],
             SANITIZE_DOM: false // This allows DOMPurify.sanitize to be called multiple times in succession without changing the output (it was removing ids before)
         });
 
@@ -141,6 +143,7 @@ export class PrendusViewQuestion extends Polymer.Element {
         const astVariables: Variable[] = getAstObjects(this.builtQuestion.ast, 'VARIABLE');
         const astInputs: Input[] = getAstObjects(this.builtQuestion.ast, 'INPUT');
         const astEssays: Essay[] = getAstObjects(this.builtQuestion.ast, 'ESSAY');
+        const astCodes: Code[] = getAstObjects(this.builtQuestion.ast, 'CODE');
         const astChecks: Check[] = getAstObjects(this.builtQuestion.ast, 'CHECK');
         const astRadios: Radio[] = getAstObjects(this.builtQuestion.ast, 'RADIO');
         const astDrags: Drag[] = getAstObjects(this.builtQuestion.ast, 'DRAG');
@@ -161,6 +164,12 @@ export class PrendusViewQuestion extends Polymer.Element {
                 value: this.shadowRoot.querySelector(`#${astEssay.varName}`).value
             };
         });
+        const userCodes: UserCode[] = astCodes.map((astCode) => {
+            return {
+                varName: astCode.varName,
+                value: this.shadowRoot.querySelector(`#${astCode.varName}`).value
+            };
+        });
         const userChecks: UserCheck[] = astChecks.map((astCheck) => {
             return {
                 varName: astCheck.varName,
@@ -174,7 +183,7 @@ export class PrendusViewQuestion extends Polymer.Element {
             };
         });
 
-        const checkAnswerInfo = await checkAnswer(this._question.code, this.builtQuestion.originalVariableValues, userVariables, userInputs, userEssays, userChecks, userRadios, userImages);
+        const checkAnswerInfo = await checkAnswer(this._question.code, this.builtQuestion.originalVariableValues, userVariables, userInputs, userEssays, userCodes, userChecks, userRadios, userImages);
 
         this.dispatchEvent(new CustomEvent('question-response', {
             bubbles: false,
@@ -183,7 +192,8 @@ export class PrendusViewQuestion extends Polymer.Element {
                 userInputs,
                 userEssays,
                 userChecks,
-                userRadios
+                userRadios,
+                userCodes
             }
         }));
 
@@ -196,10 +206,12 @@ export class PrendusViewQuestion extends Polymer.Element {
         const solutionTemplate = <HTMLTemplateElement> this.shadowRoot.querySelector('#solution1');
 
         if (solutionTemplate) {
-            this.action = fireLocalAction(this.componentId, 'builtQuestion', await buildQuestion(solutionTemplate.innerHTML, this.question.code));
+            this.action = fireLocalAction(this.componentId, 'builtQuestion', await buildQuestion(solutionTemplate.innerHTML, this._question.code));
+            this.action = fireLocalAction(this.componentId, 'solutionButtonText', 'Question');
         }
         else {
-            this.action = fireLocalAction(this.componentId, 'builtQuestion', await buildQuestion(this.question.text, this.question.code));
+            this.action = fireLocalAction(this.componentId, 'builtQuestion', await buildQuestion(this._question.text, this._question.code));
+            this.action = fireLocalAction(this.componentId, 'solutionButtonText', 'Solution');
         }
     }
 
@@ -213,6 +225,7 @@ export class PrendusViewQuestion extends Polymer.Element {
         if (Object.keys(state.components[this.componentId] || {}).includes('showEmbedCode')) this.showEmbedCode = state.components[this.componentId].showEmbedCode;
         if (Object.keys(state.components[this.componentId] || {}).includes('checkAnswerResponse')) this.checkAnswerResponse = state.components[this.componentId].checkAnswerResponse;
         if (Object.keys(state.components[this.componentId] || {}).includes('showSolution')) this.showSolution = state.components[this.componentId].showSolution;
+        if (Object.keys(state.components[this.componentId] || {}).includes('solutionButtonText')) this.solutionButtonText = state.components[this.componentId].solutionButtonText;
         this.userToken = state.userToken;
 
         const contentDiv = this.shadowRoot.querySelector('#contentDiv');

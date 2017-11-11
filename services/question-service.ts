@@ -13,7 +13,8 @@ import {
     Drag,
     Drop,
     Image,
-    Solution
+    Solution,
+    Code
 } from '../../assessml/assessml.d';
 import {
     Program,
@@ -51,6 +52,7 @@ export async function buildQuestion(text: string, code: string): Promise<{
         const astImages: Image[] = <Image[]> getAstObjects(originalAmlAst, 'IMAGE');
         const astInputs: Input[] = <Input[]> getAstObjects(originalAmlAst, 'INPUT');
         const astEssays: Essay[] = <Essay[]> getAstObjects(originalAmlAst, 'ESSAY');
+        const astCodes: Code[] = <Code[]> getAstObjects(originalAmlAst, 'CODE');
         const astChecks: Check[] = <Check[]> getAstObjects(originalAmlAst, 'CHECK');
         const astRadios: Radio[] = <Radio[]> getAstObjects(originalAmlAst, 'RADIO');
 
@@ -58,6 +60,7 @@ export async function buildQuestion(text: string, code: string): Promise<{
         const astImagesString = createUserImagesString(astImages);
         const astInputsString = createUserInputsString(astInputs);
         const astEssaysString = createUserEssaysString(astEssays);
+        const astCodesString = createUserCodesString(astCodes);
         const astChecksString = createUserChecksString(astChecks);
         const astRadiosString = createUserRadiosString(astRadios);
 
@@ -67,6 +70,7 @@ export async function buildQuestion(text: string, code: string): Promise<{
             ${astImagesString}
             ${astInputsString}
             ${astEssaysString}
+            ${astCodesString}
             ${astChecksString}
             ${astRadiosString}
             ${code}
@@ -74,6 +78,14 @@ export async function buildQuestion(text: string, code: string): Promise<{
                 ${[...astVariables.map((astVariable: Variable) => astVariable.varName), ...astImages.map((astImage: Image) => astImage.varName), getAssignedToVariableNames(esprima.parse(code), astInputs, astEssays, astChecks, astRadios)]}
             });
         `);
+
+        if (originalVariableValues.error) {
+            return {
+                html: compileToHTML(originalVariableValues.error, () => generateRandomInteger(0, 100), () => ''),
+                ast: parse(text, () => generateRandomInteger(0, 100), () => ''),
+                originalVariableValues: {}
+            };
+        }
 
         const newAmlAst: AST = await asyncReduce(originalAmlAst.ast, async (result: AST, astObject: ASTObject, index: number) => {
             if (astObject.type === 'VARIABLE') {
@@ -439,10 +451,11 @@ async function getAssignmentValue(jsAst: Program, amlAst: AST, varName: string, 
     }
 }
 
-export async function checkAnswer(code: string, originalVariableValues, userVariables: UserVariable[], userInputs: UserInput[], userEssays: UserEssay[], userChecks: UserCheck[], userRadios: UserRadio[], userImages: UserImages[]) {
+export async function checkAnswer(code: string, originalVariableValues, userVariables: UserVariable[], userInputs: UserInput[], userEssays: UserEssay[], userCodes: UserCodes[], userChecks: UserCheck[], userRadios: UserRadio[], userImages: UserImages[]) {
     const userVariablesString = createUserVariablesString(userVariables);
     const userInputsString = createUserInputsString(userInputs);
     const userEssaysString = createUserEssaysString(userEssays);
+    const userCodesString = createUserCodesString(userCodes);
     const userChecksString = createUserChecksString(userChecks);
     const userRadiosString = createUserRadiosString(userRadios);
     const userImagesString = createUserImagesString(userImages);
@@ -475,6 +488,7 @@ export async function checkAnswer(code: string, originalVariableValues, userVari
         ${userVariablesString}
         ${userInputsString}
         ${userEssaysString}
+        ${userCodesString}
         ${userChecksString}
         ${userRadiosString}
         ${userImagesString}
@@ -515,6 +529,15 @@ function createUserEssaysString(userEssays: UserEssay[]) {
         value: ''
     }).reduce((result: string, userEssay) => {
         return `${result}let ${userEssay.varName} = '${userEssay.value.replace(/\\/g, '\\\\').replace(/'/g, '\\\'').replace(/\n/g, '\\n')}';`;
+    }, '');
+}
+
+function createUserCodesString(userCodes: UserCode[]) {
+    return userCodes.map((userCode) => Object.keys(userCode).includes('value') ? userCode : {
+        ...userCode,
+        value: ''
+    }).reduce((result: string, userCode) => {
+        return `${result}let ${userCode.varName} = '${userCode.value.replace(/\\/g, '\\\\').replace(/'/g, '\\\'').replace(/\n/g, '\\n')}';`;
     }, '');
 }
 
@@ -677,6 +700,19 @@ export function insertInputIntoCode(code: string, varName: string, answer: strin
 }
 
 export function insertEssayIntoCode(code: string): string {
+    const jsAst: Program = esprima.parse(code);
+    const expressionToAdd: Literal = {
+        type: 'Literal',
+        value: true,
+        raw: "true"
+    };
+    return escodegen.generate({
+        ...jsAst,
+        body: addToAnswerAssignment(jsAst, expressionToAdd)
+    });
+}
+
+export function insertCodeIntoCode(code: string): string {
     const jsAst: Program = esprima.parse(code);
     const expressionToAdd: Literal = {
         type: 'Literal',

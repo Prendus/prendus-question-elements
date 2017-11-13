@@ -89,11 +89,12 @@ export async function buildQuestion(text: string, code: string): Promise<{
 
         const newAmlAst: AST = await asyncReduce(originalAmlAst.ast, async (result: AST, astObject: ASTObject, index: number) => {
             if (astObject.type === 'VARIABLE') {
+                const originalVariableValue = originalVariableValues[astObject.varName];
                 return {
                     ...result,
                     ast: [...result.ast.slice(0, index), {
                         ...astObject,
-                        value: originalVariableValues[astObject.varName] || generateRandomInteger(0, 10)
+                        value: (originalVariableValue || originalVariableValue === 0) ? originalVariableValue : generateRandomInteger(0, 10)
                     }, ...result.ast.slice(index + 1)]
                 };
             }
@@ -115,9 +116,10 @@ export async function buildQuestion(text: string, code: string): Promise<{
                         ...astObject,
                         content: await asyncReduce(astObject.content, async (result: (Variable | Content | Image)[], astObject: Variable | Content, index: number) => {
                             if (astObject.type === 'VARIABLE') {
+                                const originalVariableValue = originalVariableValues[astObject.varName];
                                 return [...result.slice(0, index), {
                                     ...astObject,
-                                    value: originalVariableValues[astObject.varName] || generateRandomInteger(0, 10)
+                                    value: (originalVariableValue || originalVariableValue === 0) ? originalVariableValue : generateRandomInteger(0, 10)
                                 }, ...result.slice(index + 1)];
                             }
 

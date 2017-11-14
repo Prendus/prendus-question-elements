@@ -206,7 +206,7 @@ export class PrendusViewQuestion extends Polymer.Element {
         const solutionTemplate = <HTMLTemplateElement> this.shadowRoot.querySelector('#solution1');
 
         if (solutionTemplate) {
-            this.action = fireLocalAction(this.componentId, 'builtQuestion', await buildQuestion(solutionTemplate.innerHTML, this._question.code));
+            this.action = fireLocalAction(this.componentId, 'builtQuestion', await buildQuestion(`${solutionTemplate.innerHTML}<template>${this._question.text}</template>`, this._question.code));
             this.action = fireLocalAction(this.componentId, 'solutionButtonText', 'Question');
         }
         else {

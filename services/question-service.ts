@@ -382,6 +382,20 @@ function substituteVariablesInUpdateExpression(updateExpression: UpdateExpressio
     };
 }
 
+function substituteVariablesInLogicalExpression(logicalExpression: LogicalExpression, substitutionFunctions, originalVariableValues) {
+    return {
+        ...logicalExpression,
+        left: (() => {
+            const substitutionFunction = substitutionFunctions[logicalExpression.left.type];
+            return substitutionFunction ? substitutionFunction(logicalExpression.left, substitutionFunctions, originalVariableValues) : logicalExpression.left;
+        })(),
+        right: (() => {
+            const substitutionFunction = substitutionFunctions[logicalExpression.right.type];
+            return substitutionFunction ? substitutionFunction(logicalExpression.right, substitutionFunctions, originalVariableValues) : logicalExpression.right;
+        })()
+    };
+}
+
 function substituteVariablesInMemberExpression(memberExpression: MemberExpression, substitutionFunctions, originalVariableValues) {
     return {
         ...memberExpression,
@@ -478,7 +492,8 @@ export async function checkAnswer(code: string, originalVariableValues, userVari
         'ForStatement': substituteVariablesInForStatement,
         'AssignmentExpression': substituteVariablesInAssignmentExpression,
         'UpdateExpression': substituteVariablesInUpdateExpression,
-        'MemberExpression': substituteVariablesInMemberExpression
+        'MemberExpression': substituteVariablesInMemberExpression,
+        'LogicalExpression': substituteVariablesInLogicalExpression
     };
     const jsAst = esprima.parse(code);
 

@@ -12,7 +12,7 @@ import {
 } from './prendus-question-elements.d';
 import {buildQuestion, checkAnswer} from './services/question-service';
 import {createUUID, fireLocalAction} from '../prendus-shared/services/utilities-service';
-import {getAstObjects} from '../assessml/assessml';
+import {getAstObjects, compileToHTML} from '../assessml/assessml';
 import {RootReducer} from './redux/reducers';
 import {
     AST,
@@ -204,13 +204,18 @@ export class PrendusViewQuestion extends Polymer.Element {
 
     async showSolutionClick() {
         const solutionTemplate = <HTMLTemplateElement> this.shadowRoot.querySelector('#solution1');
-
         if (solutionTemplate) {
-            this.action = fireLocalAction(this.componentId, 'builtQuestion', await buildQuestion(`${solutionTemplate.innerHTML}<template>${this._question.text}</template>`, this._question.code));
+            this.action = fireLocalAction(this.componentId, 'builtQuestion', {
+                ...this.builtQuestion,
+                html: `${solutionTemplate.innerHTML}<template>${this._question.text}</template>`
+            });
             this.action = fireLocalAction(this.componentId, 'solutionButtonText', 'Question');
         }
         else {
-            this.action = fireLocalAction(this.componentId, 'builtQuestion', await buildQuestion(this._question.text, this._question.code));
+            this.action = fireLocalAction(this.componentId, 'builtQuestion', {
+                ...this.builtQuestion,
+                html: compileToHTML(this.builtQuestion.ast, () => NaN, () => '')
+            });
             this.action = fireLocalAction(this.componentId, 'solutionButtonText', 'Solution');
         }
     }

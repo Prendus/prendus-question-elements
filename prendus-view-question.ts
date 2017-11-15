@@ -149,9 +149,11 @@ export class PrendusViewQuestion extends Polymer.Element {
         const astDrags: Drag[] = getAstObjects(this.builtQuestion.ast, 'DRAG');
         const astDrops: Drop[] = getAstObjects(this.builtQuestion.ast, 'DROP');
         const astImages: Image[] = getAstObjects(this.builtQuestion.ast, 'IMAGE');
+        const astGraphs: Graph[] = getAstObjects(this.builtQuestion.ast, 'GRAPH');
 
         const userVariables: UserVariable[] = astVariables;
         const userImages: UserImage[] = astImages;
+        const userGraphs: UserGraph[] = astGraphs;
         const userInputs: UserInput[] = astInputs.map((astInput) => {
             return {
                 varName: astInput.varName,
@@ -183,7 +185,7 @@ export class PrendusViewQuestion extends Polymer.Element {
             };
         });
 
-        const checkAnswerInfo = await checkAnswer(this._question.code, this.builtQuestion.originalVariableValues, userVariables, userInputs, userEssays, userCodes, userChecks, userRadios, userImages);
+        const checkAnswerInfo = await checkAnswer(this._question.code, this.builtQuestion.originalVariableValues, userVariables, userInputs, userEssays, userCodes, userChecks, userRadios, userImages, userGraphs);
 
         this.dispatchEvent(new CustomEvent('question-response', {
             bubbles: false,

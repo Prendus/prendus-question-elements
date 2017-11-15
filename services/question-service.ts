@@ -144,6 +144,13 @@ export async function buildQuestion(text: string, code: string): Promise<{
                                 }, ...result.slice(index + 1)];
                             }
 
+                            if (astObject.type === 'GRAPH') {
+                                return [...result.slice(0, index), {
+                                    ...astObject,
+                                    equations: originalVariableValues[astObject.varName].equations || []
+                                }, ...result.slice(index + 1)];
+                            }
+
                             return result;
                         }, astObject.content)
                     }, ...result.ast.slice(index + 1)]
@@ -481,7 +488,7 @@ async function getAssignmentValue(jsAst: Program, amlAst: AST, varName: string, 
     }
 }
 
-export async function checkAnswer(code: string, originalVariableValues, userVariables: UserVariable[], userInputs: UserInput[], userEssays: UserEssay[], userCodes: UserCodes[], userChecks: UserCheck[], userRadios: UserRadio[], userImages: UserImages[]) {
+export async function checkAnswer(code: string, originalVariableValues, userVariables: UserVariable[], userInputs: UserInput[], userEssays: UserEssay[], userCodes: UserCodes[], userChecks: UserCheck[], userRadios: UserRadio[], userImages: UserImages[], userGraphs: UserGraphs[]) {
     const userVariablesString = createUserVariablesString(userVariables);
     const userInputsString = createUserInputsString(userInputs);
     const userEssaysString = createUserEssaysString(userEssays);
@@ -489,6 +496,7 @@ export async function checkAnswer(code: string, originalVariableValues, userVari
     const userChecksString = createUserChecksString(userChecks);
     const userRadiosString = createUserRadiosString(userRadios);
     const userImagesString = createUserImagesString(userImages);
+    const userGraphsString = createUserGraphsString(userGraphs);
 
     const substitutionFunctions = {
         'Identifier': substituteVariablesInIdentifier,
@@ -523,6 +531,7 @@ export async function checkAnswer(code: string, originalVariableValues, userVari
         ${userChecksString}
         ${userRadiosString}
         ${userImagesString}
+        ${userGraphsString}
         ${codeReplacedVariables}
 
         postMessage({

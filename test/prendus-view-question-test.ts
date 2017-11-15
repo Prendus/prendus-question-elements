@@ -1,5 +1,3 @@
-import {html} from '../node_modules/lit-html/lit-html';
-import {render} from '../node_modules/lit-html/lib/lit-extended';
 import {parse, compileToAssessML, compileToHTML} from '../node_modules/assessml/assessml';
 import {AST, ASTObject} from '../node_modules/assessml/assessml.d';
 import {GQLRequest} from '../node_modules/prendus-shared/services/graphql-service';

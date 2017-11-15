@@ -14,7 +14,8 @@ import {
     Drop,
     Image,
     Solution,
-    Code
+    Code,
+    Graph
 } from '../../assessml/assessml.d';
 import {
     Program,
@@ -46,7 +47,7 @@ export async function buildQuestion(text: string, code: string): Promise<{
     originalVariableValues;
 }> {
     try {
-        const originalAmlAst = parse(text, () => generateRandomInteger(0, 10), () => '');
+        const originalAmlAst = parse(text, () => generateRandomInteger(0, 10), () => '', () => []);
 
         const astVariables: Variable[] = <Variable[]> getAstObjects(originalAmlAst, 'VARIABLE');
         const astImages: Image[] = <Image[]> getAstObjects(originalAmlAst, 'IMAGE');
@@ -55,6 +56,7 @@ export async function buildQuestion(text: string, code: string): Promise<{
         const astCodes: Code[] = <Code[]> getAstObjects(originalAmlAst, 'CODE');
         const astChecks: Check[] = <Check[]> getAstObjects(originalAmlAst, 'CHECK');
         const astRadios: Radio[] = <Radio[]> getAstObjects(originalAmlAst, 'RADIO');
+        const astGraphs: Graph[] = <Graph[]> getAstObjects(originalAmlAst, 'GRAPH');
 
         const astVariablesString = createUserVariablesString(astVariables);
         const astImagesString = createUserImagesString(astImages);
@@ -63,9 +65,10 @@ export async function buildQuestion(text: string, code: string): Promise<{
         const astCodesString = createUserCodesString(astCodes);
         const astChecksString = createUserChecksString(astChecks);
         const astRadiosString = createUserRadiosString(astRadios);
+        const astGraphsString = createUserGraphsString(astGraphs);
 
         const originalVariableValues = await secureEval(`
-            let answer;
+            let answer = true;
             ${astVariablesString}
             ${astImagesString}
             ${astInputsString}
@@ -73,15 +76,16 @@ export async function buildQuestion(text: string, code: string): Promise<{
             ${astCodesString}
             ${astChecksString}
             ${astRadiosString}
+            ${astGraphsString}
             ${code}
             postMessage({
-                ${[...astVariables.map((astVariable: Variable) => astVariable.varName), ...astImages.map((astImage: Image) => astImage.varName), getAssignedToVariableNames(esprima.parse(code), astInputs, astEssays, astChecks, astRadios)]}
+                ${[...astVariables.map((astVariable: Variable) => astVariable.varName), ...astImages.map((astImage: Image) => astImage.varName), ...astGraphs.map((astGraph: Graph) => astGraph.varName), getAssignedToVariableNames(esprima.parse(code), astInputs, astEssays, astChecks, astRadios)]}
             });
         `);
 
         if (originalVariableValues.error) {
             return {
-                html: compileToHTML(originalVariableValues.error, () => generateRandomInteger(0, 100), () => ''),
+                html: compileToHTML(originalVariableValues.error, () => generateRandomInteger(0, 100), () => '', () => []),
                 ast: parse(text, () => generateRandomInteger(0, 100), () => ''),
                 originalVariableValues: {}
             };
@@ -105,6 +109,16 @@ export async function buildQuestion(text: string, code: string): Promise<{
                     ast: [...result.ast.slice(0, index), {
                         ...astObject,
                         src: originalVariableValues[astObject.varName] ? originalVariableValues[astObject.varName].src : ''
+                    }, ...result.ast.slice(index + 1)]
+                };
+            }
+
+            if (astObject.type === 'GRAPH') {
+                return {
+                    ...result,
+                    ast: [...result.ast.slice(0, index), {
+                        ...astObject,
+                        equations: originalVariableValues[astObject.varName].equations || []
                     }, ...result.ast.slice(index + 1)]
                 };
             }
@@ -142,7 +156,7 @@ export async function buildQuestion(text: string, code: string): Promise<{
         const normalizedAmlAst: AST = normalizeVariables(newAmlAst);
 
         return {
-            html: compileToHTML(normalizedAmlAst, () => generateRandomInteger(0, 10), () => ''),
+            html: compileToHTML(normalizedAmlAst, () => generateRandomInteger(0, 10), () => '', () => []),
             ast: normalizedAmlAst,
             originalVariableValues
         };
@@ -152,8 +166,8 @@ export async function buildQuestion(text: string, code: string): Promise<{
         console.log('probably a JS parsing error while the user is typing');
         // There will be many intermediate JavaScript parsing errors while the user is typing. If that happens, do nothing
         return {
-            html: compileToHTML(text, () => generateRandomInteger(0, 100), () => ''),
-            ast: parse(text, () => generateRandomInteger(0, 100), () => ''),
+            html: compileToHTML(text, () => generateRandomInteger(0, 100), () => '', () => []),
+            ast: parse(text, () => generateRandomInteger(0, 100), () => '', () => []),
             originalVariableValues: {}
         };
     }
@@ -531,6 +545,12 @@ function createUserImagesString(astImages: Image[]) {
     }, '');
 }
 
+function createUserGraphsString(astGraphs: Graph[]) {
+    return normalizeUserGraphs(astGraphs).reduce((result: string, astGraph: Graph) => {
+        return `${result}let ${astGraph.varName} = {};`;
+    }, '');
+}
+
 function createUserInputsString(userInputs: UserInput[]) {
     return userInputs.map((userInput) => Object.keys(userInput).includes('value') ? userInput : {
         ...userInput,
@@ -591,6 +611,12 @@ function normalizeUserImages(userImages: UserImage[] | Image[]): UserVariable[] 
     return userImages.reduce((result: UserVariable[] | Variable[], outerUserImage: UserVariable | Variable, index: number) => {
         return [userImages[index], ...result.filter((innerUserImage) => outerUserImage.varName !== innerUserImage.varName)];
     }, userImages);
+}
+
+function normalizeUserGraphs(userGraphs: UserGraph[] | Graph[]): UserGraph[] | Graph[] {
+    return userGraphs.reduce((result: UserGraph[] | Graph[], outerUserGraph: UserGraph | Graph, index: number) => {
+        return [userGraphs[index], ...result.filter((innerUserGraph) => outerUserGraph.varName !== innerUserGraph.varName)];
+    }, userGraphs);
 }
 
 export async function insertVariableIntoCode(code: string, varName: string, minValue: string, maxValue: string, precisionValue: string) {

@@ -2,7 +2,7 @@ import {parse, compileToAssessML, compileToHTML} from '../node_modules/assessml/
 import {AST, ASTObject} from '../node_modules/assessml/assessml.d';
 import {GQLRequest} from '../node_modules/prendus-shared/services/graphql-service';
 import {arbAST, verifyHTML, resetNums} from '../node_modules/assessml/test-utilities';
-import {generateVarValue, getImageSrc} from '../node_modules/assessml/assessml';
+import {generateVarValue, getImageSrc, getGraphEquations} from '../node_modules/assessml/assessml';
 import {generateArbQuestion} from '../node_modules/prendus-question-elements/test-utilities';
 import {UserCheck, UserRadio, UserInput, UserEssay, Question} from '../prendus-question-elements.d';
 import * as JSVerify from 'jsverify';
@@ -388,8 +388,8 @@ function verifyQuestionLoaded(prendusViewQuestion, arbQuestion) {
     const result = (
         deepEqual(prendusViewQuestion._question, arbQuestion) &&
         deepEqual(prendusViewQuestion.loaded, true) &&
-        deepEqual(compileToAssessML(prendusViewQuestion.builtQuestion.ast, () => 5, () => ''), arbQuestion.text) &&
-        verifyHTML(parse(arbQuestion.text, (varName: string) => generateVarValue(prendusViewQuestion.builtQuestion.ast, varName), (varName) => getImageSrc(prendusViewQuestion.builtQuestion.ast, varName)), prendusViewQuestion.builtQuestion.html)
+        deepEqual(compileToAssessML(prendusViewQuestion.builtQuestion.ast, () => 5, () => '', () => []), arbQuestion.text) &&
+        verifyHTML(parse(arbQuestion.text, (varName: string) => generateVarValue(prendusViewQuestion.builtQuestion.ast, varName), (varName) => getImageSrc(prendusViewQuestion.builtQuestion.ast, varName), (varName) => getGraphEquations(prendusViewQuestion.builtQuestion.ast, varName)), prendusViewQuestion.builtQuestion.html)
     );
 
     return result;

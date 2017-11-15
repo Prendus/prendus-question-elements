@@ -20,9 +20,6 @@
     // this is so that DOMPurify loads onto the window object even if it is run inside of Electron, which also has a Node.js runtime, which was messing up the module export because it was confused about being in the browser and Node.js
     if (window && window.process && window.process.type) {
         window.DOMPurify = require('dompurify');
-    }
-
-    if (module) {
         window.d3 = module.exports;
     }
 </script>

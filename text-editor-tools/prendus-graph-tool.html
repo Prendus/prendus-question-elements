@@ -1,0 +1,20 @@
+<link rel="import" href="../../../bower_components/wysiwyg-e/wysiwyg-tool.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../../../bower_components/paper-tooltip/paper-tooltip.html">
+
+<dom-module id="prendus-graph-tool">
+    <template>
+        <style include="wysiwyg-tool"></style>
+        <paper-button id="button" disabled="[[disabled]]">
+            <iron-icon icon="editor:show-chart"></iron-icon>
+        </paper-button>
+        <paper-tooltip id="tooltip" for="button" position="[[tooltipPosition]]" offset="5">
+			<span>Graph</span>
+		</paper-tooltip>
+    </template>
+
+    <script src="prendus-graph-tool.ts"></script>
+</dom-module>

@@ -2,7 +2,7 @@ import {parse, compileToAssessML, compileToHTML} from '../node_modules/assessml/
 import {AST, ASTObject} from '../node_modules/assessml/assessml.d';
 import {GQLRequest} from '../node_modules/prendus-shared/services/graphql-service';
 import {arbAST, verifyHTML, resetNums} from '../node_modules/assessml/test-utilities';
-import {generateVarValue, getImageSrc, getGraphEquations} from '../node_modules/assessml/assessml';
+import {generateVarValue, getASTObjectPayload} from '../node_modules/assessml/assessml';
 import {generateArbQuestion} from '../node_modules/prendus-question-elements/test-utilities';
 import {UserCheck, UserRadio, UserInput, UserEssay, Question} from '../prendus-question-elements.d';
 import * as JSVerify from 'jsverify';
@@ -26,6 +26,8 @@ class PrendusViewQuestionTest extends HTMLElement {
         test('set questionId property once with no residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test3.bind(this));
         test('set questionId property multiple times with residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test4.bind(this));
         test('interleave the setting of the question and questionId properties with residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)()), jsc.bool], test5.bind(this));
+
+        //TODO the check answer tests should be rethought
         test('user inputs correct answer with no residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test6.bind(this));
         test('user inputs correct answer with residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test7.bind(this));
         test('user inputs incorrect answer with no residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test8.bind(this));
@@ -388,8 +390,26 @@ function verifyQuestionLoaded(prendusViewQuestion, arbQuestion) {
     const result = (
         deepEqual(prendusViewQuestion._question, arbQuestion) &&
         deepEqual(prendusViewQuestion.loaded, true) &&
-        deepEqual(compileToAssessML(prendusViewQuestion.builtQuestion.ast, () => 5, () => '', () => []), arbQuestion.text) &&
-        verifyHTML(parse(arbQuestion.text, (varName: string) => generateVarValue(prendusViewQuestion.builtQuestion.ast, varName), (varName) => getImageSrc(prendusViewQuestion.builtQuestion.ast, varName), (varName) => getGraphEquations(prendusViewQuestion.builtQuestion.ast, varName)), prendusViewQuestion.builtQuestion.html)
+        deepEqual(
+            compileToAssessML(
+                prendusViewQuestion.builtQuestion.ast,
+                (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'VARIABLE', varName),
+                (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'IMAGE', varName),
+                (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'GRAPH', varName),
+                (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'SHUFFLE', varName)
+            ),
+            arbQuestion.text
+        ) &&
+        verifyHTML(
+            parse(
+                arbQuestion.text,
+                (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'VARIABLE', varName),
+                (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'IMAGE', varName),
+                (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'GRAPH', varName),
+                (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'SHUFFLE', varName)
+            ),
+            prendusViewQuestion.builtQuestion.html
+        )
     );
 
     return result;

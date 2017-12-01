@@ -38,7 +38,7 @@ import {
     ConditionalExpression
 } from 'estree';
 import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay} from '../prendus-question-elements.d';
-import {normalizeVariables} from '../../assessml/assessml';
+import {normalizeASTObjectPayloads} from '../../assessml/assessml';
 
 //TODO there is a lot of repeated code in here
 export async function buildQuestion(text: string, code: string): Promise<{
@@ -47,7 +47,7 @@ export async function buildQuestion(text: string, code: string): Promise<{
     originalVariableValues;
 }> {
     try {
-        const originalAmlAst = parse(text, () => generateRandomInteger(0, 10), () => '', () => []);
+        const originalAmlAst = parse(text, () => generateRandomInteger(0, 10), () => '', () => [], () => null);
 
         const astVariables: Variable[] = <Variable[]> getAstObjects(originalAmlAst, 'VARIABLE');
         const astImages: Image[] = <Image[]> getAstObjects(originalAmlAst, 'IMAGE');
@@ -85,85 +85,17 @@ export async function buildQuestion(text: string, code: string): Promise<{
 
         if (originalVariableValues.error) {
             return {
-                html: compileToHTML(originalVariableValues.error, () => generateRandomInteger(0, 100), () => '', () => []),
-                ast: parse(text, () => generateRandomInteger(0, 100), () => ''),
+                html: compileToHTML(originalVariableValues.error, () => generateRandomInteger(0, 100), () => '', () => [], () => []),
+                ast: parse(text, () => generateRandomInteger(0, 100), () => '', () => [], () => []),
                 originalVariableValues: {}
             };
         }
 
-        const newAmlAst: AST = await asyncReduce(originalAmlAst.ast, async (result: AST, astObject: ASTObject, index: number) => {
-            if (astObject.type === 'VARIABLE') {
-                const originalVariableValue = originalVariableValues[astObject.varName];
-                return {
-                    ...result,
-                    ast: [...result.ast.slice(0, index), {
-                        ...astObject,
-                        value: (originalVariableValue || originalVariableValue === 0) ? originalVariableValue : generateRandomInteger(0, 10)
-                    }, ...result.ast.slice(index + 1)]
-                };
-            }
-
-            if (astObject.type === 'IMAGE') {
-                return {
-                    ...result,
-                    ast: [...result.ast.slice(0, index), {
-                        ...astObject,
-                        src: originalVariableValues[astObject.varName] ? originalVariableValues[astObject.varName].src : ''
-                    }, ...result.ast.slice(index + 1)]
-                };
-            }
-
-            if (astObject.type === 'GRAPH') {
-                return {
-                    ...result,
-                    ast: [...result.ast.slice(0, index), {
-                        ...astObject,
-                        equations: originalVariableValues[astObject.varName].equations || []
-                    }, ...result.ast.slice(index + 1)]
-                };
-            }
-
-            if (astObject.type === 'RADIO' || astObject.type === 'CHECK' || astObject.type === 'SOLUTION') {
-                return {
-                    ...result,
-                    ast: [...result.ast.slice(0, index), {
-                        ...astObject,
-                        content: await asyncReduce(astObject.content, async (result: (Variable | Content | Image)[], astObject: Variable | Content, index: number) => {
-                            if (astObject.type === 'VARIABLE') {
-                                const originalVariableValue = originalVariableValues[astObject.varName];
-                                return [...result.slice(0, index), {
-                                    ...astObject,
-                                    value: (originalVariableValue || originalVariableValue === 0) ? originalVariableValue : generateRandomInteger(0, 10)
-                                }, ...result.slice(index + 1)];
-                            }
-
-                            if (astObject.type === 'IMAGE') {
-                                return [...result.slice(0, index), {
-                                    ...astObject,
-                                    src: originalVariableValues[astObject.varName] ? originalVariableValues[astObject.varName].src : ''
-                                }, ...result.slice(index + 1)];
-                            }
-
-                            if (astObject.type === 'GRAPH') {
-                                return [...result.slice(0, index), {
-                                    ...astObject,
-                                    equations: originalVariableValues[astObject.varName].equations || []
-                                }, ...result.slice(index + 1)];
-                            }
-
-                            return result;
-                        }, astObject.content)
-                    }, ...result.ast.slice(index + 1)]
-                };
-            }
-
-            return result;
-        }, originalAmlAst);
-
-        const normalizedAmlAst: AST = normalizeVariables(newAmlAst);
+        const newAmlAst: AST = await injectVariableValues(originalAmlAst, originalVariableValues);
+        const normalizedAmlAst: AST = normalizeASTObjectPayloads(newAmlAst, newAmlAst);
 
         return {
-            html: compileToHTML(normalizedAmlAst, () => generateRandomInteger(0, 10), () => '', () => []),
+            html: compileToHTML(normalizedAmlAst, () => generateRandomInteger(0, 10), () => '', () => [], () => []),
             ast: normalizedAmlAst,
             originalVariableValues
         };
@@ -173,11 +105,68 @@ export async function buildQuestion(text: string, code: string): Promise<{
         console.log('probably a JS parsing error while the user is typing');
         // There will be many intermediate JavaScript parsing errors while the user is typing. If that happens, do nothing
         return {
-            html: compileToHTML(text, () => generateRandomInteger(0, 100), () => '', () => []),
-            ast: parse(text, () => generateRandomInteger(0, 100), () => '', () => []),
+            html: compileToHTML(text, () => generateRandomInteger(0, 100), () => '', () => [], () => []),
+            ast: parse(text, () => generateRandomInteger(0, 100), () => '', () => [], () => []),
             originalVariableValues: {}
         };
     }
+}
+
+async function injectVariableValues(originalAmlAst: AST, originalVariableValues): Promise<AST> {
+    return await asyncReduce(originalAmlAst.ast, async (result: AST, astObject: ASTObject, index: number) => {
+        if (astObject.type === 'VARIABLE') {
+            const originalVariableValue = originalVariableValues[astObject.varName];
+            return {
+                ...result,
+                ast: [...result.ast.slice(0, index), {
+                    ...astObject,
+                    value: (originalVariableValue || originalVariableValue === 0) ? originalVariableValue : generateRandomInteger(0, 10)
+                }, ...result.ast.slice(index + 1)]
+            };
+        }
+
+        if (astObject.type === 'IMAGE') {
+            return {
+                ...result,
+                ast: [...result.ast.slice(0, index), {
+                    ...astObject,
+                    src: originalVariableValues[astObject.varName] ? originalVariableValues[astObject.varName].src : ''
+                }, ...result.ast.slice(index + 1)]
+            };
+        }
+
+        if (astObject.type === 'GRAPH') {
+            return {
+                ...result,
+                ast: [...result.ast.slice(0, index), {
+                    ...astObject,
+                    equations: originalVariableValues[astObject.varName].equations || []
+                }, ...result.ast.slice(index + 1)]
+            };
+        }
+
+        if (
+            astObject.type === 'CHECK' ||
+            astObject.type === 'RADIO' ||
+            astObject.type === 'SOLUTION' ||
+            astObject.type === 'SHUFFLE' ||
+            astObject.type === 'DRAG' ||
+            astObject.type === 'DROP'
+        ) {
+            return {
+                ...result,
+                ast: [...result.ast.slice(0, index), {
+                    ...astObject,
+                    content: (await injectVariableValues({
+                        type: 'AST',
+                        ast: astObject.content
+                    }, originalVariableValues)).ast
+                }, ...result.ast.slice(index + 1)]
+            };
+        }
+
+        return result;
+    }, originalAmlAst);
 }
 
 // returns the names of all variables that have been assigned to in an Esprima JavaScript AST

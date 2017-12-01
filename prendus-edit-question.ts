@@ -405,7 +405,7 @@ class PrendusEditQuestion extends Polymer.Element {
         this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
         this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
 
-        const ast: AST = parse(this._question.text, () => 5, () => '', () => []);
+        const ast: AST = parse(this._question.text, () => 5, () => '', () => [], () => []);
         const astRadios: Radio[] = <Radio[]> getAstObjects(ast, 'RADIO');
 
         const varName = `radio${astRadios.length + 1}`;
@@ -416,7 +416,7 @@ class PrendusEditQuestion extends Polymer.Element {
 
         const code = codeEditor.value;
 
-        const radioString = `[*]${content}[*]`;
+        const radioString = `[radio start]${content}[radio end]`;
         const newTextNode = document.createTextNode(radioString);
         textEditor.range0.insertNode(newTextNode);
         textEditor.range0.setStart(newTextNode, radioString.length);
@@ -441,7 +441,7 @@ class PrendusEditQuestion extends Polymer.Element {
         this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
         this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
 
-        const ast: AST = parse(this._question.text, () => 5, () => '', () => []);
+        const ast: AST = parse(this._question.text, () => 5, () => '', () => [], () => []);
         const astChecks: Check[] = <Check[]> getAstObjects(ast, 'CHECK');
 
         const varName = `check${astChecks.length + 1}`;
@@ -452,7 +452,7 @@ class PrendusEditQuestion extends Polymer.Element {
 
         const code = codeEditor.value;
 
-        const checkString = `[x]${content}[x]`;
+        const checkString = `[check start]${content}[check end]`;
         const newTextNode = document.createTextNode(checkString);
         textEditor.range0.insertNode(newTextNode);
         textEditor.range0.setStart(newTextNode, checkString.length);
@@ -504,7 +504,7 @@ class PrendusEditQuestion extends Polymer.Element {
         this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
         this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
 
-        const ast: AST = parse(this._question.text, () => 5, () => '', () => []);
+        const ast: AST = parse(this._question.text, () => 5, () => '', () => [], () => []);
         const { dataUrl } = e.detail;
         const textEditor = this.shadowRoot.querySelector('#textEditor');
         const codeEditor = this.shadowRoot.querySelector('#codeEditor');
@@ -537,7 +537,7 @@ class PrendusEditQuestion extends Polymer.Element {
         this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
         this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
 
-        const ast: AST = parse(this._question.text, () => 5, () => '', () => []);
+        const ast: AST = parse(this._question.text, () => 5, () => '', () => [], () => []);
         const textEditor = this.shadowRoot.querySelector('#textEditor');
         const astGraphs: Graph[] = <Graph[]> getAstObjects(ast, 'GRAPH');
 

@@ -140,16 +140,16 @@ export class PrendusViewQuestion extends Polymer.Element {
     }
 
     async checkAnswer() {
-        const astVariables: Variable[] = getAstObjects(this.builtQuestion.ast, 'VARIABLE');
-        const astInputs: Input[] = getAstObjects(this.builtQuestion.ast, 'INPUT');
-        const astEssays: Essay[] = getAstObjects(this.builtQuestion.ast, 'ESSAY');
-        const astCodes: Code[] = getAstObjects(this.builtQuestion.ast, 'CODE');
-        const astChecks: Check[] = getAstObjects(this.builtQuestion.ast, 'CHECK');
-        const astRadios: Radio[] = getAstObjects(this.builtQuestion.ast, 'RADIO');
-        const astDrags: Drag[] = getAstObjects(this.builtQuestion.ast, 'DRAG');
-        const astDrops: Drop[] = getAstObjects(this.builtQuestion.ast, 'DROP');
-        const astImages: Image[] = getAstObjects(this.builtQuestion.ast, 'IMAGE');
-        const astGraphs: Graph[] = getAstObjects(this.builtQuestion.ast, 'GRAPH');
+        const astVariables: Variable[] = getAstObjects(this.builtQuestion.ast, 'VARIABLE', ['SOLUTION']);
+        const astInputs: Input[] = getAstObjects(this.builtQuestion.ast, 'INPUT', ['SOLUTION']);
+        const astEssays: Essay[] = getAstObjects(this.builtQuestion.ast, 'ESSAY', ['SOLUTION']);
+        const astCodes: Code[] = getAstObjects(this.builtQuestion.ast, 'CODE', ['SOLUTION']);
+        const astChecks: Check[] = getAstObjects(this.builtQuestion.ast, 'CHECK', ['SOLUTION']);
+        const astRadios: Radio[] = getAstObjects(this.builtQuestion.ast, 'RADIO', ['SOLUTION']);
+        const astDrags: Drag[] = getAstObjects(this.builtQuestion.ast, 'DRAG', ['SOLUTION']);
+        const astDrops: Drop[] = getAstObjects(this.builtQuestion.ast, 'DROP', ['SOLUTION']);
+        const astImages: Image[] = getAstObjects(this.builtQuestion.ast, 'IMAGE', ['SOLUTION']);
+        const astGraphs: Graph[] = getAstObjects(this.builtQuestion.ast, 'GRAPH', ['SOLUTION']);
 
         const userVariables: UserVariable[] = astVariables;
         const userImages: UserImage[] = astImages;

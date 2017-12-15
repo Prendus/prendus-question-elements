@@ -88,15 +88,15 @@
                 <iron-pages id="ironPages" selected="[[selected]]">
                     <div class="editorContainer">
                         <wysiwyg-e id="textEditor" class="editor" value="[[_question.text]]" on-value-changed="textEditorChanged" allowed-tag-names="[[getAllowedTagNames()]]">
-                            <prendus-radio-tool on-insert-radio="insertRadio"></prendus-radio-tool>
-                            <prendus-check-tool on-insert-check="insertCheck"></prendus-check-tool>
-                            <prendus-input-tool on-insert-input="insertInput"></prendus-input-tool>
-                            <prendus-essay-tool on-insert-essay="insertEssay"></prendus-essay-tool>
-                            <prendus-code-tool on-insert-code="insertCode"></prendus-code-tool>
-                            <prendus-variable-tool on-insert-variable="insertVariable"></prendus-variable-tool>
-                            <prendus-math-tool on-insert-math="insertMath"></prendus-math-tool>
-                            <prendus-image-tool on-insert-image="insertImage"></prendus-image-tool>
-                            <prendus-graph-tool on-insert-graph="insertGraph"></prendus-graph-tool>
+                            <prendus-radio-tool id="prendus-radio-tool" on-insert-radio="insertRadio"></prendus-radio-tool>
+                            <prendus-check-tool id="prendus-check-tool" on-insert-check="insertCheck"></prendus-check-tool>
+                            <prendus-input-tool id="prendus-input-tool" on-insert-input="insertInput"></prendus-input-tool>
+                            <prendus-essay-tool id="prendus-essay-tool" on-insert-essay="insertEssay"></prendus-essay-tool>
+                            <prendus-code-tool id="prendus-code-tool" on-insert-code="insertCode"></prendus-code-tool>
+                            <prendus-variable-tool id="prendus-variable-tool" on-insert-variable="insertVariable"></prendus-variable-tool>
+                            <prendus-math-tool id="prendus-math-tool" on-insert-math="insertMath"></prendus-math-tool>
+                            <prendus-image-tool id="prendus-image-tool" on-insert-image="insertImage"></prendus-image-tool>
+                            <prendus-graph-tool id="prendus-graph-tool" on-insert-graph="insertGraph"></prendus-graph-tool>
                         </wysiwyg-e>
                         <div class="savingText">[[getSavingText(saving)]]</div>
                     </div>

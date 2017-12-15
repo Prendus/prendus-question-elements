@@ -569,6 +569,51 @@ class PrendusEditQuestion extends Polymer.Element {
         ];
     }
 
+    clickRadioTool() {
+        //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
+        this.shadowRoot.querySelector('#prendus-radio-tool').shadowRoot.querySelector('#button').click();
+    }
+
+    clickCheckTool() {
+        //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
+        this.shadowRoot.querySelector('#prendus-check-tool').shadowRoot.querySelector('#button').click();
+    }
+
+    clickInputTool() {
+        //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
+        this.shadowRoot.querySelector('#prendus-input-tool').shadowRoot.querySelector('#button').click();
+    }
+
+    clickEssayTool() {
+        //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
+        this.shadowRoot.querySelector('#prendus-essay-tool').shadowRoot.querySelector('#button').click();
+    }
+
+    clickCodeTool() {
+        //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
+        this.shadowRoot.querySelector('#prendus-code-tool').shadowRoot.querySelector('#button').click();
+    }
+
+    clickVariableTool() {
+        //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
+        this.shadowRoot.querySelector('#prendus-variable-tool').shadowRoot.querySelector('#button').click();
+    }
+
+    clickMathTool() {
+        //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
+        this.shadowRoot.querySelector('#prendus-math-tool').shadowRoot.querySelector('#button').click();
+    }
+
+    clickImageTool() {
+        //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
+        this.shadowRoot.querySelector('#prendus-image-tool').shadowRoot.querySelector('#button').click();
+    }
+
+    clickGraphTool() {
+        //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
+        this.shadowRoot.querySelector('#prendus-graph-tool').shadowRoot.querySelector('#button').click();
+    }
+
     stateChange(e: CustomEvent) {
         const state = e.detail.state;
 

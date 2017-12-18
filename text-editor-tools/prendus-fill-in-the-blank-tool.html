@@ -6,26 +6,26 @@
 <link rel="import" href="../../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../../bower_components/paper-tooltip/paper-tooltip.html">
 
-<dom-module id="prendus-input-tool">
+<dom-module id="prendus-fill-in-the-blank-tool">
     <template>
         <style include="wysiwyg-tool"></style>
         <paper-button id="button" disabled="[[disabled]]">
             <iron-icon icon="icons:check-box-outline-blank"></iron-icon>
         </paper-button>
         <paper-tooltip id="tooltip" for="button" position="[[tooltipPosition]]" offset="5">
-			<span>Input</span>
+			<span>Fill in the blank</span>
 		</paper-tooltip>
 
         <paper-dialog id="inputDialog" on-click="inputDialogClick">
             <div>
-                <paper-input id="answerInput" type="text" label="Type the correct answer for this input" autofocus></paper-input>
+                <paper-input id="answerInput" type="text" label="Type the correct answer for this blank input" autofocus></paper-input>
             </div>
 
             <div style="display: flex">
-                <paper-button style="margin-left: auto" on-click="insertClick" raised noink>Insert</paper-button>
+                <paper-button style="margin-left: auto" on-click="insertClick" raised noink>Insert blank input</paper-button>
             </div>
         </paper-dialog>
     </template>
 
-    <script src="prendus-input-tool.ts"></script>
+    <script src="prendus-fill-in-the-blank-tool.ts"></script>
 </dom-module>

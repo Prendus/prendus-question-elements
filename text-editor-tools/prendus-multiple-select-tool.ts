@@ -1,5 +1,5 @@
-class PrendusRadioTool extends WysiwygTool {
-    static get is() { return 'prendus-radio-tool'; }
+class PrendusMultipleSelectTool extends WysiwygTool {
+    static get is() { return 'prendus-multiple-select-tool'; }
 
     connectedCallback() {
         super.connectedCallback();
@@ -12,10 +12,10 @@ class PrendusRadioTool extends WysiwygTool {
             return;
         }
 
-        this.shadowRoot.querySelector('#radioDialog').open();
+        this.shadowRoot.querySelector('#checkDialog').open();
     }
 
-    radioDialogClick(e: Event) {
+    checkDialogClick(e: Event) {
         e.stopPropagation();
     }
 
@@ -26,18 +26,18 @@ class PrendusRadioTool extends WysiwygTool {
         const content = contentInput.value;
         const correct = correctSelect.value === 'true' ? true : false;
 
-        this.dispatchEvent(new CustomEvent('insert-radio', {
+        this.dispatchEvent(new CustomEvent('insert-check', {
             bubbles: false,
             detail: {
                 content,
                 correct
             }
         }));
-        this.shadowRoot.querySelector('#radioDialog').close();
+        this.shadowRoot.querySelector('#checkDialog').close();
 
         contentInput.value = '';
         correctSelect.value = 'true';
     }
 }
 
-window.customElements.define(PrendusRadioTool.is, PrendusRadioTool);
+window.customElements.define(PrendusMultipleSelectTool.is, PrendusMultipleSelectTool);

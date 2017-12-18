@@ -571,7 +571,7 @@ class PrendusEditQuestion extends Polymer.Element {
 
     clickRadioTool() {
         //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
-        this.shadowRoot.querySelector('#prendus-radio-tool').shadowRoot.querySelector('#button').click();
+        this.shadowRoot.querySelector('#prendus-multiple-choice-tool').shadowRoot.querySelector('#button').click();
     }
 
     clickCheckTool() {

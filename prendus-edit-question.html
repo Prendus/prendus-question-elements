@@ -2,11 +2,11 @@
 <link rel="import" href="../redux-store-element/redux-store.html">
 <link rel="import" href="prendus-view-question.html">
 <link rel="import" href="text-editor-tools/prendus-variable-tool.html">
-<link rel="import" href="text-editor-tools/prendus-input-tool.html">
+<link rel="import" href="text-editor-tools/prendus-fill-in-the-blank-tool.html">
 <link rel="import" href="text-editor-tools/prendus-essay-tool.html">
 <link rel="import" href="text-editor-tools/prendus-code-tool.html">
-<link rel="import" href="text-editor-tools/prendus-radio-tool.html">
-<link rel="import" href="text-editor-tools/prendus-check-tool.html">
+<link rel="import" href="text-editor-tools/prendus-multiple-choice-tool.html">
+<link rel="import" href="text-editor-tools/prendus-multiple-select-tool.html">
 <link rel="import" href="text-editor-tools/prendus-math-tool.html">
 <link rel="import" href="text-editor-tools/prendus-image-tool.html">
 <link rel="import" href="text-editor-tools/prendus-graph-tool.html">
@@ -88,9 +88,9 @@
                 <iron-pages id="ironPages" selected="[[selected]]">
                     <div class="editorContainer">
                         <wysiwyg-e id="textEditor" class="editor" value="[[_question.text]]" on-value-changed="textEditorChanged" allowed-tag-names="[[getAllowedTagNames()]]">
-                            <prendus-radio-tool id="prendus-radio-tool" on-insert-radio="insertRadio"></prendus-radio-tool>
-                            <prendus-check-tool id="prendus-check-tool" on-insert-check="insertCheck"></prendus-check-tool>
-                            <prendus-input-tool id="prendus-input-tool" on-insert-input="insertInput"></prendus-input-tool>
+                            <prendus-multiple-choice-tool id="prendus-multiple-choice-tool" on-insert-radio="insertRadio"></prendus-multiple-choice-tool>
+                            <prendus-multiple-select-tool id="prendus-multiple-select-tool" on-insert-check="insertCheck"></prendus-multiple-select-tool>
+                            <prendus-fill-in-the-blank-tool id="prendus-fill-in-the-blank-tool" on-insert-input="insertInput"></prendus-fill-in-the-blank-tool>
                             <prendus-essay-tool id="prendus-essay-tool" on-insert-essay="insertEssay"></prendus-essay-tool>
                             <prendus-code-tool id="prendus-code-tool" on-insert-code="insertCode"></prendus-code-tool>
                             <prendus-variable-tool id="prendus-variable-tool" on-insert-variable="insertVariable"></prendus-variable-tool>

@@ -1,5 +1,5 @@
-class PrendusInputTool extends WysiwygTool {
-    static get is() { return 'prendus-input-tool'; }
+class PrendusFillInTheBlankTool extends WysiwygTool {
+    static get is() { return 'prendus-fill-in-the-blank-tool'; }
 
     connectedCallback() {
         super.connectedCallback();
@@ -34,4 +34,4 @@ class PrendusInputTool extends WysiwygTool {
     }
 }
 
-window.customElements.define(PrendusInputTool.is, PrendusInputTool);
+window.customElements.define(PrendusFillInTheBlankTool.is, PrendusFillInTheBlankTool);

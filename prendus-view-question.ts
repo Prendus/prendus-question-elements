@@ -91,7 +91,7 @@ export class PrendusViewQuestion extends Polymer.Element {
 
         this.action = fireLocalAction(this.componentId, 'question', loadDataResult.question);
         this.action = fireLocalAction(this.componentId, 'builtQuestion', loadDataResult.builtQuestion);
-        this.action = fireLocalAction(this.componentId, 'showSolution', getAstObjects(this.builtQuestion.ast, 'SOLUTION').length > 0);
+        this.action = fireLocalAction(this.componentId, 'showSolution', this.builtQuestion ? getAstObjects(this.builtQuestion.ast, 'SOLUTION').length > 0 : false);
         this.action = fireLocalAction(this.componentId, 'loaded', true);
 
         //this is so that if the question is being viewed from within an iframe, the iframe can resize itself

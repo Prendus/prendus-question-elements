@@ -260,8 +260,8 @@ class PrendusEditQuestion extends Polymer.Element {
         return saving ? 'Saving...' : 'Saved';
     }
 
-    selectedChanged(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'selected', e.detail.value);
+    switchEditorClick() {
+        this.action = fireLocalAction(this.componentId, 'selected', this.selected === 0 ? 1 : 0);
     }
 
     async insertVariable(e: CustomEvent) {

@@ -15,6 +15,9 @@
 <link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../../bower_components/wysiwyg-e/wysiwyg-e.html">
 <link rel="import" href="../../bower_components/juicy-ace-editor/juicy-ace-editor.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/paper-tooltip/paper-tooltip.html">
 
 <dom-module id="prendus-edit-question">
     <template>
@@ -74,19 +77,39 @@
                 right: 20px;
                 bottom: 15px;
             }
+
+            .switchEditorToJavaScriptIcon {
+                position: absolute;
+                right: -5px;
+                top: 40px;
+                cursor: pointer;
+                z-index: 1;
+            }
+
+            .switchEditorToAssessMLIcon {
+                position: absolute;
+                right: -5px;
+                top: 0px;
+                cursor: pointer;
+                z-index: 1;
+                background-color: grey;
+                color: white;
+            }
         </style>
 
         <redux-store id="reduxStoreElement" root-reducer="[[rootReducer]]" action="[[action]]" on-statechange="stateChange" store-name="PRENDUS_QUESTION_ELEMENTS"></redux-store>
 
         <dom-if if="[[loaded]]">
             <template>
-                <paper-tabs id="paperTabs" selected="[[selected]]" on-selected-changed="selectedChanged">
-                    <paper-tab>Text</paper-tab>
-                    <paper-tab>Code</paper-tab>
-                </paper-tabs>
-
                 <iron-pages id="ironPages" selected="[[selected]]">
                     <div class="editorContainer">
+                        <paper-button id="switchEditorToJavaScriptIcon" class="switchEditorToJavaScriptIcon" on-click="switchEditorClick">
+                            <iron-icon icon="icons:tab"></iron-icon>
+                        </paper-button>
+                        <paper-tooltip for="switchEditorToJavaScriptIcon" offset="5">
+                            <span>JavaScript</span>
+                        </paper-tooltip>
+
                         <wysiwyg-e id="textEditor" class="editor" value="[[_question.text]]" on-value-changed="textEditorChanged" allowed-tag-names="[[getAllowedTagNames()]]">
                             <prendus-multiple-choice-tool id="prendus-multiple-choice-tool" on-insert-radio="insertRadio"></prendus-multiple-choice-tool>
                             <prendus-multiple-select-tool id="prendus-multiple-select-tool" on-insert-check="insertCheck"></prendus-multiple-select-tool>
@@ -102,6 +125,13 @@
                     </div>
 
                     <div class="editorContainer">
+                        <paper-button id="switchEditorToAssessMLIcon" class="switchEditorToAssessMLIcon" on-click="switchEditorClick">
+                            <iron-icon icon="icons:tab"></iron-icon>
+                        </paper-button>
+                        <paper-tooltip for="switchEditorToAssessMLIcon" offset="5">
+                            <span>AssessML</span>
+                        </paper-tooltip>
+
                         <juicy-ace-editor id="codeEditor" theme="ace/theme/chrome" mode="ace/mode/javascript" class="editor" value="[[_question.code]]" on-change="codeEditorChanged"></juicy-ace-editor>
                         <div class="savingText">[[getSavingText(saving)]]</div>
                     </div>

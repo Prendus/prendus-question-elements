@@ -1,5 +1,13 @@
+import {UserRadio} from '../prendus-question-elements.d';
+
 class PrendusMultipleChoiceTool extends WysiwygTool {
+    userRadios: UserRadio[];
+
     static get is() { return 'prendus-multiple-choice-tool'; }
+
+    constructor() {
+        super();
+    }
 
     connectedCallback() {
         super.connectedCallback();
@@ -19,6 +27,10 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
         e.stopPropagation();
     }
 
+    getIndex(index: number) {
+        return index + 1;
+    }
+
     insertClick() {
         const contentInput = this.shadowRoot.querySelector('#contentInput');
         const correctSelect = this.shadowRoot.querySelector('#correctSelect');
@@ -33,10 +45,22 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
                 correct
             }
         }));
-        this.shadowRoot.querySelector('#radioDialog').close();
 
         contentInput.value = '';
         correctSelect.value = 'true';
+    }
+
+    radioCorrectChanged(e: any) {
+        const userRadio: UserRadio = {
+            varName: e.model.item.varName,
+            checked: this.shadowRoot.querySelector(`#${e.model.item.varName}`).value === 'true' ? true : false
+        };
+
+        this.dispatchEvent(new CustomEvent('radio-correct-changed', {
+            detail: {
+                userRadio
+            }
+        }));
     }
 }
 

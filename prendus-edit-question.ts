@@ -4,10 +4,19 @@ import {SetComponentPropertyAction} from './prendus-question-elements.d';
 import {GQLRequest} from '../prendus-shared/services/graphql-service';
 import {User} from './prendus-question-elements.d';
 import {RootReducer} from './redux/reducers';
-import {Reducer} from './prendus-question-elements.d';
+import {Reducer, UserCheck, UserRadio} from './prendus-question-elements.d';
 import {parse, getAstObjects} from '../assessml/assessml';
 import {AST, Input, Image, Radio, Check, Essay, Code} from '../assessml/assessml.d';
-import {insertEssayIntoCode, insertCodeIntoCode, insertInputIntoCode, insertRadioOrCheckIntoCode, insertVariableIntoCode, insertImageIntoCode} from './services/question-service';
+import {
+    insertEssayIntoCode,
+    insertCodeIntoCode,
+    insertInputIntoCode,
+    insertRadioOrCheckIntoCode,
+    insertVariableIntoCode,
+    insertImageIntoCode,
+    getUserASTObjects,
+    setUserASTObjectValue
+} from './services/question-service';
 
 class PrendusEditQuestion extends Polymer.Element {
     componentId: string;
@@ -23,6 +32,7 @@ class PrendusEditQuestion extends Polymer.Element {
     rootReducer: Reducer;
     saving: boolean;
     noSave: boolean;
+    userRadiosFromCode: UserRadio[];
 
     static get is() { return 'prendus-edit-question'; }
     static get properties() {
@@ -90,6 +100,7 @@ class PrendusEditQuestion extends Polymer.Element {
                 code: this._question ? this._question.code : ''
             });
 
+            this.action = fireLocalAction(this.componentId, 'userRadiosFromCode', getUserASTObjects(this._question.text, this._question.code, 'RADIO'));
 
             await this.save();
 
@@ -299,7 +310,7 @@ class PrendusEditQuestion extends Polymer.Element {
         this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
         this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
 
-        const ast: AST = parse(this._question.text, () => 5, () => '', () => []);
+        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
         const astInputs: Input[] = <Input[]> getAstObjects(ast, 'INPUT');
 
         const varName = `input${astInputs.length + 1}`;
@@ -335,7 +346,7 @@ class PrendusEditQuestion extends Polymer.Element {
         this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
         this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
 
-        const ast: AST = parse(this._question.text, () => 5, () => '', () => []);
+        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
         const astEssays: Essay[] = <Essay[]> getAstObjects(ast, 'ESSAY');
 
         const varName = `essay${astEssays.length + 1}`;
@@ -370,7 +381,7 @@ class PrendusEditQuestion extends Polymer.Element {
         this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
         this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
 
-        const ast: AST = parse(this._question.text, () => 5, () => '', () => []);
+        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
         const astCodes: Code[] = <Code[]> getAstObjects(ast, 'CODE');
 
         const varName = `code${astCodes.length + 1}`;
@@ -405,7 +416,7 @@ class PrendusEditQuestion extends Polymer.Element {
         this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
         this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
 
-        const ast: AST = parse(this._question.text, () => 5, () => '', () => [], () => []);
+        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
         const astRadios: Radio[] = <Radio[]> getAstObjects(ast, 'RADIO');
 
         const varName = `radio${astRadios.length + 1}`;
@@ -416,7 +427,7 @@ class PrendusEditQuestion extends Polymer.Element {
 
         const code = codeEditor.value;
 
-        const radioString = `[radio start]${content}[radio end]`;
+        const radioString = `[radio start]${content || ''}[radio end]`;
         const newTextNode = document.createTextNode(radioString);
         textEditor.range0.insertNode(newTextNode);
         textEditor.range0.setStart(newTextNode, radioString.length);
@@ -433,6 +444,8 @@ class PrendusEditQuestion extends Polymer.Element {
             code: insertRadioOrCheckIntoCode(code, varName, correct)
         });
 
+        this.action = fireLocalAction(this.componentId, 'userRadiosFromCode', getUserASTObjects(this._question.text, this._question.code, 'RADIO'));
+
         this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
         this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
     }
@@ -441,7 +454,7 @@ class PrendusEditQuestion extends Polymer.Element {
         this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
         this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
 
-        const ast: AST = parse(this._question.text, () => 5, () => '', () => [], () => []);
+        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
         const astChecks: Check[] = <Check[]> getAstObjects(ast, 'CHECK');
 
         const varName = `check${astChecks.length + 1}`;
@@ -452,7 +465,7 @@ class PrendusEditQuestion extends Polymer.Element {
 
         const code = codeEditor.value;
 
-        const checkString = `[check start]${content}[check end]`;
+        const checkString = `[check start]${content || ''}[check end]`;
         const newTextNode = document.createTextNode(checkString);
         textEditor.range0.insertNode(newTextNode);
         textEditor.range0.setStart(newTextNode, checkString.length);
@@ -493,7 +506,8 @@ class PrendusEditQuestion extends Polymer.Element {
 
         this.action = fireLocalAction(this.componentId, 'question', {
             ...this._question,
-            text
+            text,
+            code: this._question ? this._question.code : ''
         });
 
         this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
@@ -504,7 +518,7 @@ class PrendusEditQuestion extends Polymer.Element {
         this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
         this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
 
-        const ast: AST = parse(this._question.text, () => 5, () => '', () => [], () => []);
+        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
         const { dataUrl } = e.detail;
         const textEditor = this.shadowRoot.querySelector('#textEditor');
         const codeEditor = this.shadowRoot.querySelector('#codeEditor');
@@ -537,7 +551,7 @@ class PrendusEditQuestion extends Polymer.Element {
         this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
         this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
 
-        const ast: AST = parse(this._question.text, () => 5, () => '', () => [], () => []);
+        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
         const textEditor = this.shadowRoot.querySelector('#textEditor');
         const astGraphs: Graph[] = <Graph[]> getAstObjects(ast, 'GRAPH');
 
@@ -561,57 +575,20 @@ class PrendusEditQuestion extends Polymer.Element {
         this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
     }
 
+    radioCorrectChanged(e: CustomEvent) {
+        const userRadio: UserRadio = e.detail.userRadio;
+        this.action = fireLocalAction(this.componentId, 'question', {
+            ...this._question,
+            code: setUserASTObjectValue(this._question.code, userRadio)
+        });
+    }
+
     getAllowedTagNames() {
         return [
             'br',
 			'p',
 			'span'
         ];
-    }
-
-    clickRadioTool() {
-        //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
-        this.shadowRoot.querySelector('#prendus-multiple-choice-tool').shadowRoot.querySelector('#button').click();
-    }
-
-    clickCheckTool() {
-        //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
-        this.shadowRoot.querySelector('#prendus-check-tool').shadowRoot.querySelector('#button').click();
-    }
-
-    clickInputTool() {
-        //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
-        this.shadowRoot.querySelector('#prendus-input-tool').shadowRoot.querySelector('#button').click();
-    }
-
-    clickEssayTool() {
-        //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
-        this.shadowRoot.querySelector('#prendus-essay-tool').shadowRoot.querySelector('#button').click();
-    }
-
-    clickCodeTool() {
-        //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
-        this.shadowRoot.querySelector('#prendus-code-tool').shadowRoot.querySelector('#button').click();
-    }
-
-    clickVariableTool() {
-        //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
-        this.shadowRoot.querySelector('#prendus-variable-tool').shadowRoot.querySelector('#button').click();
-    }
-
-    clickMathTool() {
-        //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
-        this.shadowRoot.querySelector('#prendus-math-tool').shadowRoot.querySelector('#button').click();
-    }
-
-    clickImageTool() {
-        //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
-        this.shadowRoot.querySelector('#prendus-image-tool').shadowRoot.querySelector('#button').click();
-    }
-
-    clickGraphTool() {
-        //TODO This functionality might be better provided as a property, something like radioToolButtonOpen. Querying the property tells you if it is open or closed, and setting it controls it
-        this.shadowRoot.querySelector('#prendus-graph-tool').shadowRoot.querySelector('#button').click();
     }
 
     stateChange(e: CustomEvent) {
@@ -627,6 +604,7 @@ class PrendusEditQuestion extends Polymer.Element {
         if (Object.keys(state.components[this.componentId] || {}).includes('userToken')) this.userToken = state.components[this.componentId].userToken;
         if (Object.keys(state.components[this.componentId] || {}).includes('textEditorLock')) this.textEditorLock = state.components[this.componentId].textEditorLock;
         if (Object.keys(state.components[this.componentId] || {}).includes('codeEditorLock')) this.codeEditorLock = state.components[this.componentId].codeEditorLock;
+        if (Object.keys(state.components[this.componentId] || {}).includes('userRadiosFromCode')) this.userRadiosFromCode = state.components[this.componentId].userRadiosFromCode;
     }
 }
 

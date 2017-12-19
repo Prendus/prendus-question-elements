@@ -15,7 +15,8 @@ import {
     Image,
     Solution,
     Code,
-    Graph
+    Graph,
+    ASTObjectType
 } from '../../assessml/assessml.d';
 import {
     Program,
@@ -35,10 +36,13 @@ import {
     DoWhileStatement,
     ForStatement,
     UpdateExpression,
-    ConditionalExpression
+    ConditionalExpression,
+    LogicalExpression
 } from 'estree';
-import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay} from '../prendus-question-elements.d';
+import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay, UserASTObject} from '../prendus-question-elements.d';
 import {normalizeASTObjectPayloads} from '../../assessml/assessml';
+
+declare var esprima: any;
 
 //TODO there is a lot of repeated code in here
 export async function buildQuestion(text: string, code: string): Promise<{
@@ -834,5 +838,189 @@ function getBasicAnswerAssignment() {
                 raw: 'true'
             }
         }
+    };
+}
+
+export function setUserASTObjectValue(code: string, userASTObject: UserASTObject): string {
+    const jsAst: Program = esprima.parse(code);
+    return escodegen.generate({
+        ...jsAst,
+        body: jsAst.body.map((object) => {
+            if (
+                object.type === 'ExpressionStatement' &&
+                object.expression.type === 'AssignmentExpression' &&
+                object.expression.left.type === 'Identifier' &&
+                object.expression.left.name === 'answer'
+            ) {
+                if (object.expression.right.type === 'BinaryExpression') {
+                    return {
+                        ...object,
+                        expression: {
+                            ...object.expression,
+                            right: setIdentifierValueInBinaryExpression(object.expression.right, userASTObject.varName, userASTObject.checked)
+                        }
+                    };
+                }
+
+                if (object.expression.right.type === 'LogicalExpression') {
+                    return {
+                        ...object,
+                        expression: {
+                            ...object.expression,
+                            right: setIdentifierValueInLogicalExpression(object.expression.right, userASTObject.varName, userASTObject.checked)
+                        }
+                    };
+                }
+            }
+
+            return object;
+        })
+    });
+}
+
+export function getUserASTObjects(text: string, code: string, type: ASTObjectType): UserASTObject[]  {
+    const astObjects: ASTObject[] = getAstObjects(
+        parse(text, () => 5, () => '', () => [], () => []),
+        type
+    );
+
+    const jsAst: Program = esprima.parse(code);
+
+    return astObjects.map((astObject: ASTObject) => {
+        return jsAst.body.reduce((result: UserASTObject, object) => {
+            if (
+                object.type === 'ExpressionStatement' &&
+                object.expression.type === 'AssignmentExpression' &&
+                object.expression.left.type === 'Identifier' &&
+                object.expression.left.name === 'answer'
+            ) {
+                if (object.expression.right.type === 'BinaryExpression') {
+                    return {
+                        ...result,
+                        checked: getIdentifierValueFromBinaryExpression(object.expression.right, astObject.varName)
+                    };
+                }
+
+                if (object.expression.right.type === 'LogicalExpression') {
+                    return {
+                        ...result,
+                        checked: getIdentifierValueFromLogicalExpression(object.expression.right, astObject.varName)
+                    };
+                }
+            }
+
+            return result;
+        }, {
+            varName: astObject.varName,
+            checked: false
+        });
+    });
+}
+
+function getIdentifierValueFromBinaryExpression(expression: BinaryExpression, identifierName: string) {
+    if (
+        expression.left.type === 'Identifier' &&
+        expression.left.name === identifierName
+    ) {
+        if (
+            expression.right.type === 'Literal'
+        ) {
+            return expression.right.value;
+        }
+    }
+
+    if (
+        expression.right.type === 'Identifier' &&
+        expression.right.name === identifierName
+    ) {
+        if (
+            expression.left.type === 'Literal'
+        ) {
+            return expression.left.value;
+        }
+    }
+}
+
+function getIdentifierValueFromLogicalExpression(expression: LogicalExpression, identifierName: string): any {
+    if (expression.left.type === 'BinaryExpression') {
+        const value = getIdentifierValueFromBinaryExpression(expression.left, identifierName);
+        if (value !== undefined) {
+            return value;
+        }
+    }
+
+    if (expression.right.type === 'BinaryExpression') {
+        const value = getIdentifierValueFromBinaryExpression(expression.right, identifierName);
+        if (value !== undefined) {
+            return value;
+        }
+    }
+
+    if (expression.left.type === 'LogicalExpression') {
+        const value = getIdentifierValueFromLogicalExpression(expression.left, identifierName);
+        if (value !== undefined) {
+            return value;
+        }
+    }
+
+    if (expression.right.type === 'LogicalExpression') {
+        const value = getIdentifierValueFromLogicalExpression(expression.right, identifierName);
+        if (value !== undefined) {
+            return value;
+        }
+    }
+}
+
+function setIdentifierValueInBinaryExpression(expression: BinaryExpression, identifierName: string, value: any): BinaryExpression {
+    return {
+        ...expression,
+        left: (() => {
+            if (expression.right.type === 'Identifier' && expression.right.name === identifierName) {
+                return {
+                    ...expression.left,
+                    value
+                };
+            }
+
+            return expression.left;
+        })(),
+        right: (() => {
+            if (expression.left.type === 'Identifier' && expression.left.name === identifierName) {
+                return {
+                    ...expression.right,
+                    value
+                };
+            }
+
+            return expression.right;
+        })()
+    };
+}
+
+function setIdentifierValueInLogicalExpression(expression: LogicalExpression, identifierName: string, value: any): LogicalExpression {
+    return {
+        ...expression,
+        left: (() => {
+            if (expression.left.type === 'BinaryExpression') {
+                return setIdentifierValueInBinaryExpression(expression.left, identifierName, value);
+            }
+
+            if (expression.left.type === 'LogicalExpression') {
+                return setIdentifierValueInLogicalExpression(expression.left, identifierName, value);
+            }
+
+            return expression.left;
+        })(),
+        right: (() => {
+            if (expression.right.type === 'BinaryExpression') {
+                return setIdentifierValueInBinaryExpression(expression.right, identifierName, value);
+            }
+
+            if (expression.right.type === 'LogicalExpression') {
+                return setIdentifierValueInLogicalExpression(expression.right, identifierName, value);
+            }
+
+            return expression.right;
+        })()
     };
 }

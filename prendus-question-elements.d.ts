@@ -69,6 +69,8 @@ export interface User {
     readonly questions: Question[];
 }
 
+export type UserASTObject = UserVariable | UserInput | UserEssay | UserCheck | UserRadio;
+
 export interface UserVariable {
     readonly varName: string;
     readonly value: number;

@@ -24,8 +24,7 @@
     "paper-input": "^2.0.2",
     "paper-button": "^2.0.0",
     "iron-icon": "^2.0.1",
-    "paper-tooltip": "^2.0.1",
-    "juicy-ace-editor": "^2.0.4"
+    "paper-tooltip": "^2.0.1"
   },
   "resolutions": {
     "webcomponentsjs": "^v1.0.2"

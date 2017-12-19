@@ -46,7 +46,8 @@ export class PrendusViewQuestion extends Polymer.Element {
         return {
             question: {
                 type: Object,
-                observer: 'questionChanged'
+                observer: 'questionChanged',
+                value: null
             },
             questionId: {
                 type: String,
@@ -63,11 +64,9 @@ export class PrendusViewQuestion extends Polymer.Element {
         this.rootReducer = RootReducer;
     }
 
-    async connectedCallback() {
+    connectedCallback() {
         super.connectedCallback();
         this.action = fireLocalAction(this.componentId, 'solutionButtonText', 'Solution');
-        // this.action = checkForUserToken();
-        // this.action = await getAndSetUser();
     }
 
     getThis() {

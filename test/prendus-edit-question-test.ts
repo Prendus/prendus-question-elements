@@ -12,10 +12,6 @@ class PrendusEditQuestionTest extends HTMLElement {
         const prendusEditQuestion = document.createElement('prendus-edit-question');
 
         prendusEditQuestion.noSave = true;
-        prendusEditQuestion.question = {
-            text: '',
-            code: ''
-        };
 
         this.shadowRoot.appendChild(prendusEditQuestion);
     }

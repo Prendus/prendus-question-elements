@@ -786,31 +786,28 @@ function addToAnswerAssignment(jsAst: Program, expressionToAdd: any) {
         return isAnswerAssignment(object);
     })[0];
 
-    if (answerAssignment) {
-        return jsAst.body.map((object) => {
-            if (isAnswerAssignment(object)) {
-                const right = object.expression.right;
-                return {
-                    ...object,
-                    expression: {
-                        ...object.expression,
-                        right: {
-                            type: 'LogicalExpression',
-                            operator: '&&',
-                            left: expressionToAdd,
-                            right
-                        }
+    const body = answerAssignment ? jsAst.body : [...jsAst.body, getBasicAnswerAssignment()];
+
+    return body.map((object) => {
+        if (isAnswerAssignment(object)) {
+            const right = object.expression.right;
+            return {
+                ...object,
+                expression: {
+                    ...object.expression,
+                    right: {
+                        type: 'LogicalExpression',
+                        operator: '&&',
+                        left: expressionToAdd,
+                        right
                     }
-                };
-            }
-            else {
-                return object;
-            }
-        });
-    }
-    else {
-        return [...jsAst.body, getBasicAnswerAssignment()];
-    }
+                }
+            };
+        }
+        else {
+            return object;
+        }
+    });
 }
 
 function isAnswerAssignment(object): boolean {

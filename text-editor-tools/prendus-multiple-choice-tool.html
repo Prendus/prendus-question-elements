@@ -5,6 +5,7 @@
 <link rel="import" href="../../../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../../bower_components/paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../../../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="../../../bower_components/polymer/lib/elements/dom-repeat.html">
 
 <dom-module id="prendus-multiple-choice-tool">
@@ -18,23 +19,14 @@
 		</paper-tooltip>
 
         <paper-dialog id="radioDialog" on-click="radioDialogClick">
-            <div>
+            <div style="display: flex">
                 <paper-input id="contentInput" type="text" label="Type the text of this option" autofocus></paper-input>
-                Correct
-                <select id="correctSelect">
-                    <option value="true">True</option>
-                    <option value="false">False</option>
-                </select>
             </div>
 
             <dom-repeat items="[[userRadios]]">
                 <template>
-                    <div>
-                        Option [[getIndex(index)]], Correct:
-                        <select id="[[item.varName]]" on-change="radioCorrectChanged">
-                            <option value="true" selected$="[[item.checked]]">True</option>
-                            <option value="false" selected$="[[!item.checked]]">False</option>
-                        </select>
+                    <div style="display: flex">
+                        <span style="margin-right: 5px">Option [[getIndex(index)]], Correct:</span> <paper-toggle-button id="[[item.varName]]" on-checked-changed="radioCorrectChanged"></paper-toggle-button>
                     </div>
                 </template>
             </dom-repeat>

@@ -33,27 +33,24 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
 
     insertClick() {
         const contentInput = this.shadowRoot.querySelector('#contentInput');
-        const correctSelect = this.shadowRoot.querySelector('#correctSelect');
-
         const content = contentInput.value;
-        const correct = correctSelect.value === 'true' ? true : false;
 
         this.dispatchEvent(new CustomEvent('insert-radio', {
             bubbles: false,
             detail: {
                 content,
-                correct
+                correct: false
             }
         }));
 
         contentInput.value = '';
-        correctSelect.value = 'true';
     }
 
     radioCorrectChanged(e: any) {
+        const toggle = this.shadowRoot.querySelector(`#${e.model.item.varName}`);
         const userRadio: UserRadio = {
             varName: e.model.item.varName,
-            checked: this.shadowRoot.querySelector(`#${e.model.item.varName}`).value === 'true' ? true : false
+            checked: toggle ? toggle.checked : false
         };
 
         this.dispatchEvent(new CustomEvent('radio-correct-changed', {

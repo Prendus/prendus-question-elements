@@ -1,4 +1,8 @@
+import {UserCheck} from '../prendus-question-elements.d';
+
 class PrendusMultipleSelectTool extends WysiwygTool {
+    userChecks: UserCheck[];
+
     static get is() { return 'prendus-multiple-select-tool'; }
 
     connectedCallback() {
@@ -19,24 +23,37 @@ class PrendusMultipleSelectTool extends WysiwygTool {
         e.stopPropagation();
     }
 
+    getIndex(index: number) {
+        return index + 1;
+    }
+
     insertClick() {
         const contentInput = this.shadowRoot.querySelector('#contentInput');
-        const correctSelect = this.shadowRoot.querySelector('#correctSelect');
-
         const content = contentInput.value;
-        const correct = correctSelect.value === 'true' ? true : false;
 
         this.dispatchEvent(new CustomEvent('insert-check', {
             bubbles: false,
             detail: {
                 content,
-                correct
+                correct: false
             }
         }));
-        this.shadowRoot.querySelector('#checkDialog').close();
 
         contentInput.value = '';
-        correctSelect.value = 'true';
+    }
+
+    checkCorrectChanged(e: any) {
+        const toggle = this.shadowRoot.querySelector(`#${e.model.item.varName}`);
+        const userCheck: UserCheck = {
+            varName: e.model.item.varName,
+            checked: toggle ? toggle.checked : false
+        };
+
+        this.dispatchEvent(new CustomEvent('check-correct-changed', {
+            detail: {
+                userCheck
+            }
+        }));
     }
 }
 

@@ -5,6 +5,8 @@
 <link rel="import" href="../../../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../../bower_components/paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../../../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../../../bower_components/paper-toggle-button/paper-toggle-button.html">
 
 <dom-module id="prendus-multiple-select-tool">
     <template>
@@ -17,17 +19,17 @@
 		</paper-tooltip>
 
         <paper-dialog id="checkDialog" on-click="checkDialogClick">
-            <div>
+            <div style="display: flex">
                 <paper-input id="contentInput" type="text" label="Type the text of this option" autofocus></paper-input>
             </div>
 
-            <div>
-                Correct
-                <select id="correctSelect">
-                    <option value="true">True</option>
-                    <option value="false">False</option>
-                </select>
-            </div>
+            <dom-repeat items="[[userChecks]]">
+                <template>
+                    <div style="display: flex">
+                        <span style="margin-right: 5px">Option [[getIndex(index)]], Correct:</span> <paper-toggle-button id="[[item.varName]]" on-checked-changed="checkCorrectChanged"></paper-toggle-button>
+                    </div>
+                </template>
+            </dom-repeat>
 
             <div style="display: flex">
                 <paper-button style="margin-left: auto" on-click="insertClick" raised noink>Insert option</paper-button>

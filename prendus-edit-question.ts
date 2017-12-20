@@ -33,6 +33,7 @@ class PrendusEditQuestion extends Polymer.Element {
     saving: boolean;
     noSave: boolean;
     userRadiosFromCode: UserRadio[];
+    userChecksFromCode: UserCheck[];
 
     static get is() { return 'prendus-edit-question'; }
     static get properties() {
@@ -101,6 +102,7 @@ class PrendusEditQuestion extends Polymer.Element {
             });
 
             this.action = fireLocalAction(this.componentId, 'userRadiosFromCode', getUserASTObjects(this._question.text, this._question.code, 'RADIO'));
+            this.action = fireLocalAction(this.componentId, 'userChecksFromCode', getUserASTObjects(this._question.text, this._question.code, 'CHECK'));
 
             await this.save();
 
@@ -130,6 +132,9 @@ class PrendusEditQuestion extends Polymer.Element {
                 text: this._question ? this._question.text : '',
                 code
             });
+
+            this.action = fireLocalAction(this.componentId, 'userRadiosFromCode', getUserASTObjects(this._question.text, this._question.code, 'RADIO'));
+            this.action = fireLocalAction(this.componentId, 'userChecksFromCode', getUserASTObjects(this._question.text, this._question.code, 'CHECK'));
 
             await this.save();
 
@@ -436,6 +441,8 @@ class PrendusEditQuestion extends Polymer.Element {
         selection.removeAllRanges();
         selection.addRange(textEditor.range0);
 
+        const newLineString = ``;
+
         const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
 
         this.action = fireLocalAction(this.componentId, 'question', {
@@ -481,6 +488,8 @@ class PrendusEditQuestion extends Polymer.Element {
             text,
             code: insertRadioOrCheckIntoCode(code, varName, correct)
         });
+
+        this.action = fireLocalAction(this.componentId, 'userChecksFromCode', getUserASTObjects(this._question.text, this._question.code, 'CHECK'));
 
         this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
         this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
@@ -583,6 +592,14 @@ class PrendusEditQuestion extends Polymer.Element {
         });
     }
 
+    checkCorrectChanged(e: CustomEvent) {
+        const userCheck: UserCheck = e.detail.userCheck;
+        this.action = fireLocalAction(this.componentId, 'question', {
+            ...this._question,
+            code: setUserASTObjectValue(this._question.code, userCheck)
+        });
+    }
+
     getAllowedTagNames() {
         return [
             'br',
@@ -605,6 +622,7 @@ class PrendusEditQuestion extends Polymer.Element {
         if (Object.keys(state.components[this.componentId] || {}).includes('textEditorLock')) this.textEditorLock = state.components[this.componentId].textEditorLock;
         if (Object.keys(state.components[this.componentId] || {}).includes('codeEditorLock')) this.codeEditorLock = state.components[this.componentId].codeEditorLock;
         if (Object.keys(state.components[this.componentId] || {}).includes('userRadiosFromCode')) this.userRadiosFromCode = state.components[this.componentId].userRadiosFromCode;
+        if (Object.keys(state.components[this.componentId] || {}).includes('userChecksFromCode')) this.userChecksFromCode = state.components[this.componentId].userChecksFromCode;
     }
 }
 

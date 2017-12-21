@@ -1,4 +1,6 @@
 import {UserRadio} from '../prendus-question-elements.d';
+import {compileToAssessML, parse} from '../../assessml/assessml';
+import {ASTObject} from '../../assessml/assessml.d';
 
 class PrendusMultipleChoiceTool extends WysiwygTool {
     userRadios: UserRadio[];
@@ -27,12 +29,12 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
         e.stopPropagation();
     }
 
-    getIndex(index: number) {
-        return index + 1;
+    doneClick() {
+        this.shadowRoot.querySelector('#radioDialog').close();
     }
 
-    insertClick() {
-        const contentInput = this.shadowRoot.querySelector('#contentInput');
+    addOptionClick() {
+        const contentInput = this.shadowRoot.querySelector('#optionInput');
         const content = contentInput.value;
 
         this.dispatchEvent(new CustomEvent('insert-radio', {
@@ -47,7 +49,7 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
     }
 
     radioCorrectChanged(e: any) {
-        const toggle = this.shadowRoot.querySelector(`#${e.model.item.varName}`);
+        const toggle = this.shadowRoot.querySelector(`#${e.model.item.varName}-toggle`);
         const userRadio: UserRadio = {
             varName: e.model.item.varName,
             checked: toggle ? toggle.checked : false
@@ -58,6 +60,27 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
                 userRadio
             }
         }));
+    }
+
+    radioContentChanged(e: any) {
+        const input = this.shadowRoot.querySelector(`#${e.model.item.varName}-input`);
+        const radioContentToChange = {
+            varName: e.model.item.varName,
+            content: parse(input.value, () => 5, () => '', () => [], () => []) //TODO hook up the correct functions to get good values for variables and such
+        };
+
+        this.dispatchEvent(new CustomEvent('radio-content-changed', {
+            detail: {
+                radioContentToChange
+            }
+        }));
+    }
+
+    getCompiledContent(content: ASTObject[]) {
+        return compileToAssessML({
+            type: 'AST',
+            ast: content
+        }, () => 5, () => '', () => [], () => []);
     }
 }
 

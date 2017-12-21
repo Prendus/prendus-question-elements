@@ -19,23 +19,31 @@
 		</paper-tooltip>
 
         <paper-dialog id="radioDialog" on-click="radioDialogClick">
+            <!-- <div style="display: flex">
+                <paper-input id="questionInput" type="text" label="Question" autofocus></paper-input>
+            </div> -->
+
             <div style="display: flex">
-                <paper-input id="contentInput" type="text" label="Type the text of this option" autofocus></paper-input>
+                <paper-input id="optionInput" type="text" label="Multiple choice option"></paper-input>
+                <button style="height: 100%; margin-top: 8%; margin-left: .5vw" on-click="addOptionClick">Add</button>
             </div>
 
             <dom-repeat items="[[userRadios]]">
                 <template>
                     <div style="display: flex">
-                        <span style="margin-right: 5px">Option [[getIndex(index)]], Correct:</span> <paper-toggle-button id="[[item.varName]]" on-checked-changed="radioCorrectChanged"></paper-toggle-button>
+                        <!-- <paper-input id="[[item.varName]]-input" type="text"></paper-input> -->
+                        <input id="[[item.varName]]-input" type="text" value="[[getCompiledContent(item.content)]]" on-input="radioContentChanged">
+                        Correct: <paper-toggle-button id="[[item.varName]]-toggle" on-checked-changed="radioCorrectChanged"></paper-toggle-button>
                     </div>
                 </template>
             </dom-repeat>
 
             <div style="display: flex">
-                <paper-button style="margin-left: auto" on-click="insertClick" raised noink>Insert option</paper-button>
+                <paper-button style="margin-left: auto" raised on-click="doneClick">Done</paper-button>
             </div>
+
         </paper-dialog>
     </template>
 
-    <script src="prendus-multiple-choice-tool.ts"></script>
+    <script type="module" src="prendus-multiple-choice-tool.ts"></script>
 </dom-module>

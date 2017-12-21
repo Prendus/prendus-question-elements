@@ -5,8 +5,8 @@ import {GQLRequest} from '../prendus-shared/services/graphql-service';
 import {User} from './prendus-question-elements.d';
 import {RootReducer} from './redux/reducers';
 import {Reducer, UserCheck, UserRadio} from './prendus-question-elements.d';
-import {parse, getAstObjects} from '../assessml/assessml';
-import {AST, Input, Image, Radio, Check, Essay, Code} from '../assessml/assessml.d';
+import {parse, getAstObjects, compileToAssessML} from '../assessml/assessml';
+import {AST, Input, Image, Radio, Check, Essay, Code, ASTObject} from '../assessml/assessml.d';
 import {
     insertEssayIntoCode,
     insertCodeIntoCode,
@@ -589,6 +589,30 @@ class PrendusEditQuestion extends Polymer.Element {
         this.action = fireLocalAction(this.componentId, 'question', {
             ...this._question,
             code: setUserASTObjectValue(this._question.code, userRadio)
+        });
+    }
+
+    radioContentChanged(e: CustomEvent) {
+        const radioContentToChange = e.detail.radioContentToChange;
+
+        const assessMLAST = parse(this._question.text, () => 5, () => '', () => [], () => []);
+        const newAssessMLAST = {
+            ...assessMLAST,
+            ast: assessMLAST.ast.map((astObject: ASTObject) => {
+                if (astObject.varName === radioContentToChange.varName) {
+                    return {
+                        ...astObject,
+                        content: radioContentToChange.content.ast
+                    };
+                }
+
+                return astObject;
+            })
+        };
+
+        this.action = fireLocalAction(this.componentId, 'question', {
+            ...this._question,
+            text: compileToAssessML(newAssessMLAST, () => 5, () => '', () => [], () => [])
         });
     }
 

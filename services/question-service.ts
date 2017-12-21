@@ -909,7 +909,8 @@ export function getUserASTObjects(text: string, code: string, type: ASTObjectTyp
             return result;
         }, {
             varName: astObject.varName,
-            checked: false
+            checked: false,
+            content: astObject.content
         });
     });
 }

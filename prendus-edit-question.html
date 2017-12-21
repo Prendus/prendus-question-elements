@@ -111,7 +111,7 @@
                         </paper-tooltip>
 
                         <wysiwyg-e id="textEditor" class="editor" value="[[_question.text]]" on-value-changed="textEditorChanged" allowed-tag-names="[[getAllowedTagNames()]]">
-                            <prendus-multiple-choice-tool id="prendus-multiple-choice-tool" on-insert-radio="insertRadio" user-radios="[[userRadiosFromCode]]" on-radio-correct-changed="radioCorrectChanged"></prendus-multiple-choice-tool>
+                            <prendus-multiple-choice-tool id="prendus-multiple-choice-tool" on-insert-radio="insertRadio" user-radios="[[userRadiosFromCode]]" on-radio-correct-changed="radioCorrectChanged" on-radio-content-changed="radioContentChanged"></prendus-multiple-choice-tool>
                             <prendus-multiple-select-tool id="prendus-multiple-select-tool" on-insert-check="insertCheck" user-checks="[[userChecksFromCode]]" on-check-correct-changed="checkCorrectChanged"></prendus-multiple-select-tool>
                             <prendus-fill-in-the-blank-tool id="prendus-fill-in-the-blank-tool" on-insert-input="insertInput"></prendus-fill-in-the-blank-tool>
                             <prendus-essay-tool id="prendus-essay-tool" on-insert-essay="insertEssay"></prendus-essay-tool>

@@ -624,6 +624,30 @@ class PrendusEditQuestion extends Polymer.Element {
         });
     }
 
+    questionStemChanged(e: CustomEvent) {
+        const questionStem = e.detail.questionStem;
+
+        const newContent = {
+            type: 'CONTENT',
+            varName: 'content',
+            content: questionStem
+        };
+        const assessMLAST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+        const newAssessMLAST = assessMLAST.ast[0] && assessMLAST.ast[0].type === 'CONTENT' ? {
+            ...assessMLAST,
+            ast: [newContent, ...assessMLAST.ast.slice(1)]
+        } : {
+            ...assessMLAST,
+            ast: [newContent, ...assessMLAST.ast]
+        };
+
+        this.action = fireLocalAction(this.componentId, 'question', {
+            ...this._question,
+            text: compileToAssessML(newAssessMLAST, () => 5, () => '', () => [], () => []),
+            code: this._question ? this._question.code : ''
+        });
+    }
+
     getAllowedTagNames() {
         return [
             'br',

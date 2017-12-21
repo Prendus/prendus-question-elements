@@ -82,6 +82,21 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
             ast: content
         }, () => 5, () => '', () => [], () => []);
     }
+
+    questionStemChanged() {
+        const questionInput = this.shadowRoot.querySelector('#questionStemInput');
+
+        this.dispatchEvent(new CustomEvent('question-stem-changed', {
+            detail: {
+                questionStem: questionInput.value
+            }
+        }));
+    }
+
+    getQuestionStem(question) {
+        const assessMLAST = parse(question.text, () => 5, () => '', () => [], () => []);
+        return (assessMLAST.ast[0] && assessMLAST.ast[0].type === 'CONTENT' ? assessMLAST.ast[0].content : '').replace(/<p>|<\/p>|<br>/g, '');
+    }
 }
 
 window.customElements.define(PrendusMultipleChoiceTool.is, PrendusMultipleChoiceTool);

@@ -19,9 +19,9 @@
 		</paper-tooltip>
 
         <paper-dialog id="radioDialog" on-click="radioDialogClick">
-            <!-- <div style="display: flex">
-                <paper-input id="questionInput" type="text" label="Question" autofocus></paper-input>
-            </div> -->
+            <div style="display: flex">
+                <paper-input id="questionStemInput" type="text" label="Question" autofocus on-value-changed="questionStemChanged" value="[[getQuestionStem(question)]]"></paper-input>
+            </div>
 
             <div style="display: flex">
                 <paper-input id="optionInput" type="text" label="Multiple choice option"></paper-input>

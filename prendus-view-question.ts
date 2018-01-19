@@ -25,6 +25,12 @@ import {
     Drop,
     Image
 } from '../assessml/assessml.d';
+import {
+    execute,
+    subscribe,
+    extendSchema,
+    addIsTypeOf
+} from '../graphsm/graphsm';
 
 export class PrendusViewQuestion extends Polymer.Element {
     shadowRoot: ShadowRoot;
@@ -61,6 +67,32 @@ export class PrendusViewQuestion extends Polymer.Element {
         super();
 
         this.componentId = createUUID();
+        extendSchema(`
+            type PrendusViewQuestion implements ComponentState {
+                componentId: String!
+                componentType: String!
+                loaded: Boolean
+                question: Any
+                builtQuestion: Any
+                showSolution: Boolean
+            }
+        `);
+        addIsTypeOf('ComponentState', 'PrendusViewQuestion', (value) => {
+            return value.componentType === 'PrendusViewQuestion';
+        });
+        subscribe(this.render.bind(this));
+
+        execute(`
+            mutation($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            componentId: this.componentId,
+            props: {
+                componentType: 'PrendusViewQuestion'
+            }
+        });
+
         this.rootReducer = RootReducer;
     }
 
@@ -83,15 +115,45 @@ export class PrendusViewQuestion extends Polymer.Element {
     }
 
     async questionChanged() {
-        this.action = fireLocalAction(this.componentId, 'question', this.question);
-        this.action = fireLocalAction(this.componentId, 'loaded', false);
+        console.log(this.question)
 
-        const loadDataResult = await loadData(this._question, null, this.userToken);
+        await execute(`
+            mutation($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            componentId: this.componentId,
+            props: {
+                question: this.question,
+                loaded: false
+            }
+        });
 
-        this.action = fireLocalAction(this.componentId, 'question', loadDataResult.question);
-        this.action = fireLocalAction(this.componentId, 'builtQuestion', loadDataResult.builtQuestion);
-        this.action = fireLocalAction(this.componentId, 'showSolution', this.builtQuestion ? getAstObjects(this.builtQuestion.ast, 'SOLUTION').length > 0 : false);
-        this.action = fireLocalAction(this.componentId, 'loaded', true);
+        // this.action = fireLocalAction(this.componentId, 'question', this.question);
+        // this.action = fireLocalAction(this.componentId, 'loaded', false);
+
+        const loadDataResult = await loadData(this.question, null, this.userToken);
+
+        console.log('loadDataResult', loadDataResult);
+
+        await execute(`
+            mutation($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            componentId: this.componentId,
+            props: {
+                question: loadDataResult.question,
+                builtQuestion: loadDataResult.builtQuestion,
+                showSolution: this.builtQuestion ? getAstObjects(this.builtQuestion.ast, 'SOLUTION').length > 0 : false,
+                loaded: true
+            }
+        });
+
+        // this.action = fireLocalAction(this.componentId, 'question', loadDataResult.question);
+        // this.action = fireLocalAction(this.componentId, 'builtQuestion', loadDataResult.builtQuestion);
+        // this.action = fireLocalAction(this.componentId, 'showSolution', this.builtQuestion ? getAstObjects(this.builtQuestion.ast, 'SOLUTION').length > 0 : false);
+        // this.action = fireLocalAction(this.componentId, 'loaded', true);
 
         //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
         window.parent.postMessage({
@@ -105,28 +167,28 @@ export class PrendusViewQuestion extends Polymer.Element {
         }));
     }
 
-    async questionIdChanged() {
-        this.action = fireLocalAction(this.componentId, 'questionId', this.questionId);
-        this.action = fireLocalAction(this.componentId, 'loaded', false);
-
-        const loadDataResult = await loadData(null, this._questionId, this.userToken);
-
-        this.action = fireLocalAction(this.componentId, 'question', loadDataResult.question);
-        this.action = fireLocalAction(this.componentId, 'builtQuestion', loadDataResult.builtQuestion);
-        this.action = fireLocalAction(this.componentId, 'showSolution', getAstObjects(this.builtQuestion.ast, 'SOLUTION').length > 0);
-        this.action = fireLocalAction(this.componentId, 'loaded', true);
-
-        //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
-        window.parent.postMessage({
-            type: 'prendus-view-question-resize',
-            height: document.body.scrollHeight,
-            width: document.body.scrollWidth
-        }, '*');
-
-        this.dispatchEvent(new CustomEvent('question-loaded', {
-            bubbles: false
-        }));
-    }
+    // async questionIdChanged() {
+    //     this.action = fireLocalAction(this.componentId, 'questionId', this.questionId);
+    //     this.action = fireLocalAction(this.componentId, 'loaded', false);
+    //
+    //     const loadDataResult = await loadData(null, this._questionId, this.userToken);
+    //
+    //     this.action = fireLocalAction(this.componentId, 'question', loadDataResult.question);
+    //     this.action = fireLocalAction(this.componentId, 'builtQuestion', loadDataResult.builtQuestion);
+    //     this.action = fireLocalAction(this.componentId, 'showSolution', getAstObjects(this.builtQuestion.ast, 'SOLUTION').length > 0);
+    //     this.action = fireLocalAction(this.componentId, 'loaded', true);
+    //
+    //     //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
+    //     window.parent.postMessage({
+    //         type: 'prendus-view-question-resize',
+    //         height: document.body.scrollHeight,
+    //         width: document.body.scrollWidth
+    //     }, '*');
+    //
+    //     this.dispatchEvent(new CustomEvent('question-loaded', {
+    //         bubbles: false
+    //     }));
+    // }
 
     getSanitizedHTML(html: string) {
         const sanitizedHTML = DOMPurify.sanitize(html, {
@@ -224,31 +286,57 @@ export class PrendusViewQuestion extends Polymer.Element {
     stateChange(e: CustomEvent) {
         const state = e.detail.state;
 
-        if (Object.keys(state.components[this.componentId] || {}).includes('loaded')) this.loaded = state.components[this.componentId].loaded;
-        if (Object.keys(state.components[this.componentId] || {}).includes('question')) this._question = state.components[this.componentId].question;
+        // if (Object.keys(state.components[this.componentId] || {}).includes('loaded')) this.loaded = state.components[this.componentId].loaded;
+        // if (Object.keys(state.components[this.componentId] || {}).includes('question')) this._question = state.components[this.componentId].question;
         if (Object.keys(state.components[this.componentId] || {}).includes('questionId')) this._questionId = state.components[this.componentId].questionId;
-        if (Object.keys(state.components[this.componentId] || {}).includes('builtQuestion')) this.builtQuestion = state.components[this.componentId].builtQuestion;
+        // if (Object.keys(state.components[this.componentId] || {}).includes('builtQuestion')) this.builtQuestion = state.components[this.componentId].builtQuestion;
         if (Object.keys(state.components[this.componentId] || {}).includes('showEmbedCode')) this.showEmbedCode = state.components[this.componentId].showEmbedCode;
         if (Object.keys(state.components[this.componentId] || {}).includes('checkAnswerResponse')) this.checkAnswerResponse = state.components[this.componentId].checkAnswerResponse;
-        if (Object.keys(state.components[this.componentId] || {}).includes('showSolution')) this.showSolution = state.components[this.componentId].showSolution;
+        // if (Object.keys(state.components[this.componentId] || {}).includes('showSolution')) this.showSolution = state.components[this.componentId].showSolution;
         if (Object.keys(state.components[this.componentId] || {}).includes('solutionButtonText')) this.solutionButtonText = state.components[this.componentId].solutionButtonText;
         this.userToken = state.userToken;
+    }
 
-        const contentDiv = this.shadowRoot.querySelector('#contentDiv');
-        if (contentDiv) {
-            setTimeout(() => {
-                window.renderMathInElement(contentDiv, {
-                    delimiters: [
-                      {left: "$$", right: "$$", display: false}
-                    ]
+    async render() {
+        const result = await execute(`
+            query($componentId: String!) {
+                componentState(componentId: $componentId) {
+                    ... on PrendusViewQuestion {
+                        question
+                        loaded
+                        builtQuestion
+                        showSolution
+                    }
+                }
+            }
+        `, {
+            componentId: this.componentId
+        });
+
+        console.log(result.data.componentState);
+        const componentState = result.data.componentState;
+        if (componentState) {
+            this._question = componentState.question;
+            this.loaded = componentState.loaded;
+            this.builtQuestion = componentState.builtQuestion;
+            this.showSolution = componentState.showSolution;
+
+            const contentDiv = this.shadowRoot.querySelector('#contentDiv');
+            if (contentDiv) {
+                setTimeout(() => {
+                    window.renderMathInElement(contentDiv, {
+                        delimiters: [
+                          {left: "$$", right: "$$", display: false}
+                        ]
+                    });
                 });
-            });
-        }
-        else {
-            //TODO this seems to me to be a bad way to do this...the problem is that the contentDiv is not defined, and I do not know how to know when it will be defined. It is inside of a dom-if, and that gets stamped when the loaded property is true
-            setTimeout(() => {
-                this.stateChange(e);
-            });
+            }
+            else {
+                //TODO this seems to me to be a bad way to do this...the problem is that the contentDiv is not defined, and I do not know how to know when it will be defined. It is inside of a dom-if, and that gets stamped when the loaded property is true
+                setTimeout(() => {
+                    this.render();
+                });
+            }
         }
     }
 }

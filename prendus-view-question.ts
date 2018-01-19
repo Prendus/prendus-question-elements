@@ -1,19 +1,23 @@
-import {GQLRequest} from '../prendus-shared/services/graphql-service';
 import {
-    SetComponentPropertyAction,
     Question,
     BuiltQuestion,
-    Reducer,
     UserInput,
     UserVariable,
     UserCheck,
     UserRadio,
     UserEssay
 } from './prendus-question-elements.d';
-import {buildQuestion, checkAnswer} from './services/question-service';
-import {createUUID, fireLocalAction} from '../prendus-shared/services/utilities-service';
-import {getAstObjects, compileToHTML} from '../assessml/assessml';
-import {RootReducer} from './redux/reducers';
+import {
+    buildQuestion,
+    checkAnswer
+} from './services/question-service';
+import {
+    createUUID
+} from '../prendus-shared/services/utilities-service';
+import {
+    getAstObjects,
+    compileToHTML
+} from '../assessml/assessml';
 import {
     AST,
     Variable,
@@ -35,7 +39,6 @@ import {
 export class PrendusViewQuestion extends Polymer.Element {
     shadowRoot: ShadowRoot;
     componentId: string;
-    action: SetComponentPropertyAction;
     questionId: string;
     _questionId: string;
     _question: Question;
@@ -43,7 +46,6 @@ export class PrendusViewQuestion extends Polymer.Element {
     userToken: string | null;
     loaded: boolean;
     showEmbedCode: boolean;
-    rootReducer: Reducer;
     checkAnswerResponse: string;
     solutionButtonText: 'Solution' | 'Question';
 
@@ -51,15 +53,11 @@ export class PrendusViewQuestion extends Polymer.Element {
     static get properties() {
         return {
             question: {
-                type: Object,
-                observer: 'questionChanged',
-                value: null
+                observer: 'questionInfoChanged'
             },
             questionId: {
-                type: String,
-                observer: 'questionIdChanged'
+                observer: 'questionInfoChanged'
             }
-
         };
     }
 
@@ -68,13 +66,22 @@ export class PrendusViewQuestion extends Polymer.Element {
 
         this.componentId = createUUID();
         extendSchema(`
+            type Question {
+                text: String!
+                code: String!
+            }
+
             type PrendusViewQuestion implements ComponentState {
                 componentId: String!
                 componentType: String!
                 loaded: Boolean
-                question: Any
+                question: Question!
+                questionId: String!
                 builtQuestion: Any
-                showSolution: Boolean
+                showSolution: Boolean!
+                showEmbedCode: Boolean!
+                checkAnswerResponse: String!
+                solutionButtonText: String!
             }
         `);
         addIsTypeOf('ComponentState', 'PrendusViewQuestion', (value) => {
@@ -83,30 +90,49 @@ export class PrendusViewQuestion extends Polymer.Element {
         subscribe(this.render.bind(this));
 
         execute(`
-            mutation($componentId: String!, $props: Any) {
+            mutation initialSetup($componentId: String!, $props: Any) {
                 updateComponentState(componentId: $componentId, props: $props)
             }
         `, {
-            componentId: this.componentId,
-            props: {
-                componentType: 'PrendusViewQuestion'
+            initialSetup: (previousResult) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        componentType: 'PrendusViewQuestion',
+                        question: {
+                            text: '',
+                            code: ''
+                        },
+                        questionId: '',
+                        solutionButtonText: 'Solution',
+                        showSolution: false,
+                        showEmbedCode: false,
+                        checkAnswerResponse: ''
+                    }
+                };
             }
         });
-
-        this.rootReducer = RootReducer;
-    }
-
-    connectedCallback() {
-        super.connectedCallback();
-        this.action = fireLocalAction(this.componentId, 'solutionButtonText', 'Solution');
     }
 
     getThis() {
         return this;
     }
 
-    showEmbedCodeClick() {
-        this.action = fireLocalAction(this.componentId, 'showEmbedCode', !this.showEmbedCode);
+    async showEmbedCodeClick() {
+        await execute(`
+            mutation setShowEmbedCode($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            setShowEmbedCode: (previousResult) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        showEmbedCode: !this.showEmbedCode
+                    }
+                };
+            }
+        });
 
         //allow the template with the input to be stamped
         setTimeout(() => {
@@ -114,7 +140,11 @@ export class PrendusViewQuestion extends Polymer.Element {
         }, 0);
     }
 
-    async questionChangedGraphSM() {
+    async questionInfoChanged() {
+        if (!this.question && !this.questionId) {
+            return;
+        }
+
         await execute(`
             mutation prepareForQuestionQuery(
                 $componentId: String!
@@ -127,7 +157,10 @@ export class PrendusViewQuestion extends Polymer.Element {
                 query getLocalQuestion($componentId: String!) {
                     componentState(componentId: $componentId) {
                         ... on PrendusViewQuestion {
-                            question
+                            question {
+                                text
+                                code
+                            }
                         }
                     }
                 }
@@ -149,7 +182,7 @@ export class PrendusViewQuestion extends Polymer.Element {
                 updateComponentState(componentId: $componentId, props: $props)
             }
         `, {
-            prepareForQuestionQuery: (variables) => {
+            prepareForQuestionQuery: (previousResult) => {
                 return {
                     componentId: this.componentId,
                     props: {
@@ -158,74 +191,29 @@ export class PrendusViewQuestion extends Polymer.Element {
                     }
                 };
             },
-            getLocalQuestion: (variables) => {
+            getLocalQuestion: (previousResult) => {
                 return {
                     componentId: this.componentId
                 };
             },
-            getRemoteQuestion: (variables) => {
+            getRemoteQuestion: (previousResult) => {
                 return {
                     questionId: this.questionId
                 };
             },
-            questionPrepared: async (variables) => {
+            questionPrepared: async (previousResult) => {
+                const question = previousResult.data.componentState.question;
                 return {
                     componentId: this.componentId,
                     props: {
-                        question: variables.question,
-                        builtQuestion: await buildQuestion(variables.question.text, variables.question.code)
+                        question,
+                        builtQuestion: await buildQuestion(question.text, question.code),
+                        showSolution: this.builtQuestion ? getAstObjects(this.builtQuestion.ast, 'SOLUTION').length > 0 : false,
+                        loaded: true
                     }
                 };
             }
         });
-    }
-
-    async questionChanged() {
-        console.log(this.question)
-
-        await execute(`
-            mutation update1($componentId: String!, $props: Any) {
-                updateComponentState(componentId: $componentId, props: $props)
-            }
-
-            mutation update2($componentId: String!, $props: Any) {
-                updateComponentState(componentId: $componentId, props: $props)
-            }
-        `, {
-            componentId: this.componentId,
-            props: {
-                question: this.question,
-                loaded: false
-            }
-        }).then((result) => {
-            console.log('result', result)
-        });
-
-        // this.action = fireLocalAction(this.componentId, 'question', this.question);
-        // this.action = fireLocalAction(this.componentId, 'loaded', false);
-
-        const loadDataResult = await loadData(this.question, null, this.userToken);
-
-        console.log('loadDataResult', loadDataResult);
-
-        await execute(`
-            mutation($componentId: String!, $props: Any) {
-                updateComponentState(componentId: $componentId, props: $props)
-            }
-        `, {
-            componentId: this.componentId,
-            props: {
-                question: loadDataResult.question,
-                builtQuestion: loadDataResult.builtQuestion,
-                showSolution: this.builtQuestion ? getAstObjects(this.builtQuestion.ast, 'SOLUTION').length > 0 : false,
-                loaded: true
-            }
-        });
-
-        // this.action = fireLocalAction(this.componentId, 'question', loadDataResult.question);
-        // this.action = fireLocalAction(this.componentId, 'builtQuestion', loadDataResult.builtQuestion);
-        // this.action = fireLocalAction(this.componentId, 'showSolution', this.builtQuestion ? getAstObjects(this.builtQuestion.ast, 'SOLUTION').length > 0 : false);
-        // this.action = fireLocalAction(this.componentId, 'loaded', true);
 
         //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
         window.parent.postMessage({
@@ -238,29 +226,6 @@ export class PrendusViewQuestion extends Polymer.Element {
             bubbles: false
         }));
     }
-
-    // async questionIdChanged() {
-    //     this.action = fireLocalAction(this.componentId, 'questionId', this.questionId);
-    //     this.action = fireLocalAction(this.componentId, 'loaded', false);
-    //
-    //     const loadDataResult = await loadData(null, this._questionId, this.userToken);
-    //
-    //     this.action = fireLocalAction(this.componentId, 'question', loadDataResult.question);
-    //     this.action = fireLocalAction(this.componentId, 'builtQuestion', loadDataResult.builtQuestion);
-    //     this.action = fireLocalAction(this.componentId, 'showSolution', getAstObjects(this.builtQuestion.ast, 'SOLUTION').length > 0);
-    //     this.action = fireLocalAction(this.componentId, 'loaded', true);
-    //
-    //     //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
-    //     window.parent.postMessage({
-    //         type: 'prendus-view-question-resize',
-    //         height: document.body.scrollHeight,
-    //         width: document.body.scrollWidth
-    //     }, '*');
-    //
-    //     this.dispatchEvent(new CustomEvent('question-loaded', {
-    //         bubbles: false
-    //     }));
-    // }
 
     getSanitizedHTML(html: string) {
         const sanitizedHTML = DOMPurify.sanitize(html, {
@@ -332,7 +297,20 @@ export class PrendusViewQuestion extends Polymer.Element {
             }
         }));
 
-        this.action = fireLocalAction(this.componentId, 'checkAnswerResponse', checkAnswerInfo.answer === true ? 'Correct' : checkAnswerInfo.error ? `This question has errors:\n\n${checkAnswerInfo.error}` : 'Incorrect');
+        await execute(`
+            mutation setCheckAnswerResponse($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            setCheckAnswerResponse: (previousResult) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        checkAnswerResponse: checkAnswerInfo.answer === true ? 'Correct' : checkAnswerInfo.error ? `This question has errors:\n\n${checkAnswerInfo.error}` : 'Incorrect'
+                    }
+                };
+            }
+        });
 
         this.shadowRoot.querySelector('#checkAnswerResponseToast').open();
     }
@@ -340,58 +318,88 @@ export class PrendusViewQuestion extends Polymer.Element {
     async showSolutionClick() {
         const solutionTemplate = <HTMLTemplateElement> this.shadowRoot.querySelector('#solution1');
         if (solutionTemplate) {
-            this.action = fireLocalAction(this.componentId, 'builtQuestion', {
-                ...this.builtQuestion,
-                html: `${solutionTemplate.innerHTML}<template>${this._question.text}</template>`
+            await execute(`
+                mutation solutionTemplateExists($componentId: String!, $props: Any) {
+                    updateComponentState(componentId: $componentId, props: $props)
+                }
+            `, {
+                solutionTemplateExists: (previousResult) => {
+                    return {
+                        componentId: this.componentId,
+                        props: {
+                            builtQuestion: {
+                                ...this.builtQuestion,
+                                html: `${solutionTemplate.innerHTML}<template>${this._question.text}</template>`
+                            },
+                            solutionButtonText: 'Question'
+                        }
+                    };
+                }
             });
-            this.action = fireLocalAction(this.componentId, 'solutionButtonText', 'Question');
         }
         else {
-            this.action = fireLocalAction(this.componentId, 'builtQuestion', {
-                ...this.builtQuestion,
-                html: compileToHTML(this.builtQuestion.ast, () => NaN, () => '')
+            await execute(`
+                mutation solutionTemplateDoesNotExist($componentId: String!, $props: Any) {
+                    updateComponentState(componentId: $componentId, props: $props)
+                }
+            `, {
+                solutionTemplateDoesNotExist: (previousResult) => {
+                    return {
+                        componentId: this.componentId,
+                        props: {
+                            builtQuestion: {
+                                ...this.builtQuestion,
+                                html: compileToHTML(this.builtQuestion.ast, () => NaN, () => '')
+                            },
+                            solutionButtonText: 'Solution'
+                        }
+                    };
+                }
             });
-            this.action = fireLocalAction(this.componentId, 'solutionButtonText', 'Solution');
         }
-    }
-
-    stateChange(e: CustomEvent) {
-        const state = e.detail.state;
-
-        // if (Object.keys(state.components[this.componentId] || {}).includes('loaded')) this.loaded = state.components[this.componentId].loaded;
-        // if (Object.keys(state.components[this.componentId] || {}).includes('question')) this._question = state.components[this.componentId].question;
-        if (Object.keys(state.components[this.componentId] || {}).includes('questionId')) this._questionId = state.components[this.componentId].questionId;
-        // if (Object.keys(state.components[this.componentId] || {}).includes('builtQuestion')) this.builtQuestion = state.components[this.componentId].builtQuestion;
-        if (Object.keys(state.components[this.componentId] || {}).includes('showEmbedCode')) this.showEmbedCode = state.components[this.componentId].showEmbedCode;
-        if (Object.keys(state.components[this.componentId] || {}).includes('checkAnswerResponse')) this.checkAnswerResponse = state.components[this.componentId].checkAnswerResponse;
-        // if (Object.keys(state.components[this.componentId] || {}).includes('showSolution')) this.showSolution = state.components[this.componentId].showSolution;
-        if (Object.keys(state.components[this.componentId] || {}).includes('solutionButtonText')) this.solutionButtonText = state.components[this.componentId].solutionButtonText;
-        this.userToken = state.userToken;
     }
 
     async render() {
         const result = await execute(`
-            query($componentId: String!) {
+            query render($componentId: String!) {
                 componentState(componentId: $componentId) {
                     ... on PrendusViewQuestion {
-                        question
+                        question {
+                            text
+                            code
+                        }
                         loaded
                         builtQuestion
                         showSolution
+                        questionId
+                        showEmbedCode
+                        checkAnswerResponse
+                        solutionButtonText
                     }
                 }
             }
         `, {
-            componentId: this.componentId
+            render: (previousResult) => {
+                return {
+                    componentId: this.componentId
+                };
+            }
         });
 
-        console.log(result.data.componentState);
+        if (result.errors) {
+            throw result.errors;
+        }
+
         const componentState = result.data.componentState;
         if (componentState) {
             this._question = componentState.question;
+            this._questionId = componentState.questionId;
             this.loaded = componentState.loaded;
             this.builtQuestion = componentState.builtQuestion;
             this.showSolution = componentState.showSolution;
+            this.showEmbedCode = componentState.showEmbedCode;
+            this.checkAnswerResponse = componentState.checkAnswerResponse;
+            this.solutionButtonText = componentState.solutionButtonText;
 
             const contentDiv = this.shadowRoot.querySelector('#contentDiv');
             if (contentDiv) {
@@ -414,47 +422,6 @@ export class PrendusViewQuestion extends Polymer.Element {
 }
 
 window.customElements.define(PrendusViewQuestion.is, PrendusViewQuestion);
-
-async function loadData(question: Question | null, questionId: string | null, userToken: string | null) {
-    if (question) {
-        return {
-            question,
-            builtQuestion: await buildQuestion(question.text, question.code)
-        };
-    }
-    else if (questionId) {
-        const data = await GQLRequest(`
-            query getQuestion($questionId: ID!) {
-                question: Question(
-                    id: $questionId
-                ) {
-                    text
-                    code
-                }
-            }
-        `, {
-            questionId
-        }, userToken, (error: any) => {
-            console.log(error);
-        });
-
-        if (data.question) {
-            return {
-                question: data.question,
-                builtQuestion: await buildQuestion(data.question.text, data.question.code)
-            };
-        }
-        else {
-            return await createNotFoundQuestion(questionId);
-        }
-    }
-    else {
-        return {
-            text: '',
-            code: ''
-        };
-    }
-}
 
 async function createNotFoundQuestion(questionId: string) {
     const notFoundQuestion = {

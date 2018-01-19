@@ -417,7 +417,7 @@ class PrendusEditQuestion extends Polymer.Element {
         this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
     }
 
-    insertRadio(e: CustomEvent) {
+    async insertRadio(e: CustomEvent) {
         this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
         this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
 
@@ -432,18 +432,31 @@ class PrendusEditQuestion extends Polymer.Element {
 
         const code = codeEditor.value;
 
-        const radioString = `[radio start]${content || ''}[radio end]`;
-        const newTextNode = document.createTextNode(radioString);
-        textEditor.range0.insertNode(newTextNode);
-        textEditor.range0.setStart(newTextNode, radioString.length);
-        textEditor.range0.collapse(true);
         const selection = window.getSelection();
         selection.removeAllRanges();
         selection.addRange(textEditor.range0);
 
-        const newLineString = ``;
+        const radioString = `[radio start]${content || ''}[radio end]`;
+        document.execCommand('insertText', false, radioString);
+        document.execCommand('insertHTML', false, '<br>');
 
-        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+        textEditor.range0.setStart(textEditor.range0.startContainer, textEditor.range0.startContainer.innerHTML.length - 1);
+
+        // textEditor.range0.collapse(true);
+
+
+        // const selection2 = window.getSelection();
+        // selection2.removeAllRanges();
+        // selection2.addRange(textEditor.range0);
+        //
+        // document.execCommand('insertHTML', false, '<br>');
+
+        // textEditor.range0.setStart(textEditor.range0.startContainer, radioString.length);
+        // textEditor.range0.collapse(true);
+
+        await wait(); //this wait is necessary to get the correct value from the textEditor (https://github.com/miztroh/wysiwyg-e/issues/202)
+        const text = textEditor.value;
+        // const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
 
         this.action = fireLocalAction(this.componentId, 'question', {
             ...this._question,
@@ -680,4 +693,12 @@ let currentTimeoutId: any;
 function debounce(func: () => any, delay: number) {
     clearTimeout(currentTimeoutId);
     currentTimeoutId = setTimeout(func, delay);
+}
+
+function wait(milliseconds: number = 0) {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            resolve();
+        }, milliseconds);
+    });
 }

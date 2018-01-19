@@ -114,11 +114,81 @@ export class PrendusViewQuestion extends Polymer.Element {
         }, 0);
     }
 
+    async questionChangedGraphSM() {
+        await execute(`
+            mutation prepareForQuestionQuery(
+                $componentId: String!
+                $props: Any
+            ) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+
+            ${this.question ? `
+                query getLocalQuestion($componentId: String!) {
+                    componentState(componentId: $componentId) {
+                        ... on PrendusViewQuestion {
+                            question
+                        }
+                    }
+                }
+            ` : `
+                query getRemoteQuestion($questionId: ID!) {
+                    question: Question(
+                        id: $questionId
+                    ) {
+                        text
+                        code
+                    }
+                }
+            `}
+
+            mutation questionPrepared(
+                $componentId: String!
+                $props: Any
+            ) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareForQuestionQuery: (variables) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: this.question,
+                        loaded: false
+                    }
+                };
+            },
+            getLocalQuestion: (variables) => {
+                return {
+                    componentId: this.componentId
+                };
+            },
+            getRemoteQuestion: (variables) => {
+                return {
+                    questionId: this.questionId
+                };
+            },
+            questionPrepared: async (variables) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: variables.question,
+                        builtQuestion: await buildQuestion(variables.question.text, variables.question.code)
+                    }
+                };
+            }
+        });
+    }
+
     async questionChanged() {
         console.log(this.question)
 
         await execute(`
-            mutation($componentId: String!, $props: Any) {
+            mutation update1($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+
+            mutation update2($componentId: String!, $props: Any) {
                 updateComponentState(componentId: $componentId, props: $props)
             }
         `, {
@@ -127,6 +197,8 @@ export class PrendusViewQuestion extends Polymer.Element {
                 question: this.question,
                 loaded: false
             }
+        }).then((result) => {
+            console.log('result', result)
         });
 
         // this.action = fireLocalAction(this.componentId, 'question', this.question);

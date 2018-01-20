@@ -36,6 +36,29 @@ import {
     addIsTypeOf
 } from '../graphsm/graphsm';
 
+extendSchema(`
+    type Question {
+        text: String!
+        code: String!
+    }
+
+    type PrendusViewQuestion implements ComponentState {
+        componentId: String!
+        componentType: String!
+        loaded: Boolean
+        question: Question!
+        questionId: String!
+        builtQuestion: Any
+        showSolution: Boolean!
+        showEmbedCode: Boolean!
+        checkAnswerResponse: String!
+        solutionButtonText: String!
+    }
+`);
+addIsTypeOf('ComponentState', 'PrendusViewQuestion', (value) => {
+    return value.componentType === 'PrendusViewQuestion';
+});
+
 export class PrendusViewQuestion extends Polymer.Element {
     shadowRoot: ShadowRoot;
     componentId: string;
@@ -65,28 +88,6 @@ export class PrendusViewQuestion extends Polymer.Element {
         super();
 
         this.componentId = createUUID();
-        extendSchema(`
-            type Question {
-                text: String!
-                code: String!
-            }
-
-            type PrendusViewQuestion implements ComponentState {
-                componentId: String!
-                componentType: String!
-                loaded: Boolean
-                question: Question!
-                questionId: String!
-                builtQuestion: Any
-                showSolution: Boolean!
-                showEmbedCode: Boolean!
-                checkAnswerResponse: String!
-                solutionButtonText: String!
-            }
-        `);
-        addIsTypeOf('ComponentState', 'PrendusViewQuestion', (value) => {
-            return value.componentType === 'PrendusViewQuestion';
-        });
         subscribe(this.render.bind(this));
 
         execute(`
@@ -215,12 +216,13 @@ export class PrendusViewQuestion extends Polymer.Element {
             }
         });
 
+        //TODO the resize is causing problems with the buildQuestion function with injecting variables for some reason, this happend after the switch to GraphSM
         //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
-        window.parent.postMessage({
-            type: 'prendus-view-question-resize',
-            height: document.body.scrollHeight,
-            width: document.body.scrollWidth
-        }, '*');
+        // window.parent.postMessage({
+        //     type: 'prendus-view-question-resize',
+        //     height: document.body.scrollHeight,
+        //     width: document.body.scrollWidth
+        // }, '*');
 
         this.dispatchEvent(new CustomEvent('question-loaded', {
             bubbles: false

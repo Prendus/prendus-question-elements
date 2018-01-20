@@ -1,9 +1,10 @@
+<script type="module" src="state/init-state-management.ts"></script>
+
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
 <link rel="import" href="../../bower_components/paper-tabs/paper-tab.html">
 <link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
-<link rel="import" href="../redux-store-element/redux-store.html">
 
 <script type="module" src="../function-plot-element/function-plot-element.ts"></script>
 
@@ -91,9 +92,7 @@
             }
         </style>
 
-        <redux-store id="reduxStoreElement" root-reducer="[[rootReducer]]" action="[[action]]" on-statechange="stateChange" store-name="PRENDUS_QUESTION_ELEMENTS"></redux-store>
-
-        <div class="mainContainer" hidden$="[[!question]]">
+        <div class="mainContainer" hidden$="[[!builtQuestion]]">
             <!-- <div hidden$="[[!getQuestionDefined()]]"> -->
                 <div id="contentDiv" inner-h-t-m-l="[[getSanitizedHTML(builtQuestion.html)]]"></div>
 
@@ -121,7 +120,7 @@
 
         </div>
 
-        <div class="questionPreviewPlaceholder" hidden$="[[question]]">
+        <div class="questionPreviewPlaceholder" hidden$="[[builtQuestion]]">
             Question preview will appear here
         </div>
 

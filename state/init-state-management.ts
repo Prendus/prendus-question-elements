@@ -52,5 +52,5 @@ GraphSMInit({
             };
         }
     },
-    reduxMiddlewares: [reduxLogger]
+    reduxMiddlewares: []
 });

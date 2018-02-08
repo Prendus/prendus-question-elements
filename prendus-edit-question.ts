@@ -162,17 +162,18 @@ class PrendusEditQuestion extends Polymer.Element {
             }
         `, {
             prepareToSaveText: (previousResult) => {
+                const newQuestion = {
+                    ...this._question,
+                    text,
+                    code: this._question ? this._question.code : ''
+                };
                 return {
                     componentId: this.componentId,
                     props: {
                         saving: true,
-                        question: {
-                            ...this._question,
-                            text,
-                            code: this._question ? this._question.code : ''
-                        },
-                        userRadiosFromCode: getUserASTObjects(this._question.text, this._question.code, 'RADIO'),
-                        userChecksFromCode: getUserASTObjects(this._question.text, this._question.code, 'CHECK')
+                        question: newQuestion,
+                        userRadiosFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'RADIO'),
+                        userChecksFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'CHECK')
                     }
                 };
             }

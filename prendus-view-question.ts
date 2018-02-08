@@ -113,6 +113,10 @@ export class PrendusViewQuestion extends Polymer.Element {
         return this;
     }
 
+    getQuestionDefined(builtQuestion) {
+        return builtQuestion ? builtQuestion.html === '' ? null : builtQuestion.html : null;
+    }
+
     async showEmbedCodeClick() {
         await execute(`
             mutation setShowEmbedCode($componentId: String!, $props: Any) {
@@ -187,7 +191,6 @@ export class PrendusViewQuestion extends Polymer.Element {
             }
         `, {
             prepareForQuestionQuery: (previousResult) => {
-                console.log('prepareForQuestionQuery previousResult', previousResult);
                 return {
                     componentId: this.componentId,
                     props: {
@@ -197,7 +200,6 @@ export class PrendusViewQuestion extends Polymer.Element {
                 };
             },
             getLocalQuestion: (previousResult) => {
-                console.log('getLocalQuestion previousResult', previousResult);
                 return {
                     componentId: this.componentId
                 };
@@ -208,31 +210,28 @@ export class PrendusViewQuestion extends Polymer.Element {
                 };
             },
             questionPrepared: async (previousResult) => {
-                console.log('questionPrepared previousResult', previousResult);
                 const question = previousResult.data.componentState.question;
+                const builtQuestion = await buildQuestion(question.text, question.code);
                 return {
                     componentId: this.componentId,
                     props: {
                         question,
-                        builtQuestion: await buildQuestion(question.text, question.code),
-                        showSolution: this.builtQuestion ? getAstObjects(this.builtQuestion.ast, 'SOLUTION').length > 0 : false,
+                        builtQuestion,
+                        showSolution: builtQuestion ? getAstObjects(builtQuestion.ast, 'SOLUTION').length > 0 : false,
                         loaded: true
                     }
                 };
             }
         }, this.userToken);
 
-        //TODO the resize is causing problems with the buildQuestion function with injecting variables for some reason, this happend after the switch to GraphSM
         //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
-        // window.parent.postMessage({
-        //     type: 'prendus-view-question-resize',
-        //     height: document.body.scrollHeight,
-        //     width: document.body.scrollWidth
-        // }, '*');
+        window.parent.postMessage({
+            type: 'prendus-view-question-resize',
+            height: document.body.scrollHeight,
+            width: document.body.scrollWidth
+        }, '*');
 
-        this.dispatchEvent(new CustomEvent('question-loaded', {
-            bubbles: false
-        }));
+        this.dispatchEvent(new CustomEvent('question-loaded'));
     }
 
     getSanitizedHTML(html: string) {
@@ -294,7 +293,6 @@ export class PrendusViewQuestion extends Polymer.Element {
         const checkAnswerInfo = await checkAnswer(this._question.code, this.builtQuestion.originalVariableValues, userVariables, userInputs, userEssays, userCodes, userChecks, userRadios, userImages, userGraphs);
 
         this.dispatchEvent(new CustomEvent('question-response', {
-            bubbles: false,
             detail: {
                 userVariables,
                 userInputs,
@@ -324,47 +322,33 @@ export class PrendusViewQuestion extends Polymer.Element {
     }
 
     async showSolutionClick() {
-        const solutionTemplate = <HTMLTemplateElement> this.shadowRoot.querySelector('#solution1');
-        if (solutionTemplate) {
-            await execute(`
-                mutation solutionTemplateExists($componentId: String!, $props: Any) {
-                    updateComponentState(componentId: $componentId, props: $props)
-                }
-            `, {
-                solutionTemplateExists: (previousResult) => {
-                    return {
-                        componentId: this.componentId,
-                        props: {
-                            builtQuestion: {
-                                ...this.builtQuestion,
-                                html: `${solutionTemplate.innerHTML}<template>${this._question.text}</template>`
-                            },
-                            solutionButtonText: 'Question'
-                        }
-                    };
-                }
-            }, this.userToken);
-        }
-        else {
-            await execute(`
-                mutation solutionTemplateDoesNotExist($componentId: String!, $props: Any) {
-                    updateComponentState(componentId: $componentId, props: $props)
-                }
-            `, {
-                solutionTemplateDoesNotExist: (previousResult) => {
-                    return {
-                        componentId: this.componentId,
-                        props: {
-                            builtQuestion: {
-                                ...this.builtQuestion,
-                                html: compileToHTML(this.builtQuestion.ast, () => NaN, () => '')
-                            },
-                            solutionButtonText: 'Solution'
-                        }
-                    };
-                }
-            }, this.userToken);
-        }
+        await execute(`
+            mutation setSolutionTemplateInfo($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            setSolutionTemplateInfo: (previousResult) => {
+                const solutionTemplate = <HTMLTemplateElement> this.shadowRoot.querySelector('#solution1');
+                const props = solutionTemplate ? {
+                    builtQuestion: {
+                        ...this.builtQuestion,
+                        html: `${solutionTemplate.innerHTML}<template>${this._question.text}</template>`
+                    },
+                    solutionButtonText: 'Question'
+                } : {
+                    builtQuestion: {
+                        ...this.builtQuestion,
+                        html: compileToHTML(this.builtQuestion.ast, () => NaN, () => '')
+                    },
+                    solutionButtonText: 'Solution'
+                };
+
+                return {
+                    componentId: this.componentId,
+                    props
+                };
+            }
+        }, this.userToken);
     }
 
     async render() {

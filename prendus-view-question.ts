@@ -35,9 +35,13 @@ import {
     extendSchema,
     addIsTypeOf
 } from '../graphsm/graphsm';
+import {
+    loadQuestion
+} from './services/shared-service';
 
+const PRENDUS_VIEW_QUESTION = 'PrendusViewQuestion';
 extendSchema(`
-    type PrendusViewQuestion implements ComponentState {
+    type ${PRENDUS_VIEW_QUESTION} implements ComponentState {
         componentId: String!
         componentType: String!
         loaded: Boolean
@@ -50,8 +54,8 @@ extendSchema(`
         solutionButtonText: String!
     }
 `);
-addIsTypeOf('ComponentState', 'PrendusViewQuestion', (value) => {
-    return value.componentType === 'PrendusViewQuestion';
+addIsTypeOf('ComponentState', PRENDUS_VIEW_QUESTION, (value: any) => {
+    return value.componentType === PRENDUS_VIEW_QUESTION;
 });
 
 export class PrendusViewQuestion extends Polymer.Element {
@@ -93,7 +97,7 @@ export class PrendusViewQuestion extends Polymer.Element {
                 return {
                     componentId: this.componentId,
                     props: {
-                        componentType: 'PrendusViewQuestion',
+                        componentType: PRENDUS_VIEW_QUESTION,
                         question: {
                             text: '',
                             code: ''
@@ -139,7 +143,7 @@ export class PrendusViewQuestion extends Polymer.Element {
         }, 0);
     }
 
-    async questionInfoChanged(oldValue, newValue) {
+    async questionInfoChanged(oldValue: any, newValue: any) {
         if (!this.question && !this.questionId) {
             return;
         }
@@ -153,76 +157,7 @@ export class PrendusViewQuestion extends Polymer.Element {
             return;
         }
 
-        await execute(`
-            mutation prepareForQuestionQuery(
-                $componentId: String!
-                $props: Any
-            ) {
-                updateComponentState(componentId: $componentId, props: $props)
-            }
-
-            ${this.question ? `
-                query getLocalQuestion($componentId: String!) {
-                    componentState(componentId: $componentId) {
-                        ... on PrendusViewQuestion {
-                            question {
-                                text
-                                code
-                            }
-                        }
-                    }
-                }
-            ` : `
-                query getRemoteQuestion($questionId: ID!) {
-                    question: Question(
-                        id: $questionId
-                    ) {
-                        text
-                        code
-                    }
-                }
-            `}
-
-            mutation questionPrepared(
-                $componentId: String!
-                $props: Any
-            ) {
-                updateComponentState(componentId: $componentId, props: $props)
-            }
-        `, {
-            prepareForQuestionQuery: (previousResult) => {
-                return {
-                    componentId: this.componentId,
-                    props: {
-                        question: this.question,
-                        loaded: false
-                    }
-                };
-            },
-            getLocalQuestion: (previousResult) => {
-                return {
-                    componentId: this.componentId
-                };
-            },
-            getRemoteQuestion: (previousResult) => {
-                return {
-                    questionId: this.questionId
-                };
-            },
-            questionPrepared: async (previousResult) => {
-                const question = previousResult.data.componentState.question;
-                const builtQuestion = await buildQuestion(question.text, question.code);
-                return {
-                    componentId: this.componentId,
-                    props: {
-                        question,
-                        builtQuestion,
-                        showSolution: builtQuestion ? getAstObjects(builtQuestion.ast, 'SOLUTION').length > 0 : false,
-                        loaded: true
-                    }
-                };
-            }
-        }, this.userToken);
+        await loadQuestion(this.componentId, PRENDUS_VIEW_QUESTION, this.question, this.questionId, this.userToken);
 
         //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
         window.parent.postMessage({
@@ -355,7 +290,7 @@ export class PrendusViewQuestion extends Polymer.Element {
         const result = await execute(`
             query render($componentId: String!) {
                 componentState(componentId: $componentId) {
-                    ... on PrendusViewQuestion {
+                    ... on ${PRENDUS_VIEW_QUESTION} {
                         question {
                             text
                             code

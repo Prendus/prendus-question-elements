@@ -40,9 +40,13 @@ import {
     extendSchema,
     addIsTypeOf
 } from '../graphsm/graphsm';
+import {
+    loadQuestion
+} from './services/shared-service';
 
+const PRENDUS_EDIT_QUESTION = 'PrendusEditQuestion';
 extendSchema(`
-    type PrendusEditQuestion implements ComponentState {
+    type ${PRENDUS_EDIT_QUESTION} implements ComponentState {
         componentId: String!
         componentType: String!
         loaded: Boolean!
@@ -59,8 +63,8 @@ extendSchema(`
         userChecksFromCode: Any
     }
 `);
-addIsTypeOf('ComponentState', 'PrendusEditQuestion', (value) => {
-    return value.componentType === 'PrendusEditQuestion';
+addIsTypeOf('ComponentState', PRENDUS_EDIT_QUESTION, (value: any) => {
+    return value.componentType === PRENDUS_EDIT_QUESTION;
 });
 
 class PrendusEditQuestion extends Polymer.Element {
@@ -83,11 +87,11 @@ class PrendusEditQuestion extends Polymer.Element {
         return {
             question: {
                 type: Object,
-                observer: 'questionChanged'
+                observer: 'questionInfoChanged'
             },
             questionId: {
                 type: String,
-                observer: 'questionIdChanged'
+                observer: 'questionInfoChanged'
             },
             noSave: {
                 type: Boolean,
@@ -118,7 +122,7 @@ class PrendusEditQuestion extends Polymer.Element {
                 return {
                     componentId: this.componentId,
                     props: {
-                        componentType: 'PrendusEditQuestion',
+                        componentType: PRENDUS_EDIT_QUESTION,
                         loaded: true,
                         question: {
                             text: '',
@@ -145,6 +149,32 @@ class PrendusEditQuestion extends Polymer.Element {
         }, 2000);
     }
 
+    async questionInfoChanged(oldValue: any, newValue: any) {
+        if (!this.question && !this.questionId) {
+            return;
+        }
+
+        if (
+            oldValue &&
+            newValue &&
+            oldValue.text === newValue.text &&
+            oldValue.code === newValue.code
+        ) {
+            return;
+        }
+
+        await loadQuestion(this.componentId, PRENDUS_EDIT_QUESTION, this.question, this.questionId, this.userToken);
+
+        //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
+        window.parent.postMessage({
+            type: 'prendus-edit-question-resize',
+            height: document.body.scrollHeight,
+            width: document.body.scrollWidth
+        }, '*');
+
+        this.dispatchEvent(new CustomEvent('question-loaded'));
+    }
+
     async textEditorChanged() {
         if (this.textEditorLock) {
             return;
@@ -154,39 +184,37 @@ class PrendusEditQuestion extends Polymer.Element {
             return;
         }
 
-        const text = this.shadowRoot.querySelector('#textEditor').value;
-
-        await execute(`
-            mutation prepareToSaveText($componentId: String!, $props: Any) {
-                updateComponentState(componentId: $componentId, props: $props)
-            }
-        `, {
-            prepareToSaveText: (previousResult) => {
-                const newQuestion = {
-                    ...this._question,
-                    text,
-                    code: this._question ? this._question.code : ''
-                };
-                return {
-                    componentId: this.componentId,
-                    props: {
-                        saving: true,
-                        question: newQuestion,
-                        userRadiosFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'RADIO'),
-                        userChecksFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'CHECK')
-                    }
-                };
-            }
-        }, this.userToken);
-
         debounce(async () => {
-            // await this.save();
+            const text = this.shadowRoot.querySelector('#textEditor').value;
 
             await execute(`
+                mutation prepareToSaveText($componentId: String!, $props: Any) {
+                    updateComponentState(componentId: $componentId, props: $props)
+                }
+
+                # Put in the mutation to actually save the question remotely if necessary
+                # This is where the await this.save() would be
+
                 mutation textSaved($componentId: String!, $props: Any) {
                     updateComponentState(componentId: $componentId, props: $props)
                 }
             `, {
+                prepareToSaveText: (previousResult) => {
+                    const newQuestion = {
+                        ...this._question,
+                        text,
+                        code: this._question ? this._question.code : ''
+                    };
+                    return {
+                        componentId: this.componentId,
+                        props: {
+                            saving: true,
+                            question: newQuestion,
+                            userRadiosFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'RADIO'),
+                            userChecksFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'CHECK')
+                        }
+                    };
+                },
                 textSaved: (previousResult) => {
                     return {
                         componentId: this.componentId,
@@ -200,8 +228,7 @@ class PrendusEditQuestion extends Polymer.Element {
             this.dispatchEvent(new CustomEvent('text-changed', {
                 detail: {
                     text
-                },
-                bubbles: false
+                }
             }));
         }, 200);
     }
@@ -213,6 +240,7 @@ class PrendusEditQuestion extends Polymer.Element {
 
         debounce(async () => {
             const code = this.shadowRoot.querySelector('#codeEditor').value;
+
             await execute(`
                 mutation prepareToSaveCode($componentId: String!, $props: Any) {
                     updateComponentState(componentId: $componentId, props: $props)
@@ -259,31 +287,6 @@ class PrendusEditQuestion extends Polymer.Element {
         }, 200);
     }
 
-    // async questionChanged() {
-    //     this.action = fireLocalAction(this.componentId, 'question', this.question);
-    //     this.action = fireLocalAction(this.componentId, 'loaded', false);
-    //
-    //     await this.loadData();
-    //
-    //     this.action = fireLocalAction(this.componentId, 'loaded', true);
-    //
-    //     //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
-    //     window.parent.postMessage({
-    //         type: 'prendus-edit-question-resize',
-    //         height: document.body.scrollHeight,
-    //         width: document.body.scrollWidth
-    //     }, '*');
-    // }
-
-    // async questionIdChanged() {
-    //     this.action = fireLocalAction(this.componentId, 'questionId', this.questionId);
-    //     this.action = fireLocalAction(this.componentId, 'loaded', false);
-    //
-    //     await this.loadData();
-    //
-    //     this.action = fireLocalAction(this.componentId, 'loaded', true);
-    // }
-
     async noSaveChanged(oldValue, newValue) {
         if (oldValue === newValue) {
             return;
@@ -311,37 +314,6 @@ class PrendusEditQuestion extends Polymer.Element {
 
     // userTokenChanged() {
     //     this.action = fireLocalAction(this.componentId, 'userToken', this.userToken);
-    // }
-
-    // async loadData() {
-    //     if (!this._question || (this._questionId && this._question.id !== this._questionId)) {
-    //         const data = await GQLRequest(`
-    //             query getQuestion($questionId: ID!) {
-    //                 question: Question(
-    //                     id: $questionId
-    //                 ) {
-    //                     id
-    //                     text
-    //                     code
-    //                 }
-    //             }
-    //         `, {
-    //             questionId: this._questionId
-    //         }, this.userToken, (error: any) => {
-    //             console.log(error);
-    //         });
-    //
-    //         if (data.question) {
-    //             this.action = fireLocalAction(this.componentId, 'question', data.question);
-    //         }
-    //         else {
-    //             this.action = fireLocalAction(this.componentId, 'question', {
-    //                 id: this._questionId,
-    //                 text: 'This question does not exist',
-    //                 code: 'answer = false;'
-    //             });
-    //         }
-    //     }
     // }
 
     // async save() {
@@ -813,7 +785,7 @@ class PrendusEditQuestion extends Polymer.Element {
         const result = await execute(`
             query render($componentId: String!) {
                 componentState(componentId: $componentId) {
-                    ... on PrendusEditQuestion {
+                    ... on ${PRENDUS_EDIT_QUESTION} {
                         question {
                             text
                             code

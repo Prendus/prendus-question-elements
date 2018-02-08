@@ -37,11 +37,6 @@ import {
 } from '../graphsm/graphsm';
 
 extendSchema(`
-    type Question {
-        text: String!
-        code: String!
-    }
-
     type PrendusViewQuestion implements ComponentState {
         componentId: String!
         componentType: String!
@@ -89,7 +84,6 @@ export class PrendusViewQuestion extends Polymer.Element {
 
         this.componentId = createUUID();
         subscribe(this.render.bind(this));
-
         execute(`
             mutation initialSetup($componentId: String!, $props: Any) {
                 updateComponentState(componentId: $componentId, props: $props)
@@ -112,7 +106,7 @@ export class PrendusViewQuestion extends Polymer.Element {
                     }
                 };
             }
-        });
+        }, this.userToken);
     }
 
     getThis() {
@@ -133,7 +127,7 @@ export class PrendusViewQuestion extends Polymer.Element {
                     }
                 };
             }
-        });
+        }, this.userToken);
 
         //allow the template with the input to be stamped
         setTimeout(() => {
@@ -141,8 +135,17 @@ export class PrendusViewQuestion extends Polymer.Element {
         }, 0);
     }
 
-    async questionInfoChanged() {
+    async questionInfoChanged(oldValue, newValue) {
         if (!this.question && !this.questionId) {
+            return;
+        }
+
+        if (
+            oldValue &&
+            newValue &&
+            oldValue.text === newValue.text &&
+            oldValue.code === newValue.code
+        ) {
             return;
         }
 
@@ -184,6 +187,7 @@ export class PrendusViewQuestion extends Polymer.Element {
             }
         `, {
             prepareForQuestionQuery: (previousResult) => {
+                console.log('prepareForQuestionQuery previousResult', previousResult);
                 return {
                     componentId: this.componentId,
                     props: {
@@ -193,6 +197,7 @@ export class PrendusViewQuestion extends Polymer.Element {
                 };
             },
             getLocalQuestion: (previousResult) => {
+                console.log('getLocalQuestion previousResult', previousResult);
                 return {
                     componentId: this.componentId
                 };
@@ -203,6 +208,7 @@ export class PrendusViewQuestion extends Polymer.Element {
                 };
             },
             questionPrepared: async (previousResult) => {
+                console.log('questionPrepared previousResult', previousResult);
                 const question = previousResult.data.componentState.question;
                 return {
                     componentId: this.componentId,
@@ -214,7 +220,7 @@ export class PrendusViewQuestion extends Polymer.Element {
                     }
                 };
             }
-        });
+        }, this.userToken);
 
         //TODO the resize is causing problems with the buildQuestion function with injecting variables for some reason, this happend after the switch to GraphSM
         //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
@@ -312,7 +318,7 @@ export class PrendusViewQuestion extends Polymer.Element {
                     }
                 };
             }
-        });
+        }, this.userToken);
 
         this.shadowRoot.querySelector('#checkAnswerResponseToast').open();
     }
@@ -337,7 +343,7 @@ export class PrendusViewQuestion extends Polymer.Element {
                         }
                     };
                 }
-            });
+            }, this.userToken);
         }
         else {
             await execute(`
@@ -357,7 +363,7 @@ export class PrendusViewQuestion extends Polymer.Element {
                         }
                     };
                 }
-            });
+            }, this.userToken);
         }
     }
 
@@ -386,7 +392,7 @@ export class PrendusViewQuestion extends Polymer.Element {
                     componentId: this.componentId
                 };
             }
-        });
+        }, this.userToken);
 
         if (result.errors) {
             throw result.errors;

@@ -1,12 +1,29 @@
-import {createUUID, navigate, fireLocalAction} from '../prendus-shared/services/utilities-service';
+import {
+    createUUID,
+    navigate
+} from '../prendus-shared/services/utilities-service';
 import {Question} from './prendus-question-elements.d';
-import {SetComponentPropertyAction} from './prendus-question-elements.d';
 import {GQLRequest} from '../prendus-shared/services/graphql-service';
 import {User} from './prendus-question-elements.d';
-import {RootReducer} from './redux/reducers';
-import {Reducer, UserCheck, UserRadio} from './prendus-question-elements.d';
-import {parse, getAstObjects, compileToAssessML} from '../assessml/assessml';
-import {AST, Input, Image, Radio, Check, Essay, Code, ASTObject} from '../assessml/assessml.d';
+import {
+    UserCheck,
+    UserRadio
+} from './prendus-question-elements.d';
+import {
+    parse,
+    getAstObjects,
+    compileToAssessML
+} from '../assessml/assessml';
+import {
+    AST,
+    Input,
+    Image,
+    Radio,
+    Check,
+    Essay,
+    Code,
+    ASTObject
+} from '../assessml/assessml.d';
 import {
     insertEssayIntoCode,
     insertCodeIntoCode,
@@ -17,6 +34,34 @@ import {
     getUserASTObjects,
     setUserASTObjectValue
 } from './services/question-service';
+import {
+    execute,
+    subscribe,
+    extendSchema,
+    addIsTypeOf
+} from '../graphsm/graphsm';
+
+extendSchema(`
+    type PrendusEditQuestion implements ComponentState {
+        componentId: String!
+        componentType: String!
+        loaded: Boolean!
+        question: Question!
+        questionId: String!
+        selected: Int!
+        saving: Boolean!
+        noSave: Boolean!
+        user: Any
+        userToken: String
+        textEditorLock: Boolean!
+        codeEditorLock: Boolean!
+        userRadiosFromCode: Any
+        userChecksFromCode: Any
+    }
+`);
+addIsTypeOf('ComponentState', 'PrendusEditQuestion', (value) => {
+    return value.componentType === 'PrendusEditQuestion';
+});
 
 class PrendusEditQuestion extends Polymer.Element {
     componentId: string;
@@ -24,12 +69,10 @@ class PrendusEditQuestion extends Polymer.Element {
     _questionId: string;
     question: Question;
     questionId: string;
-    action: SetComponentPropertyAction;
     userToken: string;
     user: User;
     loaded: boolean;
     selected: number;
-    rootReducer: Reducer;
     saving: boolean;
     noSave: boolean;
     userRadiosFromCode: UserRadio[];
@@ -65,15 +108,36 @@ class PrendusEditQuestion extends Polymer.Element {
         super();
 
         this.componentId = createUUID();
-        this.rootReducer = RootReducer;
+        subscribe(this.render.bind(this));
+        execute(`
+            mutation initialSetup($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            initialSetup: (previousResult) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        componentType: 'PrendusEditQuestion',
+                        loaded: true,
+                        question: {
+                            text: '',
+                            code: ''
+                        },
+                        questionId: '',
+                        selected: 0,
+                        saving: false,
+                        noSave: false,
+                        textEditorLock: false,
+                        codeEditorLock: false,
+                    }
+                };
+            }
+        }, this.userToken);
     }
 
     connectedCallback() {
         super.connectedCallback();
-
-        this.action = fireLocalAction(this.componentId, 'selected', 0);
-        this.action = fireLocalAction(this.componentId, 'saving', false);
-        this.action = fireLocalAction(this.componentId, 'loaded', true);
 
         setTimeout(() => { //TODO fix this...it would be nice to be able to set the font-size officially through the ace editor web component, and then we wouldn't have to hack. The timeout is to ensure the current task on the event loop completes and the dom template is stamped because of the loaded property before accessing the dom
             this.shadowRoot.querySelector('#codeEditor').shadowRoot.querySelector('#juicy-ace-editor-container').style = 'font-size: calc(40px - 1vw)';
@@ -90,23 +154,47 @@ class PrendusEditQuestion extends Polymer.Element {
             return;
         }
 
-        this.action = fireLocalAction(this.componentId, 'saving', true);
+        const text = this.shadowRoot.querySelector('#textEditor').value;
+
+        await execute(`
+            mutation prepareToSaveText($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareToSaveText: (previousResult) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        saving: true,
+                        question: {
+                            ...this._question,
+                            text,
+                            code: this._question ? this._question.code : ''
+                        },
+                        userRadiosFromCode: getUserASTObjects(this._question.text, this._question.code, 'RADIO'),
+                        userChecksFromCode: getUserASTObjects(this._question.text, this._question.code, 'CHECK')
+                    }
+                };
+            }
+        }, this.userToken);
 
         debounce(async () => {
-            const text = this.shadowRoot.querySelector('#textEditor').value;
+            // await this.save();
 
-            this.action = fireLocalAction(this.componentId, 'question', {
-                ...this._question,
-                text,
-                code: this._question ? this._question.code : ''
-            });
-
-            this.action = fireLocalAction(this.componentId, 'userRadiosFromCode', getUserASTObjects(this._question.text, this._question.code, 'RADIO'));
-            this.action = fireLocalAction(this.componentId, 'userChecksFromCode', getUserASTObjects(this._question.text, this._question.code, 'CHECK'));
-
-            await this.save();
-
-            this.action = fireLocalAction(this.componentId, 'saving', false);
+            await execute(`
+                mutation textSaved($componentId: String!, $props: Any) {
+                    updateComponentState(componentId: $componentId, props: $props)
+                }
+            `, {
+                textSaved: (previousResult) => {
+                    return {
+                        componentId: this.componentId,
+                        props: {
+                            saving: false
+                        }
+                    };
+                }
+            }, this.userToken);
 
             this.dispatchEvent(new CustomEvent('text-changed', {
                 detail: {
@@ -122,544 +210,595 @@ class PrendusEditQuestion extends Polymer.Element {
             return;
         }
 
-        this.action = fireLocalAction(this.componentId, 'saving', true);
-
         debounce(async () => {
             const code = this.shadowRoot.querySelector('#codeEditor').value;
+            await execute(`
+                mutation prepareToSaveCode($componentId: String!, $props: Any) {
+                    updateComponentState(componentId: $componentId, props: $props)
+                }
 
-            this.action = fireLocalAction(this.componentId, 'question', {
-                ...this._question,
-                text: this._question ? this._question.text : '',
-                code
-            });
+                # Put in the mutation to actually save the question remotely if necessary
+                # This is where the await this.save() would be
 
-            this.action = fireLocalAction(this.componentId, 'userRadiosFromCode', getUserASTObjects(this._question.text, this._question.code, 'RADIO'));
-            this.action = fireLocalAction(this.componentId, 'userChecksFromCode', getUserASTObjects(this._question.text, this._question.code, 'CHECK'));
-
-            await this.save();
-
-            this.action = fireLocalAction(this.componentId, 'saving', false);
+                mutation codeSaved($componentId: String!, $props: Any) {
+                    updateComponentState(componentId: $componentId, props: $props)
+                }
+            `, {
+                prepareToSaveCode: (previousResult) => {
+                    const newQuestion = {
+                        ...this._question,
+                        text: this._question ? this._question.text : '',
+                        code
+                    };
+                    return {
+                        componentId: this.componentId,
+                        props: {
+                            saving: true,
+                            question: newQuestion,
+                            userRadiosFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'RADIO'),
+                            userChecksFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'CHECK')
+                        }
+                    };
+                },
+                codeSaved: (previousResult) => {
+                    return {
+                        componentId: this.componentId,
+                        props: {
+                            saving: false
+                        }
+                    };
+                }
+            }, this.userToken);
 
             this.dispatchEvent(new CustomEvent('code-changed', {
                 detail: {
                     code
-                },
-                bubbles: false
+                }
             }));
         }, 200);
     }
 
-    async questionChanged() {
-        this.action = fireLocalAction(this.componentId, 'question', this.question);
-        this.action = fireLocalAction(this.componentId, 'loaded', false);
+    // async questionChanged() {
+    //     this.action = fireLocalAction(this.componentId, 'question', this.question);
+    //     this.action = fireLocalAction(this.componentId, 'loaded', false);
+    //
+    //     await this.loadData();
+    //
+    //     this.action = fireLocalAction(this.componentId, 'loaded', true);
+    //
+    //     //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
+    //     window.parent.postMessage({
+    //         type: 'prendus-edit-question-resize',
+    //         height: document.body.scrollHeight,
+    //         width: document.body.scrollWidth
+    //     }, '*');
+    // }
 
-        await this.loadData();
+    // async questionIdChanged() {
+    //     this.action = fireLocalAction(this.componentId, 'questionId', this.questionId);
+    //     this.action = fireLocalAction(this.componentId, 'loaded', false);
+    //
+    //     await this.loadData();
+    //
+    //     this.action = fireLocalAction(this.componentId, 'loaded', true);
+    // }
 
-        this.action = fireLocalAction(this.componentId, 'loaded', true);
-
-        //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
-        window.parent.postMessage({
-            type: 'prendus-edit-question-resize',
-            height: document.body.scrollHeight,
-            width: document.body.scrollWidth
-        }, '*');
-    }
-
-    async questionIdChanged() {
-        this.action = fireLocalAction(this.componentId, 'questionId', this.questionId);
-        this.action = fireLocalAction(this.componentId, 'loaded', false);
-
-        await this.loadData();
-
-        this.action = fireLocalAction(this.componentId, 'loaded', true);
-    }
-
-    noSaveChanged() {
-        this.action = fireLocalAction(this.componentId, 'noSave', this.noSave);
-    }
-
-    userChanged() {
-        this.action = fireLocalAction(this.componentId, 'user', this.user);
-    }
-
-    userTokenChanged() {
-        this.action = fireLocalAction(this.componentId, 'userToken', this.userToken);
-    }
-
-    async loadData() {
-        if (!this._question || (this._questionId && this._question.id !== this._questionId)) {
-            const data = await GQLRequest(`
-                query getQuestion($questionId: ID!) {
-                    question: Question(
-                        id: $questionId
-                    ) {
-                        id
-                        text
-                        code
-                    }
-                }
-            `, {
-                questionId: this._questionId
-            }, this.userToken, (error: any) => {
-                console.log(error);
-            });
-
-            if (data.question) {
-                this.action = fireLocalAction(this.componentId, 'question', data.question);
-            }
-            else {
-                this.action = fireLocalAction(this.componentId, 'question', {
-                    id: this._questionId,
-                    text: 'This question does not exist',
-                    code: 'answer = false;'
-                });
-            }
-        }
-    }
-
-    async save() {
-        if (this.noSave) {
+    async noSaveChanged(oldValue, newValue) {
+        if (oldValue === newValue) {
             return;
         }
 
-        if (!this._questionId) {
-            const data = await GQLRequest(`
-                mutation createQuestion(
-                    $authorId: ID!
-                    $text: String!
-                    $code: String!
-                ) {
-                    createQuestion(
-                        authorId: $authorId
-                        text: $text
-                        code: $code
-                    ) {
-                        id
+        await execute(`
+            mutation setNoSave($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            setNoSave: (previousResult) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        noSave: this.noSave
                     }
-                }
-            `, {
-                authorId: this.user.id,
-                text: this._question.text,
-                code: this._question.code
-            }, this.userToken, (error: any) => {
-                console.log(error);
-            });
-
-            navigate(`/question/${data.createQuestion.id}/edit`);
-        }
-        else {
-            await GQLRequest(`
-                mutation updateQuestion(
-                    $questionId: ID!
-                    $text: String!
-                    $code: String!
-                ) {
-                    updateQuestion(
-                        id: $questionId
-                        text: $text
-                        code: $code
-                    ) {
-                        id
-                    }
-                }
-            `, {
-                questionId: this._questionId,
-                text: this._question.text,
-                code: this._question.code
-            }, this.userToken, (error: any) => {
-                console.log(error);
-            });
-        }
+                };
+            }
+        }, this.userToken);
     }
+
+    // userChanged() {
+    //     this.action = fireLocalAction(this.componentId, 'user', this.user);
+    // }
+
+    // userTokenChanged() {
+    //     this.action = fireLocalAction(this.componentId, 'userToken', this.userToken);
+    // }
+
+    // async loadData() {
+    //     if (!this._question || (this._questionId && this._question.id !== this._questionId)) {
+    //         const data = await GQLRequest(`
+    //             query getQuestion($questionId: ID!) {
+    //                 question: Question(
+    //                     id: $questionId
+    //                 ) {
+    //                     id
+    //                     text
+    //                     code
+    //                 }
+    //             }
+    //         `, {
+    //             questionId: this._questionId
+    //         }, this.userToken, (error: any) => {
+    //             console.log(error);
+    //         });
+    //
+    //         if (data.question) {
+    //             this.action = fireLocalAction(this.componentId, 'question', data.question);
+    //         }
+    //         else {
+    //             this.action = fireLocalAction(this.componentId, 'question', {
+    //                 id: this._questionId,
+    //                 text: 'This question does not exist',
+    //                 code: 'answer = false;'
+    //             });
+    //         }
+    //     }
+    // }
+
+    // async save() {
+    //     if (this.noSave) {
+    //         return;
+    //     }
+    //
+    //     if (!this._questionId) {
+    //         const data = await GQLRequest(`
+    //             mutation createQuestion(
+    //                 $authorId: ID!
+    //                 $text: String!
+    //                 $code: String!
+    //             ) {
+    //                 createQuestion(
+    //                     authorId: $authorId
+    //                     text: $text
+    //                     code: $code
+    //                 ) {
+    //                     id
+    //                 }
+    //             }
+    //         `, {
+    //             authorId: this.user.id,
+    //             text: this._question.text,
+    //             code: this._question.code
+    //         }, this.userToken, (error: any) => {
+    //             console.log(error);
+    //         });
+    //
+    //         navigate(`/question/${data.createQuestion.id}/edit`);
+    //     }
+    //     else {
+    //         await GQLRequest(`
+    //             mutation updateQuestion(
+    //                 $questionId: ID!
+    //                 $text: String!
+    //                 $code: String!
+    //             ) {
+    //                 updateQuestion(
+    //                     id: $questionId
+    //                     text: $text
+    //                     code: $code
+    //                 ) {
+    //                     id
+    //                 }
+    //             }
+    //         `, {
+    //             questionId: this._questionId,
+    //             text: this._question.text,
+    //             code: this._question.code
+    //         }, this.userToken, (error: any) => {
+    //             console.log(error);
+    //         });
+    //     }
+    // }
 
     getSavingText(saving: boolean) {
         return saving ? 'Saving...' : 'Saved';
     }
 
-    switchEditorClick() {
-        this.action = fireLocalAction(this.componentId, 'selected', this.selected === 0 ? 1 : 0);
+    async switchEditorClick() {
+        await execute(`
+            mutation setSelected($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            setSelected: (previousResult) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        selected: this.selected === 0 ? 1 : 0
+                    }
+                };
+            }
+        }, this.userToken);
     }
 
-    async insertVariable(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-
-        const { varName, maxValue, minValue, precisionValue } = e.detail;
-        const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
-
-        const code = codeEditor.value;
-
-        const varString = `[${varName}]`;
-        const newTextNode = document.createTextNode(varString);
-        textEditor.range0.insertNode(newTextNode);
-        textEditor.range0.setStart(newTextNode, varString.length);
-        textEditor.range0.collapse(true);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(textEditor.range0);
-
-        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text,
-            code: await insertVariableIntoCode(code, varName, minValue, maxValue, precisionValue)
-        });
-
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    }
-
-    insertInput(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-
-        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-        const astInputs: Input[] = <Input[]> getAstObjects(ast, 'INPUT');
-
-        const varName = `input${astInputs.length + 1}`;
-        const answer = e.detail.answer;
-
-        const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
-
-        const code = codeEditor.value;
-
-        const inputString = `[input]`;
-        const newTextNode = document.createTextNode(inputString);
-        textEditor.range0.insertNode(newTextNode);
-        textEditor.range0.setStart(newTextNode, inputString.length);
-        textEditor.range0.collapse(true);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(textEditor.range0);
-
-        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text,
-            code: insertInputIntoCode(code, varName, answer)
-        });
-
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    }
-
-    insertEssay(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-
-        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-        const astEssays: Essay[] = <Essay[]> getAstObjects(ast, 'ESSAY');
-
-        const varName = `essay${astEssays.length + 1}`;
-
-        const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
-
-        const code = codeEditor.value;
-
-        const essayString = `[essay]`;
-        const newTextNode = document.createTextNode(essayString);
-        textEditor.range0.insertNode(newTextNode);
-        textEditor.range0.setStart(newTextNode, essayString.length);
-        textEditor.range0.collapse(true);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(textEditor.range0);
-
-        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text,
-            code: insertEssayIntoCode(code)
-        });
-
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    }
-
-    insertCode(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-
-        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-        const astCodes: Code[] = <Code[]> getAstObjects(ast, 'CODE');
-
-        const varName = `code${astCodes.length + 1}`;
-
-        const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
-
-        const code = codeEditor.value;
-
-        const codeString = `[code]`;
-        const newTextNode = document.createTextNode(codeString);
-        textEditor.range0.insertNode(newTextNode);
-        textEditor.range0.setStart(newTextNode, codeString.length);
-        textEditor.range0.collapse(true);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(textEditor.range0);
-
-        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text,
-            code: insertCodeIntoCode(code)
-        });
-
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    }
-
-    async insertRadio(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-
-        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-        const astRadios: Radio[] = <Radio[]> getAstObjects(ast, 'RADIO');
-
-        const varName = `radio${astRadios.length + 1}`;
-
-        const { content, correct } = e.detail;
-        const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
-
-        const code = codeEditor.value;
-
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(textEditor.range0);
-
-        const radioString = `[radio start]${content || ''}[radio end]`;
-        document.execCommand('insertText', false, radioString);
-        document.execCommand('insertHTML', false, '<br>');
-
-        textEditor.range0.setStart(textEditor.range0.startContainer, textEditor.range0.startContainer.innerHTML.length - 1);
-
-        // textEditor.range0.collapse(true);
-
-
-        // const selection2 = window.getSelection();
-        // selection2.removeAllRanges();
-        // selection2.addRange(textEditor.range0);
-        //
-        // document.execCommand('insertHTML', false, '<br>');
-
-        // textEditor.range0.setStart(textEditor.range0.startContainer, radioString.length);
-        // textEditor.range0.collapse(true);
-
-        await wait(); //this wait is necessary to get the correct value from the textEditor (https://github.com/miztroh/wysiwyg-e/issues/202)
-        const text = textEditor.value;
-        // const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text,
-            code: insertRadioOrCheckIntoCode(code, varName, correct)
-        });
-
-        this.action = fireLocalAction(this.componentId, 'userRadiosFromCode', getUserASTObjects(this._question.text, this._question.code, 'RADIO'));
-
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    }
-
-    insertCheck(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-
-        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-        const astChecks: Check[] = <Check[]> getAstObjects(ast, 'CHECK');
-
-        const varName = `check${astChecks.length + 1}`;
-
-        const { content, correct } = e.detail;
-        const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
-
-        const code = codeEditor.value;
-
-        const checkString = `[check start]${content || ''}[check end]`;
-        const newTextNode = document.createTextNode(checkString);
-        textEditor.range0.insertNode(newTextNode);
-        textEditor.range0.setStart(newTextNode, checkString.length);
-        textEditor.range0.collapse(true);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(textEditor.range0);
-
-        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text,
-            code: insertRadioOrCheckIntoCode(code, varName, correct)
-        });
-
-        this.action = fireLocalAction(this.componentId, 'userChecksFromCode', getUserASTObjects(this._question.text, this._question.code, 'CHECK'));
-
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    }
-
-    insertMath(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-
-        const { mathText } = e.detail;
-        const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
-
-        const newTextNode = document.createTextNode(mathText);
-        textEditor.range0.insertNode(newTextNode);
-        textEditor.range0.setStart(newTextNode, mathText.length);
-        textEditor.range0.collapse(true);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(textEditor.range0);
-
-        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text,
-            code: this._question ? this._question.code : ''
-        });
-
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    }
-
-    insertImage(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-
-        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-        const { dataUrl } = e.detail;
-        const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
-        const astImages: Image[] = <Image[]> getAstObjects(ast, 'IMAGE');
-        const varName = `img${astImages.length + 1}`;
-        const code = codeEditor.value;
-
-        const imageString = `[img${astImages.length + 1}]`;
-        const newTextNode = document.createTextNode(imageString);
-        textEditor.range0.insertNode(newTextNode);
-        textEditor.range0.setStart(newTextNode, imageString.length);
-        textEditor.range0.collapse(true);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(textEditor.range0);
-
-        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text,
-            code: insertImageIntoCode(code, varName, dataUrl)
-        });
-
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    }
-
-    insertGraph(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-
-        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-        const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const astGraphs: Graph[] = <Graph[]> getAstObjects(ast, 'GRAPH');
-
-        const graphString = `[graph${astGraphs.length + 1}]`;
-        const newTextNode = document.createTextNode(graphString);
-        textEditor.range0.insertNode(newTextNode);
-        textEditor.range0.setStart(newTextNode, graphString.length);
-        textEditor.range0.collapse(true);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(textEditor.range0);
-
-        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text
-        });
-
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    }
-
-    radioCorrectChanged(e: CustomEvent) {
-        const userRadio: UserRadio = e.detail.userRadio;
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            code: setUserASTObjectValue(this._question.code, userRadio)
-        });
-    }
-
-    radioContentChanged(e: CustomEvent) {
-        const radioContentToChange = e.detail.radioContentToChange;
-
-        const assessMLAST = parse(this._question.text, () => 5, () => '', () => [], () => []);
-        const newAssessMLAST = {
-            ...assessMLAST,
-            ast: assessMLAST.ast.map((astObject: ASTObject) => {
-                if (astObject.varName === radioContentToChange.varName) {
-                    return {
-                        ...astObject,
-                        content: radioContentToChange.content.ast
-                    };
-                }
-
-                return astObject;
-            })
-        };
-
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text: compileToAssessML(newAssessMLAST, () => 5, () => '', () => [], () => [])
-        });
-    }
-
-    checkCorrectChanged(e: CustomEvent) {
-        const userCheck: UserCheck = e.detail.userCheck;
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            code: setUserASTObjectValue(this._question.code, userCheck)
-        });
-    }
-
-    questionStemChanged(e: CustomEvent) {
-        const questionStem = e.detail.questionStem;
-
-        const newContent = {
-            type: 'CONTENT',
-            varName: 'content',
-            content: questionStem
-        };
-        const assessMLAST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-        const newAssessMLAST = assessMLAST.ast[0] && assessMLAST.ast[0].type === 'CONTENT' ? {
-            ...assessMLAST,
-            ast: [newContent, ...assessMLAST.ast.slice(1)]
-        } : {
-            ...assessMLAST,
-            ast: [newContent, ...assessMLAST.ast]
-        };
-
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text: compileToAssessML(newAssessMLAST, () => 5, () => '', () => [], () => []),
-            code: this._question ? this._question.code : ''
-        });
-    }
+    // async insertVariable(e: CustomEvent) {
+    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
+    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+    //
+    //     const { varName, maxValue, minValue, precisionValue } = e.detail;
+    //     const textEditor = this.shadowRoot.querySelector('#textEditor');
+    //     const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+    //
+    //     const code = codeEditor.value;
+    //
+    //     const varString = `[${varName}]`;
+    //     const newTextNode = document.createTextNode(varString);
+    //     textEditor.range0.insertNode(newTextNode);
+    //     textEditor.range0.setStart(newTextNode, varString.length);
+    //     textEditor.range0.collapse(true);
+    //     const selection = window.getSelection();
+    //     selection.removeAllRanges();
+    //     selection.addRange(textEditor.range0);
+    //
+    //     const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+    //
+    //     this.action = fireLocalAction(this.componentId, 'question', {
+    //         ...this._question,
+    //         text,
+    //         code: await insertVariableIntoCode(code, varName, minValue, maxValue, precisionValue)
+    //     });
+    //
+    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
+    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
+    // }
+
+    // insertInput(e: CustomEvent) {
+    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
+    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+    //
+    //     const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+    //     const astInputs: Input[] = <Input[]> getAstObjects(ast, 'INPUT');
+    //
+    //     const varName = `input${astInputs.length + 1}`;
+    //     const answer = e.detail.answer;
+    //
+    //     const textEditor = this.shadowRoot.querySelector('#textEditor');
+    //     const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+    //
+    //     const code = codeEditor.value;
+    //
+    //     const inputString = `[input]`;
+    //     const newTextNode = document.createTextNode(inputString);
+    //     textEditor.range0.insertNode(newTextNode);
+    //     textEditor.range0.setStart(newTextNode, inputString.length);
+    //     textEditor.range0.collapse(true);
+    //     const selection = window.getSelection();
+    //     selection.removeAllRanges();
+    //     selection.addRange(textEditor.range0);
+    //
+    //     const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+    //
+    //     this.action = fireLocalAction(this.componentId, 'question', {
+    //         ...this._question,
+    //         text,
+    //         code: insertInputIntoCode(code, varName, answer)
+    //     });
+    //
+    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
+    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
+    // }
+
+    // insertEssay(e: CustomEvent) {
+    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
+    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+    //
+    //     const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+    //     const astEssays: Essay[] = <Essay[]> getAstObjects(ast, 'ESSAY');
+    //
+    //     const varName = `essay${astEssays.length + 1}`;
+    //
+    //     const textEditor = this.shadowRoot.querySelector('#textEditor');
+    //     const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+    //
+    //     const code = codeEditor.value;
+    //
+    //     const essayString = `[essay]`;
+    //     const newTextNode = document.createTextNode(essayString);
+    //     textEditor.range0.insertNode(newTextNode);
+    //     textEditor.range0.setStart(newTextNode, essayString.length);
+    //     textEditor.range0.collapse(true);
+    //     const selection = window.getSelection();
+    //     selection.removeAllRanges();
+    //     selection.addRange(textEditor.range0);
+    //
+    //     const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+    //
+    //     this.action = fireLocalAction(this.componentId, 'question', {
+    //         ...this._question,
+    //         text,
+    //         code: insertEssayIntoCode(code)
+    //     });
+    //
+    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
+    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
+    // }
+
+    // insertCode(e: CustomEvent) {
+    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
+    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+    //
+    //     const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+    //     const astCodes: Code[] = <Code[]> getAstObjects(ast, 'CODE');
+    //
+    //     const varName = `code${astCodes.length + 1}`;
+    //
+    //     const textEditor = this.shadowRoot.querySelector('#textEditor');
+    //     const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+    //
+    //     const code = codeEditor.value;
+    //
+    //     const codeString = `[code]`;
+    //     const newTextNode = document.createTextNode(codeString);
+    //     textEditor.range0.insertNode(newTextNode);
+    //     textEditor.range0.setStart(newTextNode, codeString.length);
+    //     textEditor.range0.collapse(true);
+    //     const selection = window.getSelection();
+    //     selection.removeAllRanges();
+    //     selection.addRange(textEditor.range0);
+    //
+    //     const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+    //
+    //     this.action = fireLocalAction(this.componentId, 'question', {
+    //         ...this._question,
+    //         text,
+    //         code: insertCodeIntoCode(code)
+    //     });
+    //
+    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
+    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
+    // }
+
+    // async insertRadio(e: CustomEvent) {
+    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
+    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+    //
+    //     const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+    //     const astRadios: Radio[] = <Radio[]> getAstObjects(ast, 'RADIO');
+    //
+    //     const varName = `radio${astRadios.length + 1}`;
+    //
+    //     const { content, correct } = e.detail;
+    //     const textEditor = this.shadowRoot.querySelector('#textEditor');
+    //     const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+    //
+    //     const code = codeEditor.value;
+    //
+    //     const selection = window.getSelection();
+    //     selection.removeAllRanges();
+    //     selection.addRange(textEditor.range0);
+    //
+    //     const radioString = `[radio start]${content || ''}[radio end]`;
+    //     document.execCommand('insertText', false, radioString);
+    //     document.execCommand('insertHTML', false, '<br>');
+    //
+    //     textEditor.range0.setStart(textEditor.range0.startContainer, textEditor.range0.startContainer.innerHTML.length - 1);
+    //
+    //     // textEditor.range0.collapse(true);
+    //
+    //
+    //     // const selection2 = window.getSelection();
+    //     // selection2.removeAllRanges();
+    //     // selection2.addRange(textEditor.range0);
+    //     //
+    //     // document.execCommand('insertHTML', false, '<br>');
+    //
+    //     // textEditor.range0.setStart(textEditor.range0.startContainer, radioString.length);
+    //     // textEditor.range0.collapse(true);
+    //
+    //     await wait(); //this wait is necessary to get the correct value from the textEditor (https://github.com/miztroh/wysiwyg-e/issues/202)
+    //     const text = textEditor.value;
+    //     // const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+    //
+    //     this.action = fireLocalAction(this.componentId, 'question', {
+    //         ...this._question,
+    //         text,
+    //         code: insertRadioOrCheckIntoCode(code, varName, correct)
+    //     });
+    //
+    //     this.action = fireLocalAction(this.componentId, 'userRadiosFromCode', getUserASTObjects(this._question.text, this._question.code, 'RADIO'));
+    //
+    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
+    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
+    // }
+
+    // insertCheck(e: CustomEvent) {
+    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
+    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+    //
+    //     const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+    //     const astChecks: Check[] = <Check[]> getAstObjects(ast, 'CHECK');
+    //
+    //     const varName = `check${astChecks.length + 1}`;
+    //
+    //     const { content, correct } = e.detail;
+    //     const textEditor = this.shadowRoot.querySelector('#textEditor');
+    //     const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+    //
+    //     const code = codeEditor.value;
+    //
+    //     const checkString = `[check start]${content || ''}[check end]`;
+    //     const newTextNode = document.createTextNode(checkString);
+    //     textEditor.range0.insertNode(newTextNode);
+    //     textEditor.range0.setStart(newTextNode, checkString.length);
+    //     textEditor.range0.collapse(true);
+    //     const selection = window.getSelection();
+    //     selection.removeAllRanges();
+    //     selection.addRange(textEditor.range0);
+    //
+    //     const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+    //
+    //     this.action = fireLocalAction(this.componentId, 'question', {
+    //         ...this._question,
+    //         text,
+    //         code: insertRadioOrCheckIntoCode(code, varName, correct)
+    //     });
+    //
+    //     this.action = fireLocalAction(this.componentId, 'userChecksFromCode', getUserASTObjects(this._question.text, this._question.code, 'CHECK'));
+    //
+    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
+    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
+    // }
+
+    // insertMath(e: CustomEvent) {
+    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
+    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+    //
+    //     const { mathText } = e.detail;
+    //     const textEditor = this.shadowRoot.querySelector('#textEditor');
+    //     const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+    //
+    //     const newTextNode = document.createTextNode(mathText);
+    //     textEditor.range0.insertNode(newTextNode);
+    //     textEditor.range0.setStart(newTextNode, mathText.length);
+    //     textEditor.range0.collapse(true);
+    //     const selection = window.getSelection();
+    //     selection.removeAllRanges();
+    //     selection.addRange(textEditor.range0);
+    //
+    //     const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+    //
+    //     this.action = fireLocalAction(this.componentId, 'question', {
+    //         ...this._question,
+    //         text,
+    //         code: this._question ? this._question.code : ''
+    //     });
+    //
+    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
+    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
+    // }
+
+    // insertImage(e: CustomEvent) {
+    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
+    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+    //
+    //     const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+    //     const { dataUrl } = e.detail;
+    //     const textEditor = this.shadowRoot.querySelector('#textEditor');
+    //     const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+    //     const astImages: Image[] = <Image[]> getAstObjects(ast, 'IMAGE');
+    //     const varName = `img${astImages.length + 1}`;
+    //     const code = codeEditor.value;
+    //
+    //     const imageString = `[img${astImages.length + 1}]`;
+    //     const newTextNode = document.createTextNode(imageString);
+    //     textEditor.range0.insertNode(newTextNode);
+    //     textEditor.range0.setStart(newTextNode, imageString.length);
+    //     textEditor.range0.collapse(true);
+    //     const selection = window.getSelection();
+    //     selection.removeAllRanges();
+    //     selection.addRange(textEditor.range0);
+    //
+    //     const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+    //
+    //     this.action = fireLocalAction(this.componentId, 'question', {
+    //         ...this._question,
+    //         text,
+    //         code: insertImageIntoCode(code, varName, dataUrl)
+    //     });
+    //
+    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
+    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
+    // }
+
+    // insertGraph(e: CustomEvent) {
+    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
+    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+    //
+    //     const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+    //     const textEditor = this.shadowRoot.querySelector('#textEditor');
+    //     const astGraphs: Graph[] = <Graph[]> getAstObjects(ast, 'GRAPH');
+    //
+    //     const graphString = `[graph${astGraphs.length + 1}]`;
+    //     const newTextNode = document.createTextNode(graphString);
+    //     textEditor.range0.insertNode(newTextNode);
+    //     textEditor.range0.setStart(newTextNode, graphString.length);
+    //     textEditor.range0.collapse(true);
+    //     const selection = window.getSelection();
+    //     selection.removeAllRanges();
+    //     selection.addRange(textEditor.range0);
+    //
+    //     const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+    //
+    //     this.action = fireLocalAction(this.componentId, 'question', {
+    //         ...this._question,
+    //         text
+    //     });
+    //
+    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
+    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
+    // }
+
+    // radioCorrectChanged(e: CustomEvent) {
+    //     const userRadio: UserRadio = e.detail.userRadio;
+    //     this.action = fireLocalAction(this.componentId, 'question', {
+    //         ...this._question,
+    //         code: setUserASTObjectValue(this._question.code, userRadio)
+    //     });
+    // }
+
+    // radioContentChanged(e: CustomEvent) {
+    //     const radioContentToChange = e.detail.radioContentToChange;
+    //
+    //     const assessMLAST = parse(this._question.text, () => 5, () => '', () => [], () => []);
+    //     const newAssessMLAST = {
+    //         ...assessMLAST,
+    //         ast: assessMLAST.ast.map((astObject: ASTObject) => {
+    //             if (astObject.varName === radioContentToChange.varName) {
+    //                 return {
+    //                     ...astObject,
+    //                     content: radioContentToChange.content.ast
+    //                 };
+    //             }
+    //
+    //             return astObject;
+    //         })
+    //     };
+    //
+    //     this.action = fireLocalAction(this.componentId, 'question', {
+    //         ...this._question,
+    //         text: compileToAssessML(newAssessMLAST, () => 5, () => '', () => [], () => [])
+    //     });
+    // }
+
+    // checkCorrectChanged(e: CustomEvent) {
+    //     const userCheck: UserCheck = e.detail.userCheck;
+    //     this.action = fireLocalAction(this.componentId, 'question', {
+    //         ...this._question,
+    //         code: setUserASTObjectValue(this._question.code, userCheck)
+    //     });
+    // }
+
+    // questionStemChanged(e: CustomEvent) {
+    //     const questionStem = e.detail.questionStem;
+    //
+    //     const newContent = {
+    //         type: 'CONTENT',
+    //         varName: 'content',
+    //         content: questionStem
+    //     };
+    //     const assessMLAST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+    //     const newAssessMLAST = assessMLAST.ast[0] && assessMLAST.ast[0].type === 'CONTENT' ? {
+    //         ...assessMLAST,
+    //         ast: [newContent, ...assessMLAST.ast.slice(1)]
+    //     } : {
+    //         ...assessMLAST,
+    //         ast: [newContent, ...assessMLAST.ast]
+    //     };
+    //
+    //     this.action = fireLocalAction(this.componentId, 'question', {
+    //         ...this._question,
+    //         text: compileToAssessML(newAssessMLAST, () => 5, () => '', () => [], () => []),
+    //         code: this._question ? this._question.code : ''
+    //     });
+    // }
 
     getAllowedTagNames() {
         return [
@@ -669,21 +808,42 @@ class PrendusEditQuestion extends Polymer.Element {
         ];
     }
 
-    stateChange(e: CustomEvent) {
-        const state = e.detail.state;
+    async render() {
+        const result = await execute(`
+            query render($componentId: String!) {
+                componentState(componentId: $componentId) {
+                    ... on PrendusEditQuestion {
+                        question {
+                            text
+                            code
+                        }
+                        loaded
+                        selected
+                        noSave
+                        saving
+                    }
+                }
+            }
+        `, {
+            render: (previousResult) => {
+                return {
+                    componentId: this.componentId
+                };
+            }
+        }, this.userToken);
 
-        if (Object.keys(state.components[this.componentId] || {}).includes('loaded')) this.loaded = state.components[this.componentId].loaded;
-        if (Object.keys(state.components[this.componentId] || {}).includes('question')) this._question = state.components[this.componentId].question;
-        if (Object.keys(state.components[this.componentId] || {}).includes('questionId')) this._questionId = state.components[this.componentId].questionId;
-        if (Object.keys(state.components[this.componentId] || {}).includes('selected')) this.selected = state.components[this.componentId].selected;
-        if (Object.keys(state.components[this.componentId] || {}).includes('saving')) this.saving = state.components[this.componentId].saving;
-        if (Object.keys(state.components[this.componentId] || {}).includes('noSave')) this.noSave = state.components[this.componentId].noSave;
-        if (Object.keys(state.components[this.componentId] || {}).includes('user')) this.user = state.components[this.componentId].user;
-        if (Object.keys(state.components[this.componentId] || {}).includes('userToken')) this.userToken = state.components[this.componentId].userToken;
-        if (Object.keys(state.components[this.componentId] || {}).includes('textEditorLock')) this.textEditorLock = state.components[this.componentId].textEditorLock;
-        if (Object.keys(state.components[this.componentId] || {}).includes('codeEditorLock')) this.codeEditorLock = state.components[this.componentId].codeEditorLock;
-        if (Object.keys(state.components[this.componentId] || {}).includes('userRadiosFromCode')) this.userRadiosFromCode = state.components[this.componentId].userRadiosFromCode;
-        if (Object.keys(state.components[this.componentId] || {}).includes('userChecksFromCode')) this.userChecksFromCode = state.components[this.componentId].userChecksFromCode;
+        if (result.errors) {
+            throw result.errors;
+        }
+
+        const componentState = result.data.componentState;
+        if (componentState) {
+            this._question = componentState.question;
+            this.loaded = componentState.loaded;
+            this.selected = componentState.selected;
+            this.noSave = componentState.noSave;
+            this.saving = componentState.saving;
+        }
     }
 }
 

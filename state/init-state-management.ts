@@ -17,6 +17,11 @@ GraphSMInit({
     localSchema: `
         scalar Any
 
+        type Question {
+            text: String!
+            code: String!
+        }
+
         interface ComponentState {
             componentId: String!
         }
@@ -47,5 +52,5 @@ GraphSMInit({
             };
         }
     },
-    reduxMiddlewares: []
+    reduxMiddlewares: [reduxLogger]
 });

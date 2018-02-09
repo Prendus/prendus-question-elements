@@ -519,40 +519,62 @@ class PrendusEditQuestion extends Polymer.Element {
         }, this.userToken);
     }
 
-    // insertCode(e: CustomEvent) {
-    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-    //
-    //     const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-    //     const astCodes: Code[] = <Code[]> getAstObjects(ast, 'CODE');
-    //
-    //     const varName = `code${astCodes.length + 1}`;
-    //
-    //     const textEditor = this.shadowRoot.querySelector('#textEditor');
-    //     const codeEditor = this.shadowRoot.querySelector('#codeEditor');
-    //
-    //     const code = codeEditor.value;
-    //
-    //     const codeString = `[code]`;
-    //     const newTextNode = document.createTextNode(codeString);
-    //     textEditor.range0.insertNode(newTextNode);
-    //     textEditor.range0.setStart(newTextNode, codeString.length);
-    //     textEditor.range0.collapse(true);
-    //     const selection = window.getSelection();
-    //     selection.removeAllRanges();
-    //     selection.addRange(textEditor.range0);
-    //
-    //     const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-    //
-    //     this.action = fireLocalAction(this.componentId, 'question', {
-    //         ...this._question,
-    //         text,
-    //         code: insertCodeIntoCode(code)
-    //     });
-    //
-    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    // }
+    async insertCode(e: CustomEvent) {
+        await execute(`
+            mutation prepareToInsertCode($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+
+            mutation insertCode($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareToInsertCode: (previousResult: any) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        textEditorLock: true,
+                        codeEditorLock: true
+                    }
+                };
+            },
+            insertCode: (previousResult: any) => {
+                const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                const astCodes: Code[] = <Code[]> getAstObjects(ast, 'CODE');
+
+                const varName = `code${astCodes.length + 1}`;
+
+                const textEditor = this.shadowRoot.querySelector('#textEditor');
+                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+
+                const code = codeEditor.value;
+
+                const codeString = `[code]`;
+                const newTextNode = document.createTextNode(codeString);
+                textEditor.range0.insertNode(newTextNode);
+                textEditor.range0.setStart(newTextNode, codeString.length);
+                textEditor.range0.collapse(true);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(textEditor.range0);
+
+                const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text,
+                            code: insertCodeIntoCode(code)
+                        },
+                        textEditorLock: false,
+                        codeEditorLock: false
+                    }
+                };
+            }
+        }, this.userToken);
+    }
 
     // async insertRadio(e: CustomEvent) {
     //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);

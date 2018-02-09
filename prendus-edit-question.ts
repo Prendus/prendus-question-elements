@@ -576,58 +576,70 @@ class PrendusEditQuestion extends Polymer.Element {
         }, this.userToken);
     }
 
-    // async insertRadio(e: CustomEvent) {
-    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-    //
-    //     const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-    //     const astRadios: Radio[] = <Radio[]> getAstObjects(ast, 'RADIO');
-    //
-    //     const varName = `radio${astRadios.length + 1}`;
-    //
-    //     const { content, correct } = e.detail;
-    //     const textEditor = this.shadowRoot.querySelector('#textEditor');
-    //     const codeEditor = this.shadowRoot.querySelector('#codeEditor');
-    //
-    //     const code = codeEditor.value;
-    //
-    //     const selection = window.getSelection();
-    //     selection.removeAllRanges();
-    //     selection.addRange(textEditor.range0);
-    //
-    //     const radioString = `[radio start]${content || ''}[radio end]`;
-    //     document.execCommand('insertText', false, radioString);
-    //     document.execCommand('insertHTML', false, '<br>');
-    //
-    //     textEditor.range0.setStart(textEditor.range0.startContainer, textEditor.range0.startContainer.innerHTML.length - 1);
-    //
-    //     // textEditor.range0.collapse(true);
-    //
-    //
-    //     // const selection2 = window.getSelection();
-    //     // selection2.removeAllRanges();
-    //     // selection2.addRange(textEditor.range0);
-    //     //
-    //     // document.execCommand('insertHTML', false, '<br>');
-    //
-    //     // textEditor.range0.setStart(textEditor.range0.startContainer, radioString.length);
-    //     // textEditor.range0.collapse(true);
-    //
-    //     await wait(); //this wait is necessary to get the correct value from the textEditor (https://github.com/miztroh/wysiwyg-e/issues/202)
-    //     const text = textEditor.value;
-    //     // const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-    //
-    //     this.action = fireLocalAction(this.componentId, 'question', {
-    //         ...this._question,
-    //         text,
-    //         code: insertRadioOrCheckIntoCode(code, varName, correct)
-    //     });
-    //
-    //     this.action = fireLocalAction(this.componentId, 'userRadiosFromCode', getUserASTObjects(this._question.text, this._question.code, 'RADIO'));
-    //
-    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    // }
+    async insertRadio(e: CustomEvent) {
+        await execute(`
+            mutation prepareToInsertRadio($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+
+            mutation insertRadio($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareToInsertRadio: (previousResult: any) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        textEditorLock: true,
+                        codeEditorLock: true
+                    }
+                };
+            },
+            insertRadio: async (previousResult: any) => {
+                const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                const astRadios: Radio[] = <Radio[]> getAstObjects(ast, 'RADIO');
+
+                const varName = `radio${astRadios.length + 1}`;
+
+                const { content, correct } = e.detail;
+                const textEditor = this.shadowRoot.querySelector('#textEditor');
+
+                textEditor.range0.selectNodeContents(textEditor.range0.endContainer);
+                textEditor.range0.collapse();
+
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(textEditor.range0);
+                selection.collapseToEnd();
+
+                const radioString = `[radio start]${content || ''}[radio end]`;
+                document.execCommand('insertHTML', false, '<p><br></p>');
+                document.execCommand('insertText', false, radioString);
+
+                await wait(); //this wait is necessary to get the correct value from the textEditor (https://github.com/miztroh/wysiwyg-e/issues/202)
+                const text = textEditor.value;
+
+                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+                const code = codeEditor.value;
+
+                const newQuestion = {
+                    ...this._question,
+                    text,
+                    code: insertRadioOrCheckIntoCode(code, varName, correct)
+                };
+
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: newQuestion,
+                        userRadiosFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'RADIO'),
+                        textEditorLock: false,
+                        codeEditorLock: false
+                    }
+                };
+            }
+        }, this.userToken);
+    }
 
     async insertCheck(e: CustomEvent) {
         await execute(`
@@ -883,29 +895,42 @@ class PrendusEditQuestion extends Polymer.Element {
     //     });
     // }
 
-    // questionStemChanged(e: CustomEvent) {
-    //     const questionStem = e.detail.questionStem;
-    //
-    //     const newContent = {
-    //         type: 'CONTENT',
-    //         varName: 'content',
-    //         content: questionStem
-    //     };
-    //     const assessMLAST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-    //     const newAssessMLAST = assessMLAST.ast[0] && assessMLAST.ast[0].type === 'CONTENT' ? {
-    //         ...assessMLAST,
-    //         ast: [newContent, ...assessMLAST.ast.slice(1)]
-    //     } : {
-    //         ...assessMLAST,
-    //         ast: [newContent, ...assessMLAST.ast]
-    //     };
-    //
-    //     this.action = fireLocalAction(this.componentId, 'question', {
-    //         ...this._question,
-    //         text: compileToAssessML(newAssessMLAST, () => 5, () => '', () => [], () => []),
-    //         code: this._question ? this._question.code : ''
-    //     });
-    // }
+    async insertQuestionStem(e: CustomEvent) {
+        await execute(`
+            mutation insertQuestionStem($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            insertQuestionStem: (previousResult: any) => {
+                const questionStem = e.detail.questionStem;
+
+                const newContent = {
+                    type: 'CONTENT',
+                    varName: 'content',
+                    content: `${questionStem}`
+                };
+                const assessMLAst = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                const newAssessMLAST = assessMLAst.ast[0] && assessMLAst.ast[0].type === 'CONTENT' ? {
+                    ...assessMLAst,
+                    ast: [newContent, ...assessMLAst.ast.slice(1)]
+                } : {
+                    ...assessMLAst,
+                    ast: [newContent, ...assessMLAst.ast]
+                };
+
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text: compileToAssessML(newAssessMLAST, () => 5, () => '', () => [], () => []),
+                            code: this._question ? this._question.code : ''
+                        }
+                    }
+                };
+            }
+        }, this.userToken);
+    }
 
     getAllowedTagNames() {
         return [
@@ -925,6 +950,10 @@ class PrendusEditQuestion extends Polymer.Element {
             this.saving = componentState.saving;
             this.user = componentState.user;
             this.userToken = componentState.userToken;
+            this.textEditorLock = componentState.textEditorLock;
+            this.codeEditorLock = componentState.codeEditorLock;
+            this.userRadiosFromCode = componentState.userRadiosFromCode;
+            this.userChecksFromCode = componentState.userChecksFromCode;
         }
     }
 }

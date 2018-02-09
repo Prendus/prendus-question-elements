@@ -690,33 +690,55 @@ class PrendusEditQuestion extends Polymer.Element {
         }, this.userToken);
     }
 
-    // insertMath(e: CustomEvent) {
-    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-    //
-    //     const { mathText } = e.detail;
-    //     const textEditor = this.shadowRoot.querySelector('#textEditor');
-    //     const codeEditor = this.shadowRoot.querySelector('#codeEditor');
-    //
-    //     const newTextNode = document.createTextNode(mathText);
-    //     textEditor.range0.insertNode(newTextNode);
-    //     textEditor.range0.setStart(newTextNode, mathText.length);
-    //     textEditor.range0.collapse(true);
-    //     const selection = window.getSelection();
-    //     selection.removeAllRanges();
-    //     selection.addRange(textEditor.range0);
-    //
-    //     const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-    //
-    //     this.action = fireLocalAction(this.componentId, 'question', {
-    //         ...this._question,
-    //         text,
-    //         code: this._question ? this._question.code : ''
-    //     });
-    //
-    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    // }
+    async insertMath(e: CustomEvent) {
+        await execute(`
+            mutation prepareToInsertMath($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+
+            mutation insertMath($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareToInsertMath: (previousResult: any) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        textEditorLock: true,
+                        codeEditorLock: true
+                    }
+                };
+            },
+            insertMath: (previousResult: any) => {
+                const { mathText } = e.detail;
+                const textEditor = this.shadowRoot.querySelector('#textEditor');
+                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+
+                const newTextNode = document.createTextNode(mathText);
+                textEditor.range0.insertNode(newTextNode);
+                textEditor.range0.setStart(newTextNode, mathText.length);
+                textEditor.range0.collapse(true);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(textEditor.range0);
+
+                const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text,
+                            code: this._question ? this._question.code : ''
+                        },
+                        textEditorLock: false,
+                        codeEditorLock: false
+                    }
+                }
+            }
+        }, this.userToken);
+    }
 
     async insertImage(e: CustomEvent) {
         await execute(`

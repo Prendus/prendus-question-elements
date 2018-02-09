@@ -351,36 +351,58 @@ class PrendusEditQuestion extends Polymer.Element {
         }, this.userToken);
     }
 
-    // async insertVariable(e: CustomEvent) {
-    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-    //
-    //     const { varName, maxValue, minValue, precisionValue } = e.detail;
-    //     const textEditor = this.shadowRoot.querySelector('#textEditor');
-    //     const codeEditor = this.shadowRoot.querySelector('#codeEditor');
-    //
-    //     const code = codeEditor.value;
-    //
-    //     const varString = `[${varName}]`;
-    //     const newTextNode = document.createTextNode(varString);
-    //     textEditor.range0.insertNode(newTextNode);
-    //     textEditor.range0.setStart(newTextNode, varString.length);
-    //     textEditor.range0.collapse(true);
-    //     const selection = window.getSelection();
-    //     selection.removeAllRanges();
-    //     selection.addRange(textEditor.range0);
-    //
-    //     const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-    //
-    //     this.action = fireLocalAction(this.componentId, 'question', {
-    //         ...this._question,
-    //         text,
-    //         code: await insertVariableIntoCode(code, varName, minValue, maxValue, precisionValue)
-    //     });
-    //
-    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    // }
+    async insertVariable(e: CustomEvent) {
+        await execute(`
+            mutation prepareToInsertVariable($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+
+            mutation insertVariable($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareToInsertVariable: (previousResult: any) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        textEditorLock: true,
+                        codeEditorLock: true
+                    }
+                };
+            },
+            insertVariable: async (previousResult: any) => {
+                const { varName, maxValue, minValue, precisionValue } = e.detail;
+                const textEditor = this.shadowRoot.querySelector('#textEditor');
+                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+
+                const code = codeEditor.value;
+
+                const varString = `[${varName}]`;
+                const newTextNode = document.createTextNode(varString);
+                textEditor.range0.insertNode(newTextNode);
+                textEditor.range0.setStart(newTextNode, varString.length);
+                textEditor.range0.collapse(true);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(textEditor.range0);
+
+                const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text,
+                            code: await insertVariableIntoCode(code, varName, minValue, maxValue, precisionValue)
+                        },
+                        textEditorLock: false,
+                        codeEditorLock: false
+                    }
+                };
+            }
+        }, this.userToken);
+    }
 
     // insertInput(e: CustomEvent) {
     //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);

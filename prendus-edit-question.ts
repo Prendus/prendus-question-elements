@@ -460,76 +460,64 @@ class PrendusEditQuestion extends Polymer.Element {
                 };
             }
         }, this.userToken);
-
-        // this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        // this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-        //
-        // const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-        // const astInputs: Input[] = <Input[]> getAstObjects(ast, 'INPUT');
-        //
-        // const varName = `input${astInputs.length + 1}`;
-        // const answer = e.detail.answer;
-        //
-        // const textEditor = this.shadowRoot.querySelector('#textEditor');
-        // const codeEditor = this.shadowRoot.querySelector('#codeEditor');
-        //
-        // const code = codeEditor.value;
-        //
-        // const inputString = `[input]`;
-        // const newTextNode = document.createTextNode(inputString);
-        // textEditor.range0.insertNode(newTextNode);
-        // textEditor.range0.setStart(newTextNode, inputString.length);
-        // textEditor.range0.collapse(true);
-        // const selection = window.getSelection();
-        // selection.removeAllRanges();
-        // selection.addRange(textEditor.range0);
-        //
-        // const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-        //
-        // this.action = fireLocalAction(this.componentId, 'question', {
-        //     ...this._question,
-        //     text,
-        //     code: insertInputIntoCode(code, varName, answer)
-        // });
-        //
-        // this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        // this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
     }
 
-    // insertEssay(e: CustomEvent) {
-    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-    //
-    //     const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-    //     const astEssays: Essay[] = <Essay[]> getAstObjects(ast, 'ESSAY');
-    //
-    //     const varName = `essay${astEssays.length + 1}`;
-    //
-    //     const textEditor = this.shadowRoot.querySelector('#textEditor');
-    //     const codeEditor = this.shadowRoot.querySelector('#codeEditor');
-    //
-    //     const code = codeEditor.value;
-    //
-    //     const essayString = `[essay]`;
-    //     const newTextNode = document.createTextNode(essayString);
-    //     textEditor.range0.insertNode(newTextNode);
-    //     textEditor.range0.setStart(newTextNode, essayString.length);
-    //     textEditor.range0.collapse(true);
-    //     const selection = window.getSelection();
-    //     selection.removeAllRanges();
-    //     selection.addRange(textEditor.range0);
-    //
-    //     const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-    //
-    //     this.action = fireLocalAction(this.componentId, 'question', {
-    //         ...this._question,
-    //         text,
-    //         code: insertEssayIntoCode(code)
-    //     });
-    //
-    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    // }
+    async insertEssay(e: CustomEvent) {
+        await execute(`
+            mutation prepareToInsertEssay($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+
+            mutation insertEssay($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareToInsertEssay: (previousResult: any) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        textEditorLock: true,
+                        codeEditorLock: true
+                    }
+                };
+            },
+            insertEssay: (previousResult: any) => {
+                const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                const astEssays: Essay[] = <Essay[]> getAstObjects(ast, 'ESSAY');
+
+                const varName = `essay${astEssays.length + 1}`;
+
+                const textEditor = this.shadowRoot.querySelector('#textEditor');
+                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+
+                const code = codeEditor.value;
+
+                const essayString = `[essay]`;
+                const newTextNode = document.createTextNode(essayString);
+                textEditor.range0.insertNode(newTextNode);
+                textEditor.range0.setStart(newTextNode, essayString.length);
+                textEditor.range0.collapse(true);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(textEditor.range0);
+
+                const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text,
+                            code: insertEssayIntoCode(code)
+                        },
+                        textEditorLock: false,
+                        codeEditorLock: false
+                    }
+                };
+            }
+        }, this.userToken);
+    }
 
     // insertCode(e: CustomEvent) {
     //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);

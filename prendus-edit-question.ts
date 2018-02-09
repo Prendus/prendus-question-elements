@@ -718,66 +718,108 @@ class PrendusEditQuestion extends Polymer.Element {
     //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
     // }
 
-    // insertImage(e: CustomEvent) {
-    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-    //
-    //     const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-    //     const { dataUrl } = e.detail;
-    //     const textEditor = this.shadowRoot.querySelector('#textEditor');
-    //     const codeEditor = this.shadowRoot.querySelector('#codeEditor');
-    //     const astImages: Image[] = <Image[]> getAstObjects(ast, 'IMAGE');
-    //     const varName = `img${astImages.length + 1}`;
-    //     const code = codeEditor.value;
-    //
-    //     const imageString = `[img${astImages.length + 1}]`;
-    //     const newTextNode = document.createTextNode(imageString);
-    //     textEditor.range0.insertNode(newTextNode);
-    //     textEditor.range0.setStart(newTextNode, imageString.length);
-    //     textEditor.range0.collapse(true);
-    //     const selection = window.getSelection();
-    //     selection.removeAllRanges();
-    //     selection.addRange(textEditor.range0);
-    //
-    //     const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-    //
-    //     this.action = fireLocalAction(this.componentId, 'question', {
-    //         ...this._question,
-    //         text,
-    //         code: insertImageIntoCode(code, varName, dataUrl)
-    //     });
-    //
-    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    // }
+    async insertImage(e: CustomEvent) {
+        await execute(`
+            mutation prepareToInsertImage($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
 
-    // insertGraph(e: CustomEvent) {
-    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-    //
-    //     const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-    //     const textEditor = this.shadowRoot.querySelector('#textEditor');
-    //     const astGraphs: Graph[] = <Graph[]> getAstObjects(ast, 'GRAPH');
-    //
-    //     const graphString = `[graph${astGraphs.length + 1}]`;
-    //     const newTextNode = document.createTextNode(graphString);
-    //     textEditor.range0.insertNode(newTextNode);
-    //     textEditor.range0.setStart(newTextNode, graphString.length);
-    //     textEditor.range0.collapse(true);
-    //     const selection = window.getSelection();
-    //     selection.removeAllRanges();
-    //     selection.addRange(textEditor.range0);
-    //
-    //     const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-    //
-    //     this.action = fireLocalAction(this.componentId, 'question', {
-    //         ...this._question,
-    //         text
-    //     });
-    //
-    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    // }
+            mutation insertImage($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareToInsertImage: (previousResult: any) => {
+                return {
+                    componentId: this.componentId,
+                    textEditorLock: true,
+                    codeEditorLock: true
+                };
+            },
+            insertImage: (previousResult: any) => {
+                const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                const { dataUrl } = e.detail;
+                const textEditor = this.shadowRoot.querySelector('#textEditor');
+                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+                const astImages: Image[] = <Image[]> getAstObjects(ast, 'IMAGE');
+                const varName = `img${astImages.length + 1}`;
+                const code = codeEditor.value;
+
+                const imageString = `[img${astImages.length + 1}]`;
+                const newTextNode = document.createTextNode(imageString);
+                textEditor.range0.insertNode(newTextNode);
+                textEditor.range0.setStart(newTextNode, imageString.length);
+                textEditor.range0.collapse(true);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(textEditor.range0);
+
+                const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text,
+                            code: insertImageIntoCode(code, varName, dataUrl)
+                        },
+                        textEditorLock: false,
+                        codeEditorLock: false
+                    }
+                };
+            }
+        }, this.userToken);
+    }
+
+    async insertGraph(e: CustomEvent) {
+        await execute(`
+            mutation prepareToInsertGraph($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+
+            mutation insertGraph($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareToInsertGraph: (previousResult: any) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        textEditorLock: true,
+                        codeEditorLock: true
+                    }
+                };
+            },
+            insertGraph: (previousResult: any) => {
+                const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                const textEditor = this.shadowRoot.querySelector('#textEditor');
+                const astGraphs: Graph[] = <Graph[]> getAstObjects(ast, 'GRAPH');
+
+                const graphString = `[graph${astGraphs.length + 1}]`;
+                const newTextNode = document.createTextNode(graphString);
+                textEditor.range0.insertNode(newTextNode);
+                textEditor.range0.setStart(newTextNode, graphString.length);
+                textEditor.range0.collapse(true);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(textEditor.range0);
+
+                const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text
+                        },
+                        textEditorLock: false,
+                        codeEditorLock: false
+                    }
+                };
+            }
+        }, this.userToken);
+    }
 
     // radioCorrectChanged(e: CustomEvent) {
     //     const userRadio: UserRadio = e.detail.userRadio;

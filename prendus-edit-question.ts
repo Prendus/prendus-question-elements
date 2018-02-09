@@ -629,43 +629,99 @@ class PrendusEditQuestion extends Polymer.Element {
     //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
     // }
 
-    // insertCheck(e: CustomEvent) {
-    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-    //
-    //     const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-    //     const astChecks: Check[] = <Check[]> getAstObjects(ast, 'CHECK');
-    //
-    //     const varName = `check${astChecks.length + 1}`;
-    //
-    //     const { content, correct } = e.detail;
-    //     const textEditor = this.shadowRoot.querySelector('#textEditor');
-    //     const codeEditor = this.shadowRoot.querySelector('#codeEditor');
-    //
-    //     const code = codeEditor.value;
-    //
-    //     const checkString = `[check start]${content || ''}[check end]`;
-    //     const newTextNode = document.createTextNode(checkString);
-    //     textEditor.range0.insertNode(newTextNode);
-    //     textEditor.range0.setStart(newTextNode, checkString.length);
-    //     textEditor.range0.collapse(true);
-    //     const selection = window.getSelection();
-    //     selection.removeAllRanges();
-    //     selection.addRange(textEditor.range0);
-    //
-    //     const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-    //
-    //     this.action = fireLocalAction(this.componentId, 'question', {
-    //         ...this._question,
-    //         text,
-    //         code: insertRadioOrCheckIntoCode(code, varName, correct)
-    //     });
-    //
-    //     this.action = fireLocalAction(this.componentId, 'userChecksFromCode', getUserASTObjects(this._question.text, this._question.code, 'CHECK'));
-    //
-    //     this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-    //     this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    // }
+    async insertCheck(e: CustomEvent) {
+        await execute(`
+            mutation prepareToInsertCheck($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+
+            mutation insertCheck($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareToInsertCheck: (previousResult: any) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        textEditorLock: true,
+                        codeEditorLock: true
+                    }
+                };
+            },
+            insertCheck: (previousResult: any) => {
+                const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                const astChecks: Check[] = <Check[]> getAstObjects(ast, 'CHECK');
+
+                const varName = `check${astChecks.length + 1}`;
+
+                const { content, correct } = e.detail;
+                const textEditor = this.shadowRoot.querySelector('#textEditor');
+                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+
+                const code = codeEditor.value;
+
+                const checkString = `[check start]${content || ''}[check end]`;
+                const newTextNode = document.createTextNode(checkString);
+                textEditor.range0.insertNode(newTextNode);
+                textEditor.range0.setStart(newTextNode, checkString.length);
+                textEditor.range0.collapse(true);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(textEditor.range0);
+
+                const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+
+                const newQuestion = {
+                    ...this._question,
+                    text,
+                    code: insertRadioOrCheckIntoCode(code, varName, correct)
+                };
+
+                return {
+                    question: newQuestion,
+                    userChecksFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'CHECK'),
+                    textEditorLock: false,
+                    codeEditorLock: false
+                };
+            }
+        }, this.userToken);
+
+        // this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
+        // this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+        //
+        // const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+        // const astChecks: Check[] = <Check[]> getAstObjects(ast, 'CHECK');
+        //
+        // const varName = `check${astChecks.length + 1}`;
+        //
+        // const { content, correct } = e.detail;
+        // const textEditor = this.shadowRoot.querySelector('#textEditor');
+        // const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+        //
+        // const code = codeEditor.value;
+        //
+        // const checkString = `[check start]${content || ''}[check end]`;
+        // const newTextNode = document.createTextNode(checkString);
+        // textEditor.range0.insertNode(newTextNode);
+        // textEditor.range0.setStart(newTextNode, checkString.length);
+        // textEditor.range0.collapse(true);
+        // const selection = window.getSelection();
+        // selection.removeAllRanges();
+        // selection.addRange(textEditor.range0);
+        //
+        // const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+        //
+        // this.action = fireLocalAction(this.componentId, 'question', {
+        //     ...this._question,
+        //     text,
+        //     code: insertRadioOrCheckIntoCode(code, varName, correct)
+        // });
+        //
+        // this.action = fireLocalAction(this.componentId, 'userChecksFromCode', getUserASTObjects(this._question.text, this._question.code, 'CHECK'));
+        //
+        // this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
+        // this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
+    }
 
     // insertMath(e: CustomEvent) {
     //     this.action = fireLocalAction(this.componentId, 'textEditorLock', true);

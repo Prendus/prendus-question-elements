@@ -45,8 +45,7 @@ export async function loadQuestion(componentId: string, componentType: string, q
             return {
                 componentId: componentId,
                 props: {
-                    question,
-                    loaded: false
+                    question
                 }
             };
         },
@@ -68,8 +67,7 @@ export async function loadQuestion(componentId: string, componentType: string, q
                 props: {
                     question,
                     builtQuestion,
-                    showSolution: builtQuestion ? getAstObjects(builtQuestion.ast, 'SOLUTION').length > 0 : false,
-                    loaded: true
+                    showSolution: builtQuestion ? getAstObjects(builtQuestion.ast, 'SOLUTION').length > 0 : false
                 }
             };
         }

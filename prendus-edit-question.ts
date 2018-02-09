@@ -94,16 +94,13 @@ class PrendusEditQuestion extends Polymer.Element {
                 observer: 'questionInfoChanged'
             },
             noSave: {
-                type: Boolean,
-                observer: 'noSaveChanged'
+                type: Boolean
             },
             user: {
-                type: Object,
-                observer: 'userChanged'
+                type: Object
             },
             userToken: {
-                type: String,
-                observer: 'userTokenChanged'
+                type: String
             }
         };
     }
@@ -149,17 +146,8 @@ class PrendusEditQuestion extends Polymer.Element {
         }, 2000);
     }
 
-    async questionInfoChanged(oldValue: any, newValue: any) {
+    async questionInfoChanged(newValue: any, oldValue: any) {
         if (!this.question && !this.questionId) {
-            return;
-        }
-
-        if (
-            oldValue &&
-            newValue &&
-            oldValue.text === newValue.text &&
-            oldValue.code === newValue.code
-        ) {
             return;
         }
 
@@ -286,35 +274,6 @@ class PrendusEditQuestion extends Polymer.Element {
             }));
         }, 200);
     }
-
-    async noSaveChanged(oldValue, newValue) {
-        if (oldValue === newValue) {
-            return;
-        }
-
-        await execute(`
-            mutation setNoSave($componentId: String!, $props: Any) {
-                updateComponentState(componentId: $componentId, props: $props)
-            }
-        `, {
-            setNoSave: (previousResult) => {
-                return {
-                    componentId: this.componentId,
-                    props: {
-                        noSave: this.noSave
-                    }
-                };
-            }
-        }, this.userToken);
-    }
-
-    // userChanged() {
-    //     this.action = fireLocalAction(this.componentId, 'user', this.user);
-    // }
-
-    // userTokenChanged() {
-    //     this.action = fireLocalAction(this.componentId, 'userToken', this.userToken);
-    // }
 
     // async save() {
     //     if (this.noSave) {
@@ -781,41 +740,16 @@ class PrendusEditQuestion extends Polymer.Element {
         ];
     }
 
-    async render() {
-        const result = await execute(`
-            query render($componentId: String!) {
-                componentState(componentId: $componentId) {
-                    ... on ${PRENDUS_EDIT_QUESTION} {
-                        question {
-                            text
-                            code
-                        }
-                        loaded
-                        selected
-                        noSave
-                        saving
-                    }
-                }
-            }
-        `, {
-            render: (previousResult) => {
-                return {
-                    componentId: this.componentId
-                };
-            }
-        }, this.userToken);
-
-        if (result.errors) {
-            throw result.errors;
-        }
-
-        const componentState = result.data.componentState;
+    render(state) {
+        const componentState = state.components[this.componentId];
         if (componentState) {
             this._question = componentState.question;
             this.loaded = componentState.loaded;
             this.selected = componentState.selected;
             this.noSave = componentState.noSave;
             this.saving = componentState.saving;
+            this.user = componentState.user;
+            this.userToken = componentState.userToken;
         }
     }
 }

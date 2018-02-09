@@ -61,9 +61,8 @@ addIsTypeOf('ComponentState', PRENDUS_VIEW_QUESTION, (value: any) => {
 export class PrendusViewQuestion extends Polymer.Element {
     shadowRoot: ShadowRoot;
     componentId: string;
+    question: Question;
     questionId: string;
-    _questionId: string;
-    _question: Question;
     builtQuestion: BuiltQuestion;
     userToken: string | null;
     loaded: boolean;
@@ -143,17 +142,8 @@ export class PrendusViewQuestion extends Polymer.Element {
         }, 0);
     }
 
-    async questionInfoChanged(oldValue: any, newValue: any) {
+    async questionInfoChanged(newValue: any, oldValue: any) {
         if (!this.question && !this.questionId) {
-            return;
-        }
-
-        if (
-            oldValue &&
-            newValue &&
-            oldValue.text === newValue.text &&
-            oldValue.code === newValue.code
-        ) {
             return;
         }
 
@@ -286,38 +276,8 @@ export class PrendusViewQuestion extends Polymer.Element {
         }, this.userToken);
     }
 
-    async render() {
-        const result = await execute(`
-            query render($componentId: String!) {
-                componentState(componentId: $componentId) {
-                    ... on ${PRENDUS_VIEW_QUESTION} {
-                        question {
-                            text
-                            code
-                        }
-                        loaded
-                        builtQuestion
-                        showSolution
-                        questionId
-                        showEmbedCode
-                        checkAnswerResponse
-                        solutionButtonText
-                    }
-                }
-            }
-        `, {
-            render: (previousResult) => {
-                return {
-                    componentId: this.componentId
-                };
-            }
-        }, this.userToken);
-
-        if (result.errors) {
-            throw result.errors;
-        }
-
-        const componentState = result.data.componentState;
+    render(state) {
+        const componentState = state.components[this.componentId];
         if (componentState) {
             this._question = componentState.question;
             this._questionId = componentState.questionId;
@@ -341,7 +301,7 @@ export class PrendusViewQuestion extends Polymer.Element {
             else {
                 //TODO this seems to me to be a bad way to do this...the problem is that the contentDiv is not defined, and I do not know how to know when it will be defined. It is inside of a dom-if, and that gets stamped when the loaded property is true
                 setTimeout(() => {
-                    this.render();
+                    this.render(state);
                 });
             }
         }

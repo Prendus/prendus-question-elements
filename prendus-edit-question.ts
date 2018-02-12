@@ -660,7 +660,7 @@ class PrendusEditQuestion extends Polymer.Element {
                     }
                 };
             },
-            insertCheck: (previousResult: any) => {
+            insertCheck: async (previousResult: any) => {
                 const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
                 const astChecks: Check[] = <Check[]> getAstObjects(ast, 'CHECK');
 
@@ -668,20 +668,24 @@ class PrendusEditQuestion extends Polymer.Element {
 
                 const { content, correct } = e.detail;
                 const textEditor = this.shadowRoot.querySelector('#textEditor');
-                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
 
-                const code = codeEditor.value;
+                textEditor.range0.selectNodeContents(textEditor.range0.endContainer);
+                textEditor.range0.collapse();
 
-                const checkString = `[check start]${content || ''}[check end]`;
-                const newTextNode = document.createTextNode(checkString);
-                textEditor.range0.insertNode(newTextNode);
-                textEditor.range0.setStart(newTextNode, checkString.length);
-                textEditor.range0.collapse(true);
                 const selection = window.getSelection();
                 selection.removeAllRanges();
                 selection.addRange(textEditor.range0);
+                selection.collapseToEnd();
 
-                const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+                const radioString = `[check start]${content || ''}[check end]`;
+                document.execCommand('insertHTML', false, '<p><br></p>');
+                document.execCommand('insertText', false, radioString);
+
+                await wait(); //this wait is necessary to get the correct value from the textEditor (https://github.com/miztroh/wysiwyg-e/issues/202)
+                const text = textEditor.value;
+
+                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+                const code = codeEditor.value;
 
                 const newQuestion = {
                     ...this._question,
@@ -912,13 +916,63 @@ class PrendusEditQuestion extends Polymer.Element {
         }, this.usertoken);
     }
 
-    // checkCorrectChanged(e: CustomEvent) {
-    //     const userCheck: UserCheck = e.detail.userCheck;
-    //     this.action = fireLocalAction(this.componentId, 'question', {
-    //         ...this._question,
-    //         code: setUserASTObjectValue(this._question.code, userCheck)
-    //     });
-    // }
+    async checkCorrectChanged(e: CustomEvent) {
+        await execute(`
+            mutation changeCheckCorrect($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            changeCheckCorrect: (previousResult: any) => {
+                const userCheck: UserCheck = e.detail.userCheck;
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            code: setUserASTObjectValue(this._question.code, userCheck)
+                        }
+                    }
+                };
+            }
+        }, this.usertoken);
+    }
+
+    //TODO I might be able to combine all of the check and radio content and correct changed methods
+    async checkContentChanged(e: CustomEvent) {
+        await execute(`
+            mutation changeCheckContent($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            changeCheckContent: (previousResult: any) => {
+                const checkContentToChange = e.detail.checkContentToChange;
+                const assessMLAST = parse(this._question.text, () => 5, () => '', () => [], () => []);
+                const newAssessMLAST = {
+                    ...assessMLAST,
+                    ast: assessMLAST.ast.map((astObject: ASTObject) => {
+                        if (astObject.varName === checkContentToChange.varName) {
+                            return {
+                                ...astObject,
+                                content: checkContentToChange.content.ast
+                            };
+                        }
+
+                        return astObject;
+                    })
+                };
+
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text: compileToAssessML(newAssessMLAST, () => 5, () => '', () => [], () => [])
+                        }
+                    }
+                };
+            }
+        }, this.usertoken);
+    }
 
     async insertQuestionStem(e: CustomEvent) {
         await execute(`

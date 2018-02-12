@@ -7,10 +7,6 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
 
     static get is() { return 'prendus-multiple-choice-tool'; }
 
-    constructor() {
-        super();
-    }
-
     connectedCallback() {
         super.connectedCallback();
 
@@ -38,7 +34,6 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
         const content = contentInput.value;
 
         this.dispatchEvent(new CustomEvent('insert-radio', {
-            bubbles: false,
             detail: {
                 content,
                 correct: false

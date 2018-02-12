@@ -5,8 +5,8 @@
 <link rel="import" href="../../../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../../bower_components/paper-tooltip/paper-tooltip.html">
-<link rel="import" href="../../../bower_components/polymer/lib/elements/dom-repeat.html">
 <link rel="import" href="../../../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../../../bower_components/polymer/lib/elements/dom-repeat.html">
 
 <dom-module id="prendus-multiple-select-tool">
     <template>
@@ -20,22 +20,29 @@
 
         <paper-dialog id="checkDialog" on-click="checkDialogClick">
             <div style="display: flex">
-                <paper-input id="contentInput" type="text" label="Type the text of this option" autofocus></paper-input>
+                <paper-input id="questionStemInput" type="text" label="Question" autofocus on-value-changed="questionStemChanged" value="[[getQuestionStem(question)]]"></paper-input>
+            </div>
+
+            <div style="display: flex">
+                <paper-input id="optionInput" type="text" label="Multiple select option"></paper-input>
+                <button style="height: 100%; margin-top: 8%; margin-left: .5vw" on-click="addOptionClick">Add</button>
             </div>
 
             <dom-repeat items="[[userChecks]]">
                 <template>
                     <div style="display: flex">
-                        <span style="margin-right: 5px">Option [[getIndex(index)]], Correct:</span> <paper-toggle-button id="[[item.varName]]" on-checked-changed="checkCorrectChanged"></paper-toggle-button>
+                        <!-- <paper-input id="[[item.varName]]-input" type="text"></paper-input> -->
+                        <input id="[[item.varName]]-input" type="text" value="[[getCompiledContent(item.content)]]" on-input="checkContentChanged">
+                        Correct: <paper-toggle-button id="[[item.varName]]-toggle" on-checked-changed="checkCorrectChanged"></paper-toggle-button>
                     </div>
                 </template>
             </dom-repeat>
 
             <div style="display: flex">
-                <paper-button style="margin-left: auto" on-click="insertClick" raised noink>Insert option</paper-button>
+                <paper-button style="margin-left: auto" raised on-click="doneClick">Done</paper-button>
             </div>
         </paper-dialog>
     </template>
 
-    <script src="prendus-multiple-select-tool.ts"></script>
+    <script type="module" src="prendus-multiple-select-tool.ts"></script>
 </dom-module>

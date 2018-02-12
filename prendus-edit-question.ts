@@ -855,37 +855,62 @@ class PrendusEditQuestion extends Polymer.Element {
         }, this.userToken);
     }
 
-    // radioCorrectChanged(e: CustomEvent) {
-    //     const userRadio: UserRadio = e.detail.userRadio;
-    //     this.action = fireLocalAction(this.componentId, 'question', {
-    //         ...this._question,
-    //         code: setUserASTObjectValue(this._question.code, userRadio)
-    //     });
-    // }
+    async radioCorrectChanged(e: CustomEvent) {
+        await execute(`
+            mutation changeRadioCorrect($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            changeRadioCorrect: (previousResult: any) => {
+                const userRadio: UserRadio = e.detail.userRadio;
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            code: setUserASTObjectValue(this._question.code, userRadio)
+                        }
+                    }
+                };
+            }
+        }, this.usertoken);
+    }
 
-    // radioContentChanged(e: CustomEvent) {
-    //     const radioContentToChange = e.detail.radioContentToChange;
-    //
-    //     const assessMLAST = parse(this._question.text, () => 5, () => '', () => [], () => []);
-    //     const newAssessMLAST = {
-    //         ...assessMLAST,
-    //         ast: assessMLAST.ast.map((astObject: ASTObject) => {
-    //             if (astObject.varName === radioContentToChange.varName) {
-    //                 return {
-    //                     ...astObject,
-    //                     content: radioContentToChange.content.ast
-    //                 };
-    //             }
-    //
-    //             return astObject;
-    //         })
-    //     };
-    //
-    //     this.action = fireLocalAction(this.componentId, 'question', {
-    //         ...this._question,
-    //         text: compileToAssessML(newAssessMLAST, () => 5, () => '', () => [], () => [])
-    //     });
-    // }
+    async radioContentChanged(e: CustomEvent) {
+        await execute(`
+            mutation changeRadioContent($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            changeRadioContent: (previousResult: any) => {
+                const radioContentToChange = e.detail.radioContentToChange;
+                const assessMLAST = parse(this._question.text, () => 5, () => '', () => [], () => []);
+                const newAssessMLAST = {
+                    ...assessMLAST,
+                    ast: assessMLAST.ast.map((astObject: ASTObject) => {
+                        if (astObject.varName === radioContentToChange.varName) {
+                            return {
+                                ...astObject,
+                                content: radioContentToChange.content.ast
+                            };
+                        }
+
+                        return astObject;
+                    })
+                };
+
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text: compileToAssessML(newAssessMLAST, () => 5, () => '', () => [], () => [])
+                        }
+                    }
+                };
+            }
+        }, this.usertoken);
+    }
 
     // checkCorrectChanged(e: CustomEvent) {
     //     const userCheck: UserCheck = e.detail.userCheck;
@@ -907,7 +932,7 @@ class PrendusEditQuestion extends Polymer.Element {
                 const newContent = {
                     type: 'CONTENT',
                     varName: 'content',
-                    content: `${questionStem}`
+                    content: `${questionStem}<p><br></p>`
                 };
                 const assessMLAst = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
                 const newAssessMLAST = assessMLAst.ast[0] && assessMLAst.ast[0].type === 'CONTENT' ? {

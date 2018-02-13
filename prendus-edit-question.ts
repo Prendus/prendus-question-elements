@@ -7,7 +7,8 @@ import {GQLRequest} from '../prendus-shared/services/graphql-service';
 import {User} from './prendus-question-elements.d';
 import {
     UserCheck,
-    UserRadio
+    UserRadio,
+    UserInput
 } from './prendus-question-elements.d';
 import {
     parse,
@@ -61,6 +62,7 @@ extendSchema(`
         codeEditorLock: Boolean!
         userRadiosFromCode: Any
         userChecksFromCode: Any
+        userInputsFromCode: Any
     }
 `);
 addIsTypeOf('ComponentState', PRENDUS_EDIT_QUESTION, (value: any) => {
@@ -81,6 +83,7 @@ class PrendusEditQuestion extends Polymer.Element {
     noSave: boolean;
     userRadiosFromCode: UserRadio[];
     userChecksFromCode: UserCheck[];
+    userInputsFromCode: UserInput[];
 
     static get is() { return 'prendus-edit-question'; }
     static get properties() {
@@ -199,7 +202,8 @@ class PrendusEditQuestion extends Polymer.Element {
                             saving: true,
                             question: newQuestion,
                             userRadiosFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'RADIO'),
-                            userChecksFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'CHECK')
+                            userChecksFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'CHECK'),
+                            userInputsFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'INPUT')
                         }
                     };
                 },
@@ -253,7 +257,8 @@ class PrendusEditQuestion extends Polymer.Element {
                             saving: true,
                             question: newQuestion,
                             userRadiosFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'RADIO'),
-                            userChecksFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'CHECK')
+                            userChecksFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'CHECK'),
+                            userInputsFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'INPUT')
                         }
                     };
                 },
@@ -446,16 +451,19 @@ class PrendusEditQuestion extends Polymer.Element {
 
                 const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
 
+                const newQuestion = {
+                    ...this._question,
+                    text,
+                    code: insertInputIntoCode(code, varName, answer)
+                };
+
                 return {
                     componentId: this.componentId,
                     props: {
-                        question: {
-                            ...this._question,
-                            text,
-                            code: insertInputIntoCode(code, varName, answer)
-                        },
+                        question: newQuestion,
                         textEditorLock:  false,
-                        codeEditorLock: false
+                        codeEditorLock: false,
+                        userInputsFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'INPUT')
                     }
                 };
             }
@@ -1011,6 +1019,27 @@ class PrendusEditQuestion extends Polymer.Element {
         }, this.userToken);
     }
 
+    async inputAnswerChanged(e: CustomEvent) {
+        await execute(`
+            mutation changeInputAnswer($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            changeInputAnswer: (previousResult: any) => {
+                const userInput: UserInput = e.detail.userInput;
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            code: setUserASTObjectValue(this._question.code, userInput)
+                        }
+                    }
+                };
+            }
+        }, this.usertoken);
+    }
+
     getAllowedTagNames() {
         return [
             'br',
@@ -1033,6 +1062,7 @@ class PrendusEditQuestion extends Polymer.Element {
             this.codeEditorLock = componentState.codeEditorLock;
             this.userRadiosFromCode = componentState.userRadiosFromCode;
             this.userChecksFromCode = componentState.userChecksFromCode;
+            this.userInputsFromCode = componentState.userInputsFromCode;
         }
     }
 }

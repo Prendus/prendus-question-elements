@@ -849,12 +849,14 @@ export function setUserASTObjectValue(code: string, userASTObject: UserASTObject
                 object.expression.left.type === 'Identifier' &&
                 object.expression.left.name === 'answer'
             ) {
+                const userASTValue = userASTObject.type === 'USER_RADIO' || userASTObject.type === 'USER_CHECK' ? userASTObject.checked : userASTObject.value;
+
                 if (object.expression.right.type === 'BinaryExpression') {
                     return {
                         ...object,
                         expression: {
                             ...object.expression,
-                            right: setIdentifierValueInBinaryExpression(object.expression.right, userASTObject.varName, userASTObject.checked)
+                            right: setIdentifierValueInBinaryExpression(object.expression.right, userASTObject.varName, userASTValue)
                         }
                     };
                 }
@@ -864,7 +866,7 @@ export function setUserASTObjectValue(code: string, userASTObject: UserASTObject
                         ...object,
                         expression: {
                             ...object.expression,
-                            right: setIdentifierValueInLogicalExpression(object.expression.right, userASTObject.varName, userASTObject.checked)
+                            right: setIdentifierValueInLogicalExpression(object.expression.right, userASTObject.varName, userASTValue)
                         }
                     };
                 }
@@ -873,6 +875,28 @@ export function setUserASTObjectValue(code: string, userASTObject: UserASTObject
             return object;
         })
     });
+}
+
+export function getUserASTObjectValue(code: string, userASTObject: UserASTObject) {
+    const jsAst: Program = esprima.parse(code);
+    return jsAst.body.reduce((result, object) => {
+        if (
+            object.type === 'ExpressionStatement' &&
+            object.expression.type === 'AssignmentExpression' &&
+            object.expression.left.type === 'Identifier' &&
+            object.expression.left.name === 'answer'
+        ) {
+            if (object.expression.right.type === 'BinaryExpression') {
+                return getIdentifierValueFromBinaryExpression(object.expression.right, userASTObject.varName);
+            }
+
+            if (object.expression.right.type === 'LogicalExpression') {
+                return getIdentifierValueFromLogicalExpression(object.expression.right, userASTObject.varName);
+            }
+        }
+
+        return result;
+    }, null);
 }
 
 export function getUserASTObjects(text: string, code: string, type: ASTObjectType): UserASTObject[]  {

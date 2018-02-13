@@ -25,7 +25,8 @@
             <dom-repeat items="[[userInputs]]">
                 <template>
                     <div style="display: flex">
-                        <input id="[[item.varName]]-input" type="text" value="[[getInputAnswer(item)]]" on-input="inputAnswerChanged">
+                        <div>Blank [[getIndex(index)]]:</div>
+                        <paper-input id="[[item.varName]]-input" type="text" value="[[getInputAnswer(item)]]" on-input="inputAnswerChanged"></paper-input>
                     </div>
                 </template>
             </dom-repeat>

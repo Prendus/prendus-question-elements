@@ -46,6 +46,7 @@ class PrendusMultipleSelectTool extends WysiwygTool {
     checkCorrectChanged(e: any) {
         const toggle = this.shadowRoot.querySelector(`#${e.model.item.varName}-toggle`);
         const userCheck: UserCheck = {
+            type: 'USER_CHECK',
             varName: e.model.item.varName,
             checked: toggle ? toggle.checked : false
         };

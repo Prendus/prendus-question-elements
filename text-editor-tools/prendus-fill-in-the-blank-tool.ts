@@ -26,6 +26,10 @@ class PrendusFillInTheBlankTool extends WysiwygTool {
         this.shadowRoot.querySelector('#inputDialog').close();
     }
 
+    getIndex(index: number) {
+        return index + 1;
+    }
+
     addBlankAnswerClick(e: Event) {
         const blankAnswerInput = this.shadowRoot.querySelector('#blankAnswerInput');
         const answer = blankAnswerInput.value;

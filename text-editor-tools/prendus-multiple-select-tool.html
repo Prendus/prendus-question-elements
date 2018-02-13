@@ -31,9 +31,9 @@
             <dom-repeat items="[[userChecks]]">
                 <template>
                     <div style="display: flex">
-                        <!-- <paper-input id="[[item.varName]]-input" type="text"></paper-input> -->
-                        <input id="[[item.varName]]-input" type="text" value="[[getCompiledContent(item.content)]]" on-input="checkContentChanged">
-                        Correct: <paper-toggle-button id="[[item.varName]]-toggle" on-checked-changed="checkCorrectChanged"></paper-toggle-button>
+                        <paper-input id="[[item.varName]]-input" type="text" value="[[getCompiledContent(item.content)]]" on-input="checkContentChanged"></paper-input>
+                        <div>Correct:</div>
+                        <paper-toggle-button id="[[item.varName]]-toggle" on-checked-changed="checkCorrectChanged"></paper-toggle-button>
                     </div>
                 </template>
             </dom-repeat>

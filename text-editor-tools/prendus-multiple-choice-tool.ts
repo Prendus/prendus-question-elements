@@ -46,6 +46,7 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
     radioCorrectChanged(e: any) {
         const toggle = this.shadowRoot.querySelector(`#${e.model.item.varName}-toggle`);
         const userRadio: UserRadio = {
+            type: 'USER_RADIO',
             varName: e.model.item.varName,
             checked: toggle ? toggle.checked : false
         };

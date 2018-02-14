@@ -429,7 +429,7 @@ function substituteVariablesInMemberExpression(memberExpression: MemberExpressio
     };
 }
 
-async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, propertyName: string, defaultValue: number | string): Promise<number | string> {
+export async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, propertyName: string, defaultValue: number | string): Promise<number | string> {
     const objectsWithProperty = jsAst.body.filter((bodyObj) => {
         return bodyObj.type === 'ExpressionStatement' && bodyObj.expression.type === 'AssignmentExpression' && (<MemberExpression> bodyObj.expression.left).object && (<Identifier> (<MemberExpression> bodyObj.expression.left).object).name === varName && (<Identifier> (<MemberExpression> bodyObj.expression.left).property).name === propertyName;
     });
@@ -458,7 +458,7 @@ async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, pr
     }
 }
 
-async function getAssignmentValue(jsAst: Program, amlAst: AST, varName: string, defaultValue: number | string): Promise<number | string> {
+export async function getAssignmentValue(jsAst: Program, amlAst: AST, varName: string, defaultValue: number | string): Promise<number | string> {
     const objectsWithAssignment = jsAst.body.filter((bodyObj) => {
         return bodyObj.type === 'ExpressionStatement' && bodyObj.expression.type === 'AssignmentExpression' && bodyObj.expression.left.type === 'Identifier' && bodyObj.expression.left.name === varName;
     });
@@ -778,6 +778,26 @@ export function insertImageIntoCode(code: string, varName: string, src: string):
             createPropertyAssignment(varName, 'src', src),
             ...jsAst.body
         ]
+    });
+}
+
+export function removeImageFromCode(code: string, varName: string, src: string): string {
+    const jsAst: Program = esprima.parse(code);
+    return escodegen.generate({
+        ...jsAst,
+        body: jsAst.body.filter((object) => {
+            return !(object.type === 'ExpressionStatement' &&
+                    object.expression.type === 'AssignmentExpression' &&
+                    object.expression.operator === '=' &&
+                    object.expression.left.type === 'MemberExpression' &&
+                    object.expression.left.computed === false &&
+                    object.expression.left.object.type === 'Identifier' &&
+                    object.expression.left.object.name === varName &&
+                    object.expression.left.property.type === 'Identifier' &&
+                    object.expression.left.property.name === 'src' &&
+                    object.expression.right.type === 'Literal' &&
+                    object.expression.right.value === src);
+        })
     });
 }
 

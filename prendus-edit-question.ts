@@ -1,6 +1,7 @@
 import {
     createUUID,
-    navigate
+    navigate,
+    asyncReduce
 } from '../prendus-shared/services/utilities-service';
 import {Question} from './prendus-question-elements.d';
 import {GQLRequest} from '../prendus-shared/services/graphql-service';
@@ -36,7 +37,9 @@ import {
     nullifyUserASTObjectInAnswerAssignment,
     setUserASTObjectValue,
     setUserASTObjectIdentifierNameInAnswerAssignment,
-    decrementUserASTObjectVarNamesInAnswerAssignment
+    decrementUserASTObjectVarNamesInAnswerAssignment,
+    removeImageFromCode,
+    getPropertyValue
 } from './services/question-service';
 import {
     execute,
@@ -193,7 +196,7 @@ class PrendusEditQuestion extends Polymer.Element {
                     updateComponentState(componentId: $componentId, props: $props)
                 }
             `, {
-                prepareToSaveText: (previousResult) => {
+                prepareToSaveText: async (previousResult) => {
                     const originalUserRadioASTObjects = getUserASTObjectsFromAnswerAssignment(this._question ? this._question.text : '', this._question ? this._question.code : '', 'RADIO');
                     const currentUserRadioASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'RADIO');
                     const radiosDeletedCode = decrementUserASTObjectVarNamesInAnswerAssignment(this._question ? this._question.code : '', originalUserRadioASTObjects, currentUserRadioASTObjects);
@@ -206,10 +209,24 @@ class PrendusEditQuestion extends Polymer.Element {
                     const currentUserInputASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'INPUT');
                     const inputsDeletedCode = decrementUserASTObjectVarNamesInAnswerAssignment(checksDeletedCode, originalUserInputASTObjects, currentUserInputASTObjects);
 
+                    const originalUserImageASTObjects = getAstObjects(parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []), 'IMAGE');
+                    const currentUserImageASTObjects = getAstObjects(parse(text, () => 5, () => '', () => [], () => []), 'IMAGE');
+                    const userImageASTObjectsToRemove = originalUserImageASTObjects.filter((originalUserImageASTObject) => {
+                        return currentUserImageASTObjects.filter((currentUserImageASTObject) => {
+                            return originalUserImageASTObject.varName === currentUserImageASTObject.varName;
+                        }).length === 0;
+                    });
+                    const jsAst = esprima.parse(inputsDeletedCode);
+                    const amlAst = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                    const imagesDeletedCode = await asyncReduce(userImageASTObjectsToRemove, async (result, userImageASTObjectToRemove) => {
+                        const imageSrc = await getPropertyValue(jsAst, amlAst, userImageASTObjectToRemove.varName, 'src', '');
+                        return removeImageFromCode(result, userImageASTObjectToRemove.varName, imageSrc);
+                    }, inputsDeletedCode);
+
                     const newQuestion = {
                         ...this._question,
                         text,
-                        code: inputsDeletedCode
+                        code: imagesDeletedCode
                     };
 
                     return {

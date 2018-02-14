@@ -23,12 +23,20 @@ class PrendusImageTool extends WysiwygTool {
             this.dispatchEvent(new CustomEvent('insert-image', {
                 detail: {
                     dataUrl: reader.result
-                },
-                bubbles: false
+                }
             }));
         });
         reader.readAsDataURL(file);
-        e.target.value = null; //We do this so that the on change will work even if the same file is selected
+
+        //TODO this is a temporary fix for the erratic behavior caused by inserting an image
+        //TODO the editor cursor jumps around after inserting an image unless we estroy the input and add it later
+        const imageInputContainer = this.shadowRoot.querySelector('#imageInputContainer');
+        const imageInput = this.shadowRoot.querySelector('#imageInput');
+        imageInputContainer.removeChild(imageInput);
+
+        setTimeout(() => {
+            imageInputContainer.appendChild(imageInput);
+        }, 1000);
     }
 }
 

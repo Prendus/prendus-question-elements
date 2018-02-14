@@ -35,14 +35,13 @@ import {
     extendSchema,
     addIsTypeOf
 } from '../graphsm/graphsm';
+import {
+    loadQuestion
+} from './services/shared-service';
 
+const PRENDUS_VIEW_QUESTION = 'PrendusViewQuestion';
 extendSchema(`
-    type Question {
-        text: String!
-        code: String!
-    }
-
-    type PrendusViewQuestion implements ComponentState {
+    type ${PRENDUS_VIEW_QUESTION} implements ComponentState {
         componentId: String!
         componentType: String!
         loaded: Boolean
@@ -55,16 +54,15 @@ extendSchema(`
         solutionButtonText: String!
     }
 `);
-addIsTypeOf('ComponentState', 'PrendusViewQuestion', (value) => {
-    return value.componentType === 'PrendusViewQuestion';
+addIsTypeOf('ComponentState', PRENDUS_VIEW_QUESTION, (value: any) => {
+    return value.componentType === PRENDUS_VIEW_QUESTION;
 });
 
 export class PrendusViewQuestion extends Polymer.Element {
     shadowRoot: ShadowRoot;
     componentId: string;
+    question: Question;
     questionId: string;
-    _questionId: string;
-    _question: Question;
     builtQuestion: BuiltQuestion;
     userToken: string | null;
     loaded: boolean;
@@ -89,7 +87,6 @@ export class PrendusViewQuestion extends Polymer.Element {
 
         this.componentId = createUUID();
         subscribe(this.render.bind(this));
-
         execute(`
             mutation initialSetup($componentId: String!, $props: Any) {
                 updateComponentState(componentId: $componentId, props: $props)
@@ -99,7 +96,7 @@ export class PrendusViewQuestion extends Polymer.Element {
                 return {
                     componentId: this.componentId,
                     props: {
-                        componentType: 'PrendusViewQuestion',
+                        componentType: PRENDUS_VIEW_QUESTION,
                         question: {
                             text: '',
                             code: ''
@@ -112,11 +109,15 @@ export class PrendusViewQuestion extends Polymer.Element {
                     }
                 };
             }
-        });
+        }, this.userToken);
     }
 
     getThis() {
         return this;
+    }
+
+    getQuestionDefined(builtQuestion) {
+        return builtQuestion ? builtQuestion.html === '' ? null : builtQuestion.html : null;
     }
 
     async showEmbedCodeClick() {
@@ -133,7 +134,7 @@ export class PrendusViewQuestion extends Polymer.Element {
                     }
                 };
             }
-        });
+        }, this.userToken);
 
         //allow the template with the input to be stamped
         setTimeout(() => {
@@ -141,92 +142,21 @@ export class PrendusViewQuestion extends Polymer.Element {
         }, 0);
     }
 
-    async questionInfoChanged() {
+    async questionInfoChanged(newValue: any, oldValue: any) {
         if (!this.question && !this.questionId) {
             return;
         }
 
-        await execute(`
-            mutation prepareForQuestionQuery(
-                $componentId: String!
-                $props: Any
-            ) {
-                updateComponentState(componentId: $componentId, props: $props)
-            }
+        await loadQuestion(this.componentId, PRENDUS_VIEW_QUESTION, this.question, this.questionId, this.userToken);
 
-            ${this.question ? `
-                query getLocalQuestion($componentId: String!) {
-                    componentState(componentId: $componentId) {
-                        ... on PrendusViewQuestion {
-                            question {
-                                text
-                                code
-                            }
-                        }
-                    }
-                }
-            ` : `
-                query getRemoteQuestion($questionId: ID!) {
-                    question: Question(
-                        id: $questionId
-                    ) {
-                        text
-                        code
-                    }
-                }
-            `}
-
-            mutation questionPrepared(
-                $componentId: String!
-                $props: Any
-            ) {
-                updateComponentState(componentId: $componentId, props: $props)
-            }
-        `, {
-            prepareForQuestionQuery: (previousResult) => {
-                return {
-                    componentId: this.componentId,
-                    props: {
-                        question: this.question,
-                        loaded: false
-                    }
-                };
-            },
-            getLocalQuestion: (previousResult) => {
-                return {
-                    componentId: this.componentId
-                };
-            },
-            getRemoteQuestion: (previousResult) => {
-                return {
-                    questionId: this.questionId
-                };
-            },
-            questionPrepared: async (previousResult) => {
-                const question = previousResult.data.componentState.question;
-                return {
-                    componentId: this.componentId,
-                    props: {
-                        question,
-                        builtQuestion: await buildQuestion(question.text, question.code),
-                        showSolution: this.builtQuestion ? getAstObjects(this.builtQuestion.ast, 'SOLUTION').length > 0 : false,
-                        loaded: true
-                    }
-                };
-            }
-        });
-
-        //TODO the resize is causing problems with the buildQuestion function with injecting variables for some reason, this happend after the switch to GraphSM
         //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
-        // window.parent.postMessage({
-        //     type: 'prendus-view-question-resize',
-        //     height: document.body.scrollHeight,
-        //     width: document.body.scrollWidth
-        // }, '*');
+        window.parent.postMessage({
+            type: 'prendus-view-question-resize',
+            height: document.body.scrollHeight,
+            width: document.body.scrollWidth
+        }, '*');
 
-        this.dispatchEvent(new CustomEvent('question-loaded', {
-            bubbles: false
-        }));
+        this.dispatchEvent(new CustomEvent('question-loaded'));
     }
 
     getSanitizedHTML(html: string) {
@@ -288,7 +218,6 @@ export class PrendusViewQuestion extends Polymer.Element {
         const checkAnswerInfo = await checkAnswer(this._question.code, this.builtQuestion.originalVariableValues, userVariables, userInputs, userEssays, userCodes, userChecks, userRadios, userImages, userGraphs);
 
         this.dispatchEvent(new CustomEvent('question-response', {
-            bubbles: false,
             detail: {
                 userVariables,
                 userInputs,
@@ -312,87 +241,43 @@ export class PrendusViewQuestion extends Polymer.Element {
                     }
                 };
             }
-        });
+        }, this.userToken);
 
         this.shadowRoot.querySelector('#checkAnswerResponseToast').open();
     }
 
     async showSolutionClick() {
-        const solutionTemplate = <HTMLTemplateElement> this.shadowRoot.querySelector('#solution1');
-        if (solutionTemplate) {
-            await execute(`
-                mutation solutionTemplateExists($componentId: String!, $props: Any) {
-                    updateComponentState(componentId: $componentId, props: $props)
-                }
-            `, {
-                solutionTemplateExists: (previousResult) => {
-                    return {
-                        componentId: this.componentId,
-                        props: {
-                            builtQuestion: {
-                                ...this.builtQuestion,
-                                html: `${solutionTemplate.innerHTML}<template>${this._question.text}</template>`
-                            },
-                            solutionButtonText: 'Question'
-                        }
-                    };
-                }
-            });
-        }
-        else {
-            await execute(`
-                mutation solutionTemplateDoesNotExist($componentId: String!, $props: Any) {
-                    updateComponentState(componentId: $componentId, props: $props)
-                }
-            `, {
-                solutionTemplateDoesNotExist: (previousResult) => {
-                    return {
-                        componentId: this.componentId,
-                        props: {
-                            builtQuestion: {
-                                ...this.builtQuestion,
-                                html: compileToHTML(this.builtQuestion.ast, () => NaN, () => '')
-                            },
-                            solutionButtonText: 'Solution'
-                        }
-                    };
-                }
-            });
-        }
-    }
-
-    async render() {
-        const result = await execute(`
-            query render($componentId: String!) {
-                componentState(componentId: $componentId) {
-                    ... on PrendusViewQuestion {
-                        question {
-                            text
-                            code
-                        }
-                        loaded
-                        builtQuestion
-                        showSolution
-                        questionId
-                        showEmbedCode
-                        checkAnswerResponse
-                        solutionButtonText
-                    }
-                }
+        await execute(`
+            mutation setSolutionTemplateInfo($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
             }
         `, {
-            render: (previousResult) => {
+            setSolutionTemplateInfo: (previousResult) => {
+                const solutionTemplate = <HTMLTemplateElement> this.shadowRoot.querySelector('#solution1');
+                const props = solutionTemplate ? {
+                    builtQuestion: {
+                        ...this.builtQuestion,
+                        html: `${solutionTemplate.innerHTML}<template>${this._question.text}</template>`
+                    },
+                    solutionButtonText: 'Question'
+                } : {
+                    builtQuestion: {
+                        ...this.builtQuestion,
+                        html: compileToHTML(this.builtQuestion.ast, () => NaN, () => '')
+                    },
+                    solutionButtonText: 'Solution'
+                };
+
                 return {
-                    componentId: this.componentId
+                    componentId: this.componentId,
+                    props
                 };
             }
-        });
+        }, this.userToken);
+    }
 
-        if (result.errors) {
-            throw result.errors;
-        }
-
-        const componentState = result.data.componentState;
+    render(state) {
+        const componentState = state.components[this.componentId];
         if (componentState) {
             this._question = componentState.question;
             this._questionId = componentState.questionId;
@@ -416,7 +301,7 @@ export class PrendusViewQuestion extends Polymer.Element {
             else {
                 //TODO this seems to me to be a bad way to do this...the problem is that the contentDiv is not defined, and I do not know how to know when it will be defined. It is inside of a dom-if, and that gets stamped when the loaded property is true
                 setTimeout(() => {
-                    this.render();
+                    this.render(state);
                 });
             }
         }

@@ -1,3 +1,6 @@
+import {UserInput} from '../prendus-question-elements.d';
+import {getUserASTObjectValue} from '../services/question-service';
+
 class PrendusFillInTheBlankTool extends WysiwygTool {
     static get is() { return 'prendus-fill-in-the-blank-tool'; }
 
@@ -19,18 +22,44 @@ class PrendusFillInTheBlankTool extends WysiwygTool {
         e.stopPropagation();
     }
 
-    insertClick() {
-        const answerInput = this.shadowRoot.querySelector('#answerInput');
-        const answer = answerInput.value;
+    doneClick() {
+        this.shadowRoot.querySelector('#inputDialog').close();
+    }
+
+    getIndex(index: number) {
+        return index + 1;
+    }
+
+    addBlankAnswerClick(e: Event) {
+        const blankAnswerInput = this.shadowRoot.querySelector('#blankAnswerInput');
+        const answer = blankAnswerInput.value;
 
         this.dispatchEvent(new CustomEvent('insert-input', {
-            bubbles: false,
             detail: {
                 answer
             }
         }));
-        this.shadowRoot.querySelector('#inputDialog').close();
-        answerInput.value = '';
+
+        blankAnswerInput.value = '';
+    }
+
+    inputAnswerChanged(e: CustomEvent) {
+        const input = this.shadowRoot.querySelector(`#${e.model.item.varName}-input`);
+        const userInput: UserInput = {
+            type: 'USER_INPUT',
+            varName: e.model.item.varName,
+            value: input.value
+        };
+
+        this.dispatchEvent(new CustomEvent('input-answer-changed', {
+            detail: {
+                userInput
+            }
+        }));
+    }
+
+    getInputAnswer(userInput: UserInput) {
+        return getUserASTObjectValue(this.question.code, userInput);
     }
 }
 

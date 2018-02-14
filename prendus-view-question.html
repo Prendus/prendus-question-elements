@@ -92,7 +92,7 @@
             }
         </style>
 
-        <div class="mainContainer" hidden$="[[!builtQuestion]]">
+        <div class="mainContainer" hidden$="[[!builtQuestion.html]]">
             <!-- <div hidden$="[[!getQuestionDefined()]]"> -->
                 <div id="contentDiv" inner-h-t-m-l="[[getSanitizedHTML(builtQuestion.html)]]"></div>
 
@@ -120,7 +120,7 @@
 
         </div>
 
-        <div class="questionPreviewPlaceholder" hidden$="[[builtQuestion]]">
+        <div class="questionPreviewPlaceholder" hidden$="[[getQuestionDefined(builtQuestion)]]">
             Question preview will appear here
         </div>
 

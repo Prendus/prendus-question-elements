@@ -31,9 +31,9 @@
             <dom-repeat items="[[userRadios]]">
                 <template>
                     <div style="display: flex">
-                        <!-- <paper-input id="[[item.varName]]-input" type="text"></paper-input> -->
-                        <input id="[[item.varName]]-input" type="text" value="[[getCompiledContent(item.content)]]" on-input="radioContentChanged">
-                        Correct: <paper-toggle-button id="[[item.varName]]-toggle" on-checked-changed="radioCorrectChanged"></paper-toggle-button>
+                        <paper-input id="[[item.varName]]-input" type="text" value="[[getCompiledContent(item.content)]]" on-input="radioContentChanged"></paper-input>
+                        <div>Correct:</div>
+                        <paper-toggle-button id="[[item.varName]]-toggle" checked="[[item.checked]]" on-checked-changed="radioCorrectChanged"></paper-toggle-button>
                     </div>
                 </template>
             </dom-repeat>

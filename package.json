@@ -27,10 +27,10 @@
     "esprima": "^4.0.0",
     "function-plot": "^1.18.1",
     "function-plot-element": "0.0.3",
-    "graphsm": "^0.2.1",
+    "graphsm": "^0.3.1",
     "juicy-ace-editor": "^2.0.5",
     "prendus-shared": "^0.3.0",
-    "redux-store-element": "^1.2.13",
+    "redux-store-element": "^1.3.0",
     "secure-eval": "^0.3.2"
   },
   "devDependencies": {

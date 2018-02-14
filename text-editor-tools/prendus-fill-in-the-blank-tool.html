@@ -17,15 +17,26 @@
 		</paper-tooltip>
 
         <paper-dialog id="inputDialog" on-click="inputDialogClick">
-            <div>
-                <paper-input id="answerInput" type="text" label="Type the correct answer for this blank input" autofocus></paper-input>
+            <div style="display: flex">
+                <paper-input id="blankAnswerInput" type="text" label="Blank answer" autofocus></paper-input>
+                <button style="height: 100%; margin-top: 8%; margin-left: .5vw" on-click="addBlankAnswerClick">Add</button>
             </div>
 
+            <dom-repeat items="[[userInputs]]">
+                <template>
+                    <div style="display: flex">
+                        <div style="margin-top: 7%; margin-right: .5vw">Blank [[getIndex(index)]]:</div>
+                        <paper-input id="[[item.varName]]-input" type="text" value="[[getInputAnswer(item)]]" on-input="inputAnswerChanged"></paper-input>
+                    </div>
+                </template>
+            </dom-repeat>
+
             <div style="display: flex">
-                <paper-button style="margin-left: auto" on-click="insertClick" raised noink>Insert blank input</paper-button>
+                <paper-button style="margin-left: auto" raised on-click="doneClick">Done</paper-button>
             </div>
+
         </paper-dialog>
     </template>
 
-    <script src="prendus-fill-in-the-blank-tool.ts"></script>
+    <script type="module" src="prendus-fill-in-the-blank-tool.ts"></script>
 </dom-module>

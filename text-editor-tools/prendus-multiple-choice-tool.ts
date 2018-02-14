@@ -7,10 +7,6 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
 
     static get is() { return 'prendus-multiple-choice-tool'; }
 
-    constructor() {
-        super();
-    }
-
     connectedCallback() {
         super.connectedCallback();
 
@@ -38,7 +34,6 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
         const content = contentInput.value;
 
         this.dispatchEvent(new CustomEvent('insert-radio', {
-            bubbles: false,
             detail: {
                 content,
                 correct: false
@@ -51,6 +46,7 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
     radioCorrectChanged(e: any) {
         const toggle = this.shadowRoot.querySelector(`#${e.model.item.varName}-toggle`);
         const userRadio: UserRadio = {
+            type: 'USER_RADIO',
             varName: e.model.item.varName,
             checked: toggle ? toggle.checked : false
         };

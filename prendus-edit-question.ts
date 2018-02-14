@@ -35,7 +35,8 @@ import {
     getUserASTObjectsFromAnswerAssignment,
     nullifyUserASTObjectInAnswerAssignment,
     setUserASTObjectValue,
-    setUserASTObjectIdentifierNameInAnswerAssignment
+    setUserASTObjectIdentifierNameInAnswerAssignment,
+    decrementUserASTObjectVarNamesInAnswerAssignment
 } from './services/question-service';
 import {
     execute,
@@ -195,35 +196,20 @@ class PrendusEditQuestion extends Polymer.Element {
                 prepareToSaveText: (previousResult) => {
                     const originalUserRadioASTObjects = getUserASTObjectsFromAnswerAssignment(this._question ? this._question.text : '', this._question ? this._question.code : '', 'RADIO');
                     const currentUserRadioASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'RADIO');
-                    const userRadioASTObjectsToRemove = originalUserRadioASTObjects.filter((originalUserRadioASTObject) => {
-                        return currentUserRadioASTObjects.filter((currentUserRadioASTObject) => {
-                            //TODO using JSON.stringify for deep equality might not be good enough...for example, ordering of properties matters
-                            return JSON.stringify(originalUserRadioASTObject.content) === JSON.stringify(currentUserRadioASTObject.content);
-                        }).length === 0;
-                    });
-                    const nullifiedRadiosCode = userRadioASTObjectsToRemove.reduce((result, userRadioASTObjectToRemove) => {
-                        return nullifyUserASTObjectInAnswerAssignment(result, userRadioASTObjectToRemove);
-                    }, this._question ? this._question.code : '');
+                    const radiosDeletedCode = decrementUserASTObjectVarNamesInAnswerAssignment(this._question ? this._question.code : '', originalUserRadioASTObjects, currentUserRadioASTObjects);
 
-                    const code = userRadioASTObjectsToRemove.reduce((result, userRadioASTObjectToRemove, index) => {
-                        const nextUserRadioASTObjectToRemove = userRadioASTObjectsToRemove[index + 1];
+                    const originalUserCheckASTObjects = getUserASTObjectsFromAnswerAssignment(this._question ? this._question.text : '', this._question ? this._question.code : '', 'CHECK');
+                    const currentUserCheckASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'CHECK');
+                    const checksDeletedCode = decrementUserASTObjectVarNamesInAnswerAssignment(radiosDeletedCode, originalUserCheckASTObjects, currentUserCheckASTObjects);
 
-                        const originalStartingIndex = originalUserRadioASTObjects.map(originalUserRadioASTObject => originalUserRadioASTObject.varName).indexOf(userRadioASTObjectToRemove.varName);
-                        const originalEndingIndex = originalUserRadioASTObjects.map(originalUserRadioASTObject => originalUserRadioASTObject.varName).indexOf(nextUserRadioASTObjectToRemove ? nextUserRadioASTObjectToRemove.varName : '');
-
-                        return originalUserRadioASTObjects.splice(originalStartingIndex, originalEndingIndex !== -1 ? originalEndingIndex : originalUserRadioASTObjects.length).reduce((innerResult, originalUserRadioASTObject) => {
-                            const varNameStem = originalUserRadioASTObject.varName.replace(/\d/g, '');
-                            const varNameIndex = +originalUserRadioASTObject.varName.replace(/[a-z]/g, '');
-                            const newName = `${varNameStem}${varNameIndex - 1}`;
-
-                            return setUserASTObjectIdentifierNameInAnswerAssignment(innerResult, originalUserRadioASTObject, newName);
-                        }, result);
-                    }, nullifiedRadiosCode);
+                    const originalUserInputASTObjects = getUserASTObjectsFromAnswerAssignment(this._question ? this._question.text : '', this._question ? this._question.code : '', 'INPUT');
+                    const currentUserInputASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'INPUT');
+                    const inputsDeletedCode = decrementUserASTObjectVarNamesInAnswerAssignment(checksDeletedCode, originalUserInputASTObjects, currentUserInputASTObjects);
 
                     const newQuestion = {
                         ...this._question,
                         text,
-                        code
+                        code: inputsDeletedCode
                     };
 
                     return {

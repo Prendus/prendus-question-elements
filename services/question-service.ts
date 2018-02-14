@@ -918,14 +918,14 @@ export function getUserASTObjectsFromAnswerAssignment(text: string, code: string
                 if (object.expression.right.type === 'BinaryExpression') {
                     return {
                         ...result,
-                        checked: getIdentifierValueFromBinaryExpression(object.expression.right, astObject.varName)
+                        [type === 'RADIO' || type === 'CHECK' ? 'checked' : 'value']: getIdentifierValueFromBinaryExpression(object.expression.right, astObject.varName)
                     };
                 }
 
                 if (object.expression.right.type === 'LogicalExpression') {
                     return {
                         ...result,
-                        checked: getIdentifierValueFromLogicalExpression(object.expression.right, astObject.varName)
+                        [type === 'RADIO' || type === 'CHECK' ? 'checked' : 'value']: getIdentifierValueFromLogicalExpression(object.expression.right, astObject.varName)
                     };
                 }
             }
@@ -934,6 +934,7 @@ export function getUserASTObjectsFromAnswerAssignment(text: string, code: string
         }, {
             varName: astObject.varName,
             checked: false,
+            value: null,
             content: astObject.content
         });
     });
@@ -1228,4 +1229,35 @@ function setIdentifierNameInLogicalExpression(expression: LogicalExpression, ide
             return expression.right;
         })()
     };
+}
+
+export function decrementUserASTObjectVarNamesInAnswerAssignment(code: string, originalUserASTObjects: UserASTObject[], currentUserASTObjects: UserASTObject[]): string {
+    const userASTObjectsToRemove = originalUserASTObjects.filter((originalUserASTObject) => {
+        return currentUserASTObjects.filter((currentUserASTObject) => {
+            //TODO using JSON.stringify for deep equality might not be good enough...for example, ordering of properties matters
+            return originalUserASTObject.type === 'USER_RADIO' || originalUserASTObject.type === 'USER_CHECK' ?
+                JSON.stringify(originalUserASTObject.content) === JSON.stringify(currentUserASTObject.content) :
+                originalUserASTObject.value === currentUserASTObject.value;
+        }).length === 0;
+    });
+    const nullifiedUserASTObjectsCode = userASTObjectsToRemove.reduce((result, userASTObjectToRemove) => {
+        return nullifyUserASTObjectInAnswerAssignment(result, userASTObjectToRemove);
+    }, code);
+
+    const decrementedVarNameCode = userASTObjectsToRemove.reduce((result, userASTObjectToRemove, index) => {
+        const nextUserASTObjectToRemove = userASTObjectsToRemove[index + 1];
+
+        const originalStartingIndex = originalUserASTObjects.map(originalUserASTObject => originalUserASTObject.varName).indexOf(userASTObjectToRemove.varName);
+        const originalEndingIndex = originalUserASTObjects.map(originalUserASTObject => originalUserASTObject.varName).indexOf(nextUserASTObjectToRemove ? nextUserASTObjectToRemove.varName : '');
+
+        return originalUserASTObjects.splice(originalStartingIndex, originalEndingIndex !== -1 ? originalEndingIndex : originalUserASTObjects.length).reduce((innerResult, originalUserASTObject) => {
+            const varNameStem = originalUserASTObject.varName.replace(/\d/g, '');
+            const varNameIndex = +originalUserASTObject.varName.replace(/[a-z]/g, '');
+            const newName = `${varNameStem}${varNameIndex - 1}`;
+
+            return setUserASTObjectIdentifierNameInAnswerAssignment(innerResult, originalUserASTObject, newName);
+        }, result);
+    }, nullifiedUserASTObjectsCode);
+
+    return decrementedVarNameCode;
 }

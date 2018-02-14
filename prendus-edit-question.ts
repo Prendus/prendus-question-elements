@@ -1,12 +1,31 @@
-import {createUUID, navigate, fireLocalAction} from '../prendus-shared/services/utilities-service';
+import {
+    createUUID,
+    navigate,
+    asyncReduce
+} from '../prendus-shared/services/utilities-service';
 import {Question} from './prendus-question-elements.d';
-import {SetComponentPropertyAction} from './prendus-question-elements.d';
 import {GQLRequest} from '../prendus-shared/services/graphql-service';
 import {User} from './prendus-question-elements.d';
-import {RootReducer} from './redux/reducers';
-import {Reducer, UserCheck, UserRadio} from './prendus-question-elements.d';
-import {parse, getAstObjects, compileToAssessML} from '../assessml/assessml';
-import {AST, Input, Image, Radio, Check, Essay, Code, ASTObject} from '../assessml/assessml.d';
+import {
+    UserCheck,
+    UserRadio,
+    UserInput
+} from './prendus-question-elements.d';
+import {
+    parse,
+    getAstObjects,
+    compileToAssessML
+} from '../assessml/assessml';
+import {
+    AST,
+    Input,
+    Image,
+    Radio,
+    Check,
+    Essay,
+    Code,
+    ASTObject
+} from '../assessml/assessml.d';
 import {
     insertEssayIntoCode,
     insertCodeIntoCode,
@@ -14,9 +33,47 @@ import {
     insertRadioOrCheckIntoCode,
     insertVariableIntoCode,
     insertImageIntoCode,
-    getUserASTObjects,
-    setUserASTObjectValue
+    getUserASTObjectsFromAnswerAssignment,
+    nullifyUserASTObjectInAnswerAssignment,
+    setUserASTObjectValue,
+    setUserASTObjectIdentifierNameInAnswerAssignment,
+    decrementUserASTObjectVarNamesInAnswerAssignment,
+    removeImageFromCode,
+    getPropertyValue
 } from './services/question-service';
+import {
+    execute,
+    subscribe,
+    extendSchema,
+    addIsTypeOf
+} from '../graphsm/graphsm';
+import {
+    loadQuestion
+} from './services/shared-service';
+
+const PRENDUS_EDIT_QUESTION = 'PrendusEditQuestion';
+extendSchema(`
+    type ${PRENDUS_EDIT_QUESTION} implements ComponentState {
+        componentId: String!
+        componentType: String!
+        loaded: Boolean!
+        question: Question!
+        questionId: String!
+        selected: Int!
+        saving: Boolean!
+        noSave: Boolean!
+        user: Any
+        userToken: String
+        textEditorLock: Boolean!
+        codeEditorLock: Boolean!
+        userRadiosFromCode: Any
+        userChecksFromCode: Any
+        userInputsFromCode: Any
+    }
+`);
+addIsTypeOf('ComponentState', PRENDUS_EDIT_QUESTION, (value: any) => {
+    return value.componentType === PRENDUS_EDIT_QUESTION;
+});
 
 class PrendusEditQuestion extends Polymer.Element {
     componentId: string;
@@ -24,39 +81,35 @@ class PrendusEditQuestion extends Polymer.Element {
     _questionId: string;
     question: Question;
     questionId: string;
-    action: SetComponentPropertyAction;
     userToken: string;
     user: User;
     loaded: boolean;
     selected: number;
-    rootReducer: Reducer;
     saving: boolean;
     noSave: boolean;
     userRadiosFromCode: UserRadio[];
     userChecksFromCode: UserCheck[];
+    userInputsFromCode: UserInput[];
 
     static get is() { return 'prendus-edit-question'; }
     static get properties() {
         return {
             question: {
                 type: Object,
-                observer: 'questionChanged'
+                observer: 'questionInfoChanged'
             },
             questionId: {
                 type: String,
-                observer: 'questionIdChanged'
+                observer: 'questionInfoChanged'
             },
             noSave: {
-                type: Boolean,
-                observer: 'noSaveChanged'
+                type: Boolean
             },
             user: {
-                type: Object,
-                observer: 'userChanged'
+                type: Object
             },
             userToken: {
-                type: String,
-                observer: 'userTokenChanged'
+                type: String
             }
         };
     }
@@ -65,20 +118,58 @@ class PrendusEditQuestion extends Polymer.Element {
         super();
 
         this.componentId = createUUID();
-        this.rootReducer = RootReducer;
+        subscribe(this.render.bind(this));
+        execute(`
+            mutation initialSetup($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            initialSetup: (previousResult) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        componentType: PRENDUS_EDIT_QUESTION,
+                        loaded: true,
+                        question: {
+                            text: '',
+                            code: ''
+                        },
+                        questionId: '',
+                        selected: 0,
+                        saving: false,
+                        noSave: false,
+                        textEditorLock: false,
+                        codeEditorLock: false,
+                    }
+                };
+            }
+        }, this.userToken);
     }
 
     connectedCallback() {
         super.connectedCallback();
 
-        this.action = fireLocalAction(this.componentId, 'selected', 0);
-        this.action = fireLocalAction(this.componentId, 'saving', false);
-        this.action = fireLocalAction(this.componentId, 'loaded', true);
-
         setTimeout(() => { //TODO fix this...it would be nice to be able to set the font-size officially through the ace editor web component, and then we wouldn't have to hack. The timeout is to ensure the current task on the event loop completes and the dom template is stamped because of the loaded property before accessing the dom
             this.shadowRoot.querySelector('#codeEditor').shadowRoot.querySelector('#juicy-ace-editor-container').style = 'font-size: calc(40px - 1vw)';
             this.shadowRoot.querySelector('#codeEditor').shadowRoot.querySelector('.ace_gutter').style = 'background: #2a9af2';
         }, 2000);
+    }
+
+    async questionInfoChanged(newValue: any, oldValue: any) {
+        if (!this.question && !this.questionId) {
+            return;
+        }
+
+        await loadQuestion(this.componentId, PRENDUS_EDIT_QUESTION, this.question, this.questionId, this.userToken);
+
+        //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
+        window.parent.postMessage({
+            type: 'prendus-edit-question-resize',
+            height: document.body.scrollHeight,
+            width: document.body.scrollWidth
+        }, '*');
+
+        this.dispatchEvent(new CustomEvent('question-loaded'));
     }
 
     async textEditorChanged() {
@@ -90,29 +181,79 @@ class PrendusEditQuestion extends Polymer.Element {
             return;
         }
 
-        this.action = fireLocalAction(this.componentId, 'saving', true);
-
         debounce(async () => {
             const text = this.shadowRoot.querySelector('#textEditor').value;
 
-            this.action = fireLocalAction(this.componentId, 'question', {
-                ...this._question,
-                text,
-                code: this._question ? this._question.code : ''
-            });
+            await execute(`
+                mutation prepareToSaveText($componentId: String!, $props: Any) {
+                    updateComponentState(componentId: $componentId, props: $props)
+                }
 
-            this.action = fireLocalAction(this.componentId, 'userRadiosFromCode', getUserASTObjects(this._question.text, this._question.code, 'RADIO'));
-            this.action = fireLocalAction(this.componentId, 'userChecksFromCode', getUserASTObjects(this._question.text, this._question.code, 'CHECK'));
+                # Put in the mutation to actually save the question remotely if necessary
+                # This is where the await this.save() would be
 
-            await this.save();
+                mutation textSaved($componentId: String!, $props: Any) {
+                    updateComponentState(componentId: $componentId, props: $props)
+                }
+            `, {
+                prepareToSaveText: async (previousResult) => {
+                    const originalUserRadioASTObjects = getUserASTObjectsFromAnswerAssignment(this._question ? this._question.text : '', this._question ? this._question.code : '', 'RADIO');
+                    const currentUserRadioASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'RADIO');
+                    const radiosDeletedCode = decrementUserASTObjectVarNamesInAnswerAssignment(this._question ? this._question.code : '', originalUserRadioASTObjects, currentUserRadioASTObjects);
 
-            this.action = fireLocalAction(this.componentId, 'saving', false);
+                    const originalUserCheckASTObjects = getUserASTObjectsFromAnswerAssignment(this._question ? this._question.text : '', this._question ? this._question.code : '', 'CHECK');
+                    const currentUserCheckASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'CHECK');
+                    const checksDeletedCode = decrementUserASTObjectVarNamesInAnswerAssignment(radiosDeletedCode, originalUserCheckASTObjects, currentUserCheckASTObjects);
+
+                    const originalUserInputASTObjects = getUserASTObjectsFromAnswerAssignment(this._question ? this._question.text : '', this._question ? this._question.code : '', 'INPUT');
+                    const currentUserInputASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'INPUT');
+                    const inputsDeletedCode = decrementUserASTObjectVarNamesInAnswerAssignment(checksDeletedCode, originalUserInputASTObjects, currentUserInputASTObjects);
+
+                    const originalUserImageASTObjects = getAstObjects(parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []), 'IMAGE');
+                    const currentUserImageASTObjects = getAstObjects(parse(text, () => 5, () => '', () => [], () => []), 'IMAGE');
+                    const userImageASTObjectsToRemove = originalUserImageASTObjects.filter((originalUserImageASTObject) => {
+                        return currentUserImageASTObjects.filter((currentUserImageASTObject) => {
+                            return originalUserImageASTObject.varName === currentUserImageASTObject.varName;
+                        }).length === 0;
+                    });
+                    const jsAst = esprima.parse(inputsDeletedCode);
+                    const amlAst = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                    const imagesDeletedCode = await asyncReduce(userImageASTObjectsToRemove, async (result, userImageASTObjectToRemove) => {
+                        const imageSrc = await getPropertyValue(jsAst, amlAst, userImageASTObjectToRemove.varName, 'src', '');
+                        return removeImageFromCode(result, userImageASTObjectToRemove.varName, imageSrc);
+                    }, inputsDeletedCode);
+
+                    const newQuestion = {
+                        ...this._question,
+                        text,
+                        code: imagesDeletedCode
+                    };
+
+                    return {
+                        componentId: this.componentId,
+                        props: {
+                            saving: true,
+                            question: newQuestion,
+                            userRadiosFromCode: getUserASTObjectsFromAnswerAssignment(newQuestion.text, newQuestion.code, 'RADIO'),
+                            userChecksFromCode: getUserASTObjectsFromAnswerAssignment(newQuestion.text, newQuestion.code, 'CHECK'),
+                            userInputsFromCode: getUserASTObjectsFromAnswerAssignment(newQuestion.text, newQuestion.code, 'INPUT')
+                        }
+                    };
+                },
+                textSaved: (previousResult) => {
+                    return {
+                        componentId: this.componentId,
+                        props: {
+                            saving: false
+                        }
+                    };
+                }
+            }, this.userToken);
 
             this.dispatchEvent(new CustomEvent('text-changed', {
                 detail: {
                     text
-                },
-                bubbles: false
+                }
             }));
         }, 200);
     }
@@ -122,543 +263,814 @@ class PrendusEditQuestion extends Polymer.Element {
             return;
         }
 
-        this.action = fireLocalAction(this.componentId, 'saving', true);
-
         debounce(async () => {
             const code = this.shadowRoot.querySelector('#codeEditor').value;
 
-            this.action = fireLocalAction(this.componentId, 'question', {
-                ...this._question,
-                text: this._question ? this._question.text : '',
-                code
-            });
+            await execute(`
+                mutation prepareToSaveCode($componentId: String!, $props: Any) {
+                    updateComponentState(componentId: $componentId, props: $props)
+                }
 
-            this.action = fireLocalAction(this.componentId, 'userRadiosFromCode', getUserASTObjects(this._question.text, this._question.code, 'RADIO'));
-            this.action = fireLocalAction(this.componentId, 'userChecksFromCode', getUserASTObjects(this._question.text, this._question.code, 'CHECK'));
+                # Put in the mutation to actually save the question remotely if necessary
+                # This is where the await this.save() would be
 
-            await this.save();
-
-            this.action = fireLocalAction(this.componentId, 'saving', false);
+                mutation codeSaved($componentId: String!, $props: Any) {
+                    updateComponentState(componentId: $componentId, props: $props)
+                }
+            `, {
+                prepareToSaveCode: (previousResult) => {
+                    const newQuestion = {
+                        ...this._question,
+                        text: this._question ? this._question.text : '',
+                        code
+                    };
+                    return {
+                        componentId: this.componentId,
+                        props: {
+                            saving: true,
+                            question: newQuestion,
+                            userRadiosFromCode: getUserASTObjectsFromAnswerAssignment(newQuestion.text, newQuestion.code, 'RADIO'),
+                            userChecksFromCode: getUserASTObjectsFromAnswerAssignment(newQuestion.text, newQuestion.code, 'CHECK'),
+                            userInputsFromCode: getUserASTObjectsFromAnswerAssignment(newQuestion.text, newQuestion.code, 'INPUT')
+                        }
+                    };
+                },
+                codeSaved: (previousResult) => {
+                    return {
+                        componentId: this.componentId,
+                        props: {
+                            saving: false
+                        }
+                    };
+                }
+            }, this.userToken);
 
             this.dispatchEvent(new CustomEvent('code-changed', {
                 detail: {
                     code
-                },
-                bubbles: false
+                }
             }));
         }, 200);
     }
 
-    async questionChanged() {
-        this.action = fireLocalAction(this.componentId, 'question', this.question);
-        this.action = fireLocalAction(this.componentId, 'loaded', false);
-
-        await this.loadData();
-
-        this.action = fireLocalAction(this.componentId, 'loaded', true);
-
-        //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
-        window.parent.postMessage({
-            type: 'prendus-edit-question-resize',
-            height: document.body.scrollHeight,
-            width: document.body.scrollWidth
-        }, '*');
-    }
-
-    async questionIdChanged() {
-        this.action = fireLocalAction(this.componentId, 'questionId', this.questionId);
-        this.action = fireLocalAction(this.componentId, 'loaded', false);
-
-        await this.loadData();
-
-        this.action = fireLocalAction(this.componentId, 'loaded', true);
-    }
-
-    noSaveChanged() {
-        this.action = fireLocalAction(this.componentId, 'noSave', this.noSave);
-    }
-
-    userChanged() {
-        this.action = fireLocalAction(this.componentId, 'user', this.user);
-    }
-
-    userTokenChanged() {
-        this.action = fireLocalAction(this.componentId, 'userToken', this.userToken);
-    }
-
-    async loadData() {
-        if (!this._question || (this._questionId && this._question.id !== this._questionId)) {
-            const data = await GQLRequest(`
-                query getQuestion($questionId: ID!) {
-                    question: Question(
-                        id: $questionId
-                    ) {
-                        id
-                        text
-                        code
-                    }
-                }
-            `, {
-                questionId: this._questionId
-            }, this.userToken, (error: any) => {
-                console.log(error);
-            });
-
-            if (data.question) {
-                this.action = fireLocalAction(this.componentId, 'question', data.question);
-            }
-            else {
-                this.action = fireLocalAction(this.componentId, 'question', {
-                    id: this._questionId,
-                    text: 'This question does not exist',
-                    code: 'answer = false;'
-                });
-            }
-        }
-    }
-
-    async save() {
-        if (this.noSave) {
-            return;
-        }
-
-        if (!this._questionId) {
-            const data = await GQLRequest(`
-                mutation createQuestion(
-                    $authorId: ID!
-                    $text: String!
-                    $code: String!
-                ) {
-                    createQuestion(
-                        authorId: $authorId
-                        text: $text
-                        code: $code
-                    ) {
-                        id
-                    }
-                }
-            `, {
-                authorId: this.user.id,
-                text: this._question.text,
-                code: this._question.code
-            }, this.userToken, (error: any) => {
-                console.log(error);
-            });
-
-            navigate(`/question/${data.createQuestion.id}/edit`);
-        }
-        else {
-            await GQLRequest(`
-                mutation updateQuestion(
-                    $questionId: ID!
-                    $text: String!
-                    $code: String!
-                ) {
-                    updateQuestion(
-                        id: $questionId
-                        text: $text
-                        code: $code
-                    ) {
-                        id
-                    }
-                }
-            `, {
-                questionId: this._questionId,
-                text: this._question.text,
-                code: this._question.code
-            }, this.userToken, (error: any) => {
-                console.log(error);
-            });
-        }
-    }
+    // async save() {
+    //     if (this.noSave) {
+    //         return;
+    //     }
+    //
+    //     if (!this._questionId) {
+    //         const data = await GQLRequest(`
+    //             mutation createQuestion(
+    //                 $authorId: ID!
+    //                 $text: String!
+    //                 $code: String!
+    //             ) {
+    //                 createQuestion(
+    //                     authorId: $authorId
+    //                     text: $text
+    //                     code: $code
+    //                 ) {
+    //                     id
+    //                 }
+    //             }
+    //         `, {
+    //             authorId: this.user.id,
+    //             text: this._question.text,
+    //             code: this._question.code
+    //         }, this.userToken, (error: any) => {
+    //             console.log(error);
+    //         });
+    //
+    //         navigate(`/question/${data.createQuestion.id}/edit`);
+    //     }
+    //     else {
+    //         await GQLRequest(`
+    //             mutation updateQuestion(
+    //                 $questionId: ID!
+    //                 $text: String!
+    //                 $code: String!
+    //             ) {
+    //                 updateQuestion(
+    //                     id: $questionId
+    //                     text: $text
+    //                     code: $code
+    //                 ) {
+    //                     id
+    //                 }
+    //             }
+    //         `, {
+    //             questionId: this._questionId,
+    //             text: this._question.text,
+    //             code: this._question.code
+    //         }, this.userToken, (error: any) => {
+    //             console.log(error);
+    //         });
+    //     }
+    // }
 
     getSavingText(saving: boolean) {
         return saving ? 'Saving...' : 'Saved';
     }
 
-    switchEditorClick() {
-        this.action = fireLocalAction(this.componentId, 'selected', this.selected === 0 ? 1 : 0);
+    async switchEditorClick() {
+        await execute(`
+            mutation setSelected($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            setSelected: (previousResult) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        selected: this.selected === 0 ? 1 : 0
+                    }
+                };
+            }
+        }, this.userToken);
     }
 
     async insertVariable(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+        await execute(`
+            mutation prepareToInsertVariable($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
 
-        const { varName, maxValue, minValue, precisionValue } = e.detail;
-        const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+            mutation insertVariable($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareToInsertVariable: (previousResult: any) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        textEditorLock: true,
+                        codeEditorLock: true
+                    }
+                };
+            },
+            insertVariable: async (previousResult: any) => {
+                const { varName, maxValue, minValue, precisionValue } = e.detail;
+                const textEditor = this.shadowRoot.querySelector('#textEditor');
+                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
 
-        const code = codeEditor.value;
+                const code = codeEditor.value;
 
-        const varString = `[${varName}]`;
-        const newTextNode = document.createTextNode(varString);
-        textEditor.range0.insertNode(newTextNode);
-        textEditor.range0.setStart(newTextNode, varString.length);
-        textEditor.range0.collapse(true);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(textEditor.range0);
+                const varString = `[${varName}]`;
+                const newTextNode = document.createTextNode(varString);
+                textEditor.range0.insertNode(newTextNode);
+                textEditor.range0.setStart(newTextNode, varString.length);
+                textEditor.range0.collapse(true);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(textEditor.range0);
 
-        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+                const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
 
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text,
-            code: await insertVariableIntoCode(code, varName, minValue, maxValue, precisionValue)
-        });
-
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text,
+                            code: await insertVariableIntoCode(code, varName, minValue, maxValue, precisionValue)
+                        },
+                        textEditorLock: false,
+                        codeEditorLock: false
+                    }
+                };
+            }
+        }, this.userToken);
     }
 
-    insertInput(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+    async insertInput(e: CustomEvent) {
+        await execute(`
+            mutation prepareToInsertInput($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
 
-        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-        const astInputs: Input[] = <Input[]> getAstObjects(ast, 'INPUT');
+            mutation insertInput($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareToInsertInput: (previousResult: any) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        textEditorLock: true,
+                        codeEditorLock: true
+                    }
+                };
+            },
+            insertInput: (previousResult: any) => {
+                const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                const astInputs: Input[] = <Input[]> getAstObjects(ast, 'INPUT');
 
-        const varName = `input${astInputs.length + 1}`;
-        const answer = e.detail.answer;
+                const varName = `input${astInputs.length + 1}`;
+                const answer = e.detail.answer;
 
-        const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+                const textEditor = this.shadowRoot.querySelector('#textEditor');
+                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
 
-        const code = codeEditor.value;
+                const code = codeEditor.value;
 
-        const inputString = `[input]`;
-        const newTextNode = document.createTextNode(inputString);
-        textEditor.range0.insertNode(newTextNode);
-        textEditor.range0.setStart(newTextNode, inputString.length);
-        textEditor.range0.collapse(true);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(textEditor.range0);
+                const inputString = `[input]`;
+                const newTextNode = document.createTextNode(inputString);
+                textEditor.range0.insertNode(newTextNode);
+                textEditor.range0.setStart(newTextNode, inputString.length);
+                textEditor.range0.collapse(true);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(textEditor.range0);
 
-        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+                const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
 
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text,
-            code: insertInputIntoCode(code, varName, answer)
-        });
+                const newQuestion = {
+                    ...this._question,
+                    text,
+                    code: insertInputIntoCode(code, varName, answer)
+                };
 
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: newQuestion,
+                        textEditorLock:  false,
+                        codeEditorLock: false,
+                        userInputsFromCode: getUserASTObjectsFromAnswerAssignment(newQuestion.text, newQuestion.code, 'INPUT')
+                    }
+                };
+            }
+        }, this.userToken);
     }
 
-    insertEssay(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+    async insertEssay(e: CustomEvent) {
+        await execute(`
+            mutation prepareToInsertEssay($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
 
-        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-        const astEssays: Essay[] = <Essay[]> getAstObjects(ast, 'ESSAY');
+            mutation insertEssay($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareToInsertEssay: (previousResult: any) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        textEditorLock: true,
+                        codeEditorLock: true
+                    }
+                };
+            },
+            insertEssay: (previousResult: any) => {
+                const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                const astEssays: Essay[] = <Essay[]> getAstObjects(ast, 'ESSAY');
 
-        const varName = `essay${astEssays.length + 1}`;
+                const varName = `essay${astEssays.length + 1}`;
 
-        const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+                const textEditor = this.shadowRoot.querySelector('#textEditor');
+                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
 
-        const code = codeEditor.value;
+                const code = codeEditor.value;
 
-        const essayString = `[essay]`;
-        const newTextNode = document.createTextNode(essayString);
-        textEditor.range0.insertNode(newTextNode);
-        textEditor.range0.setStart(newTextNode, essayString.length);
-        textEditor.range0.collapse(true);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(textEditor.range0);
+                const essayString = `[essay]`;
+                const newTextNode = document.createTextNode(essayString);
+                textEditor.range0.insertNode(newTextNode);
+                textEditor.range0.setStart(newTextNode, essayString.length);
+                textEditor.range0.collapse(true);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(textEditor.range0);
 
-        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+                const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
 
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text,
-            code: insertEssayIntoCode(code)
-        });
-
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text,
+                            code: insertEssayIntoCode(code)
+                        },
+                        textEditorLock: false,
+                        codeEditorLock: false
+                    }
+                };
+            }
+        }, this.userToken);
     }
 
-    insertCode(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+    async insertCode(e: CustomEvent) {
+        await execute(`
+            mutation prepareToInsertCode($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
 
-        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-        const astCodes: Code[] = <Code[]> getAstObjects(ast, 'CODE');
+            mutation insertCode($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareToInsertCode: (previousResult: any) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        textEditorLock: true,
+                        codeEditorLock: true
+                    }
+                };
+            },
+            insertCode: (previousResult: any) => {
+                const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                const astCodes: Code[] = <Code[]> getAstObjects(ast, 'CODE');
 
-        const varName = `code${astCodes.length + 1}`;
+                const varName = `code${astCodes.length + 1}`;
 
-        const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+                const textEditor = this.shadowRoot.querySelector('#textEditor');
+                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
 
-        const code = codeEditor.value;
+                const code = codeEditor.value;
 
-        const codeString = `[code]`;
-        const newTextNode = document.createTextNode(codeString);
-        textEditor.range0.insertNode(newTextNode);
-        textEditor.range0.setStart(newTextNode, codeString.length);
-        textEditor.range0.collapse(true);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(textEditor.range0);
+                const codeString = `[code]`;
+                const newTextNode = document.createTextNode(codeString);
+                textEditor.range0.insertNode(newTextNode);
+                textEditor.range0.setStart(newTextNode, codeString.length);
+                textEditor.range0.collapse(true);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(textEditor.range0);
 
-        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+                const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
 
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text,
-            code: insertCodeIntoCode(code)
-        });
-
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text,
+                            code: insertCodeIntoCode(code)
+                        },
+                        textEditorLock: false,
+                        codeEditorLock: false
+                    }
+                };
+            }
+        }, this.userToken);
     }
 
     async insertRadio(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+        await execute(`
+            mutation prepareToInsertRadio($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
 
-        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-        const astRadios: Radio[] = <Radio[]> getAstObjects(ast, 'RADIO');
+            mutation insertRadio($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareToInsertRadio: (previousResult: any) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        textEditorLock: true,
+                        codeEditorLock: true
+                    }
+                };
+            },
+            insertRadio: async (previousResult: any) => {
+                const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                const astRadios: Radio[] = <Radio[]> getAstObjects(ast, 'RADIO');
 
-        const varName = `radio${astRadios.length + 1}`;
+                const varName = `radio${astRadios.length + 1}`;
 
-        const { content, correct } = e.detail;
-        const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+                const { content, correct } = e.detail;
+                const textEditor = this.shadowRoot.querySelector('#textEditor');
 
-        const code = codeEditor.value;
+                textEditor.range0.selectNodeContents(textEditor.range0.endContainer);
+                textEditor.range0.collapse();
 
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(textEditor.range0);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(textEditor.range0);
+                selection.collapseToEnd();
 
-        const radioString = `[radio start]${content || ''}[radio end]`;
-        document.execCommand('insertText', false, radioString);
-        document.execCommand('insertHTML', false, '<br>');
+                const radioString = `[radio start]${content || ''}[radio end]`;
+                document.execCommand('insertHTML', false, '<p><br></p>');
+                document.execCommand('insertText', false, radioString);
 
-        textEditor.range0.setStart(textEditor.range0.startContainer, textEditor.range0.startContainer.innerHTML.length - 1);
+                await wait(); //this wait is necessary to get the correct value from the textEditor (https://github.com/miztroh/wysiwyg-e/issues/202)
+                const text = textEditor.value;
 
-        // textEditor.range0.collapse(true);
+                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+                const code = codeEditor.value;
 
+                const newQuestion = {
+                    ...this._question,
+                    text,
+                    code: insertRadioOrCheckIntoCode(code, varName, correct)
+                };
 
-        // const selection2 = window.getSelection();
-        // selection2.removeAllRanges();
-        // selection2.addRange(textEditor.range0);
-        //
-        // document.execCommand('insertHTML', false, '<br>');
-
-        // textEditor.range0.setStart(textEditor.range0.startContainer, radioString.length);
-        // textEditor.range0.collapse(true);
-
-        await wait(); //this wait is necessary to get the correct value from the textEditor (https://github.com/miztroh/wysiwyg-e/issues/202)
-        const text = textEditor.value;
-        // const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text,
-            code: insertRadioOrCheckIntoCode(code, varName, correct)
-        });
-
-        this.action = fireLocalAction(this.componentId, 'userRadiosFromCode', getUserASTObjects(this._question.text, this._question.code, 'RADIO'));
-
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: newQuestion,
+                        userRadiosFromCode: getUserASTObjectsFromAnswerAssignment(newQuestion.text, newQuestion.code, 'RADIO'),
+                        textEditorLock: false,
+                        codeEditorLock: false
+                    }
+                };
+            }
+        }, this.userToken);
     }
 
-    insertCheck(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+    async insertCheck(e: CustomEvent) {
+        await execute(`
+            mutation prepareToInsertCheck($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
 
-        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-        const astChecks: Check[] = <Check[]> getAstObjects(ast, 'CHECK');
+            mutation insertCheck($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareToInsertCheck: (previousResult: any) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        textEditorLock: true,
+                        codeEditorLock: true
+                    }
+                };
+            },
+            insertCheck: async (previousResult: any) => {
+                const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                const astChecks: Check[] = <Check[]> getAstObjects(ast, 'CHECK');
 
-        const varName = `check${astChecks.length + 1}`;
+                const varName = `check${astChecks.length + 1}`;
 
-        const { content, correct } = e.detail;
-        const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+                const { content, correct } = e.detail;
+                const textEditor = this.shadowRoot.querySelector('#textEditor');
 
-        const code = codeEditor.value;
+                textEditor.range0.selectNodeContents(textEditor.range0.endContainer);
+                textEditor.range0.collapse();
 
-        const checkString = `[check start]${content || ''}[check end]`;
-        const newTextNode = document.createTextNode(checkString);
-        textEditor.range0.insertNode(newTextNode);
-        textEditor.range0.setStart(newTextNode, checkString.length);
-        textEditor.range0.collapse(true);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(textEditor.range0);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(textEditor.range0);
+                selection.collapseToEnd();
 
-        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+                const radioString = `[check start]${content || ''}[check end]`;
+                document.execCommand('insertHTML', false, '<p><br></p>');
+                document.execCommand('insertText', false, radioString);
 
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text,
-            code: insertRadioOrCheckIntoCode(code, varName, correct)
-        });
+                await wait(); //this wait is necessary to get the correct value from the textEditor (https://github.com/miztroh/wysiwyg-e/issues/202)
+                const text = textEditor.value;
 
-        this.action = fireLocalAction(this.componentId, 'userChecksFromCode', getUserASTObjects(this._question.text, this._question.code, 'CHECK'));
+                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+                const code = codeEditor.value;
 
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
+                const newQuestion = {
+                    ...this._question,
+                    text,
+                    code: insertRadioOrCheckIntoCode(code, varName, correct)
+                };
+
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: newQuestion,
+                        userChecksFromCode: getUserASTObjectsFromAnswerAssignment(newQuestion.text, newQuestion.code, 'CHECK'),
+                        textEditorLock: false,
+                        codeEditorLock: false
+                    }
+                };
+            }
+        }, this.userToken);
     }
 
-    insertMath(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
+    async insertMath(e: CustomEvent) {
+        await execute(`
+            mutation prepareToInsertMath($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
 
-        const { mathText } = e.detail;
-        const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+            mutation insertMath($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareToInsertMath: (previousResult: any) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        textEditorLock: true,
+                        codeEditorLock: true
+                    }
+                };
+            },
+            insertMath: (previousResult: any) => {
+                const { mathText } = e.detail;
+                const textEditor = this.shadowRoot.querySelector('#textEditor');
+                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
 
-        const newTextNode = document.createTextNode(mathText);
-        textEditor.range0.insertNode(newTextNode);
-        textEditor.range0.setStart(newTextNode, mathText.length);
-        textEditor.range0.collapse(true);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(textEditor.range0);
+                const newTextNode = document.createTextNode(mathText);
+                textEditor.range0.insertNode(newTextNode);
+                textEditor.range0.setStart(newTextNode, mathText.length);
+                textEditor.range0.collapse(true);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(textEditor.range0);
 
-        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+                const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
 
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text,
-            code: this._question ? this._question.code : ''
-        });
-
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    }
-
-    insertImage(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-
-        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-        const { dataUrl } = e.detail;
-        const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const codeEditor = this.shadowRoot.querySelector('#codeEditor');
-        const astImages: Image[] = <Image[]> getAstObjects(ast, 'IMAGE');
-        const varName = `img${astImages.length + 1}`;
-        const code = codeEditor.value;
-
-        const imageString = `[img${astImages.length + 1}]`;
-        const newTextNode = document.createTextNode(imageString);
-        textEditor.range0.insertNode(newTextNode);
-        textEditor.range0.setStart(newTextNode, imageString.length);
-        textEditor.range0.collapse(true);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(textEditor.range0);
-
-        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text,
-            code: insertImageIntoCode(code, varName, dataUrl)
-        });
-
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    }
-
-    insertGraph(e: CustomEvent) {
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', true);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', true);
-
-        const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-        const textEditor = this.shadowRoot.querySelector('#textEditor');
-        const astGraphs: Graph[] = <Graph[]> getAstObjects(ast, 'GRAPH');
-
-        const graphString = `[graph${astGraphs.length + 1}]`;
-        const newTextNode = document.createTextNode(graphString);
-        textEditor.range0.insertNode(newTextNode);
-        textEditor.range0.setStart(newTextNode, graphString.length);
-        textEditor.range0.collapse(true);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(textEditor.range0);
-
-        const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
-
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text
-        });
-
-        this.action = fireLocalAction(this.componentId, 'textEditorLock', false);
-        this.action = fireLocalAction(this.componentId, 'codeEditorLock', false);
-    }
-
-    radioCorrectChanged(e: CustomEvent) {
-        const userRadio: UserRadio = e.detail.userRadio;
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            code: setUserASTObjectValue(this._question.code, userRadio)
-        });
-    }
-
-    radioContentChanged(e: CustomEvent) {
-        const radioContentToChange = e.detail.radioContentToChange;
-
-        const assessMLAST = parse(this._question.text, () => 5, () => '', () => [], () => []);
-        const newAssessMLAST = {
-            ...assessMLAST,
-            ast: assessMLAST.ast.map((astObject: ASTObject) => {
-                if (astObject.varName === radioContentToChange.varName) {
-                    return {
-                        ...astObject,
-                        content: radioContentToChange.content.ast
-                    };
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text,
+                            code: this._question ? this._question.code : ''
+                        },
+                        textEditorLock: false,
+                        codeEditorLock: false
+                    }
                 }
-
-                return astObject;
-            })
-        };
-
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text: compileToAssessML(newAssessMLAST, () => 5, () => '', () => [], () => [])
-        });
+            }
+        }, this.userToken);
     }
 
-    checkCorrectChanged(e: CustomEvent) {
-        const userCheck: UserCheck = e.detail.userCheck;
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            code: setUserASTObjectValue(this._question.code, userCheck)
-        });
+    async insertImage(e: CustomEvent) {
+        await execute(`
+            mutation prepareToInsertImage($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+
+            mutation insertImage($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareToInsertImage: (previousResult: any) => {
+                return {
+                    componentId: this.componentId,
+                    textEditorLock: true,
+                    codeEditorLock: true
+                };
+            },
+            insertImage: (previousResult: any) => {
+                const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                const { dataUrl } = e.detail;
+                const textEditor = this.shadowRoot.querySelector('#textEditor');
+                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+                const astImages: Image[] = <Image[]> getAstObjects(ast, 'IMAGE');
+                const varName = `img${astImages.length + 1}`;
+                const code = codeEditor.value;
+
+                const imageString = `[img${astImages.length + 1}]`;
+                const newTextNode = document.createTextNode(imageString);
+                textEditor.range0.insertNode(newTextNode);
+                textEditor.range0.setStart(newTextNode, imageString.length);
+                textEditor.range0.collapse(true);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(textEditor.range0);
+
+                const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text,
+                            code: insertImageIntoCode(code, varName, dataUrl)
+                        },
+                        textEditorLock: false,
+                        codeEditorLock: false
+                    }
+                };
+            }
+        }, this.userToken);
     }
 
-    questionStemChanged(e: CustomEvent) {
-        const questionStem = e.detail.questionStem;
+    async insertGraph(e: CustomEvent) {
+        await execute(`
+            mutation prepareToInsertGraph($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
 
-        const newContent = {
-            type: 'CONTENT',
-            varName: 'content',
-            content: questionStem
-        };
-        const assessMLAST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-        const newAssessMLAST = assessMLAST.ast[0] && assessMLAST.ast[0].type === 'CONTENT' ? {
-            ...assessMLAST,
-            ast: [newContent, ...assessMLAST.ast.slice(1)]
-        } : {
-            ...assessMLAST,
-            ast: [newContent, ...assessMLAST.ast]
-        };
+            mutation insertGraph($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            prepareToInsertGraph: (previousResult: any) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        textEditorLock: true,
+                        codeEditorLock: true
+                    }
+                };
+            },
+            insertGraph: (previousResult: any) => {
+                const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                const textEditor = this.shadowRoot.querySelector('#textEditor');
+                const astGraphs: Graph[] = <Graph[]> getAstObjects(ast, 'GRAPH');
 
-        this.action = fireLocalAction(this.componentId, 'question', {
-            ...this._question,
-            text: compileToAssessML(newAssessMLAST, () => 5, () => '', () => [], () => []),
-            code: this._question ? this._question.code : ''
-        });
+                const graphString = `[graph${astGraphs.length + 1}]`;
+                const newTextNode = document.createTextNode(graphString);
+                textEditor.range0.insertNode(newTextNode);
+                textEditor.range0.setStart(newTextNode, graphString.length);
+                textEditor.range0.collapse(true);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(textEditor.range0);
+
+                const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text
+                        },
+                        textEditorLock: false,
+                        codeEditorLock: false
+                    }
+                };
+            }
+        }, this.userToken);
+    }
+
+    async radioCorrectChanged(e: CustomEvent) {
+        await execute(`
+            mutation changeRadioCorrect($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            changeRadioCorrect: (previousResult: any) => {
+                const userRadio: UserRadio = e.detail.userRadio;
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            code: setUserASTObjectValue(this._question.code, userRadio)
+                        }
+                    }
+                };
+            }
+        }, this.usertoken);
+    }
+
+    async radioContentChanged(e: CustomEvent) {
+        await execute(`
+            mutation changeRadioContent($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            changeRadioContent: (previousResult: any) => {
+                const radioContentToChange = e.detail.radioContentToChange;
+                const assessMLAST = parse(this._question.text, () => 5, () => '', () => [], () => []);
+                const newAssessMLAST = {
+                    ...assessMLAST,
+                    ast: assessMLAST.ast.map((astObject: ASTObject) => {
+                        if (astObject.varName === radioContentToChange.varName) {
+                            return {
+                                ...astObject,
+                                content: radioContentToChange.content.ast
+                            };
+                        }
+
+                        return astObject;
+                    })
+                };
+
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text: compileToAssessML(newAssessMLAST, () => 5, () => '', () => [], () => [])
+                        }
+                    }
+                };
+            }
+        }, this.usertoken);
+    }
+
+    async checkCorrectChanged(e: CustomEvent) {
+        await execute(`
+            mutation changeCheckCorrect($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            changeCheckCorrect: (previousResult: any) => {
+                const userCheck: UserCheck = e.detail.userCheck;
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            code: setUserASTObjectValue(this._question.code, userCheck)
+                        }
+                    }
+                };
+            }
+        }, this.usertoken);
+    }
+
+    //TODO I might be able to combine all of the check and radio content and correct changed methods
+    async checkContentChanged(e: CustomEvent) {
+        await execute(`
+            mutation changeCheckContent($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            changeCheckContent: (previousResult: any) => {
+                const checkContentToChange = e.detail.checkContentToChange;
+                const assessMLAST = parse(this._question.text, () => 5, () => '', () => [], () => []);
+                const newAssessMLAST = {
+                    ...assessMLAST,
+                    ast: assessMLAST.ast.map((astObject: ASTObject) => {
+                        if (astObject.varName === checkContentToChange.varName) {
+                            return {
+                                ...astObject,
+                                content: checkContentToChange.content.ast
+                            };
+                        }
+
+                        return astObject;
+                    })
+                };
+
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text: compileToAssessML(newAssessMLAST, () => 5, () => '', () => [], () => [])
+                        }
+                    }
+                };
+            }
+        }, this.usertoken);
+    }
+
+    async insertQuestionStem(e: CustomEvent) {
+        await execute(`
+            mutation insertQuestionStem($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            insertQuestionStem: (previousResult: any) => {
+                const questionStem = e.detail.questionStem;
+
+                const newContent = {
+                    type: 'CONTENT',
+                    varName: 'content',
+                    content: `${questionStem}<p><br></p>`
+                };
+                const assessMLAst = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                const newAssessMLAST = assessMLAst.ast[0] && assessMLAst.ast[0].type === 'CONTENT' ? {
+                    ...assessMLAst,
+                    ast: [newContent, ...assessMLAst.ast.slice(1)]
+                } : {
+                    ...assessMLAst,
+                    ast: [newContent, ...assessMLAst.ast]
+                };
+
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text: compileToAssessML(newAssessMLAST, () => 5, () => '', () => [], () => []),
+                            code: this._question ? this._question.code : ''
+                        }
+                    }
+                };
+            }
+        }, this.userToken);
+    }
+
+    async inputAnswerChanged(e: CustomEvent) {
+        await execute(`
+            mutation changeInputAnswer($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            changeInputAnswer: (previousResult: any) => {
+                const userInput: UserInput = e.detail.userInput;
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            code: setUserASTObjectValue(this._question.code, userInput)
+                        }
+                    }
+                };
+            }
+        }, this.usertoken);
     }
 
     getAllowedTagNames() {
@@ -669,21 +1081,22 @@ class PrendusEditQuestion extends Polymer.Element {
         ];
     }
 
-    stateChange(e: CustomEvent) {
-        const state = e.detail.state;
-
-        if (Object.keys(state.components[this.componentId] || {}).includes('loaded')) this.loaded = state.components[this.componentId].loaded;
-        if (Object.keys(state.components[this.componentId] || {}).includes('question')) this._question = state.components[this.componentId].question;
-        if (Object.keys(state.components[this.componentId] || {}).includes('questionId')) this._questionId = state.components[this.componentId].questionId;
-        if (Object.keys(state.components[this.componentId] || {}).includes('selected')) this.selected = state.components[this.componentId].selected;
-        if (Object.keys(state.components[this.componentId] || {}).includes('saving')) this.saving = state.components[this.componentId].saving;
-        if (Object.keys(state.components[this.componentId] || {}).includes('noSave')) this.noSave = state.components[this.componentId].noSave;
-        if (Object.keys(state.components[this.componentId] || {}).includes('user')) this.user = state.components[this.componentId].user;
-        if (Object.keys(state.components[this.componentId] || {}).includes('userToken')) this.userToken = state.components[this.componentId].userToken;
-        if (Object.keys(state.components[this.componentId] || {}).includes('textEditorLock')) this.textEditorLock = state.components[this.componentId].textEditorLock;
-        if (Object.keys(state.components[this.componentId] || {}).includes('codeEditorLock')) this.codeEditorLock = state.components[this.componentId].codeEditorLock;
-        if (Object.keys(state.components[this.componentId] || {}).includes('userRadiosFromCode')) this.userRadiosFromCode = state.components[this.componentId].userRadiosFromCode;
-        if (Object.keys(state.components[this.componentId] || {}).includes('userChecksFromCode')) this.userChecksFromCode = state.components[this.componentId].userChecksFromCode;
+    render(state) {
+        const componentState = state.components[this.componentId];
+        if (componentState) {
+            this._question = componentState.question;
+            this.loaded = componentState.loaded;
+            this.selected = componentState.selected;
+            this.noSave = componentState.noSave;
+            this.saving = componentState.saving;
+            this.user = componentState.user;
+            this.userToken = componentState.userToken;
+            this.textEditorLock = componentState.textEditorLock;
+            this.codeEditorLock = componentState.codeEditorLock;
+            this.userRadiosFromCode = componentState.userRadiosFromCode;
+            this.userChecksFromCode = componentState.userChecksFromCode;
+            this.userInputsFromCode = componentState.userInputsFromCode;
+        }
     }
 }
 

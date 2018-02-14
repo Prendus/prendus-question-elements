@@ -10,7 +10,6 @@ class PrendusEditQuestionTest extends HTMLElement {
         this.attachShadow({mode: 'open'});
 
         const prendusEditQuestion = document.createElement('prendus-edit-question');
-
         prendusEditQuestion.noSave = true;
 
         this.shadowRoot.appendChild(prendusEditQuestion);

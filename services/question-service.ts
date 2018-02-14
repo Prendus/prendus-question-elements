@@ -429,7 +429,7 @@ function substituteVariablesInMemberExpression(memberExpression: MemberExpressio
     };
 }
 
-async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, propertyName: string, defaultValue: number | string): Promise<number | string> {
+export async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, propertyName: string, defaultValue: number | string): Promise<number | string> {
     const objectsWithProperty = jsAst.body.filter((bodyObj) => {
         return bodyObj.type === 'ExpressionStatement' && bodyObj.expression.type === 'AssignmentExpression' && (<MemberExpression> bodyObj.expression.left).object && (<Identifier> (<MemberExpression> bodyObj.expression.left).object).name === varName && (<Identifier> (<MemberExpression> bodyObj.expression.left).property).name === propertyName;
     });
@@ -458,7 +458,7 @@ async function getPropertyValue(jsAst: Program, amlAst: AST, varName: string, pr
     }
 }
 
-async function getAssignmentValue(jsAst: Program, amlAst: AST, varName: string, defaultValue: number | string): Promise<number | string> {
+export async function getAssignmentValue(jsAst: Program, amlAst: AST, varName: string, defaultValue: number | string): Promise<number | string> {
     const objectsWithAssignment = jsAst.body.filter((bodyObj) => {
         return bodyObj.type === 'ExpressionStatement' && bodyObj.expression.type === 'AssignmentExpression' && bodyObj.expression.left.type === 'Identifier' && bodyObj.expression.left.name === varName;
     });
@@ -781,6 +781,26 @@ export function insertImageIntoCode(code: string, varName: string, src: string):
     });
 }
 
+export function removeImageFromCode(code: string, varName: string, src: string): string {
+    const jsAst: Program = esprima.parse(code);
+    return escodegen.generate({
+        ...jsAst,
+        body: jsAst.body.filter((object) => {
+            return !(object.type === 'ExpressionStatement' &&
+                    object.expression.type === 'AssignmentExpression' &&
+                    object.expression.operator === '=' &&
+                    object.expression.left.type === 'MemberExpression' &&
+                    object.expression.left.computed === false &&
+                    object.expression.left.object.type === 'Identifier' &&
+                    object.expression.left.object.name === varName &&
+                    object.expression.left.property.type === 'Identifier' &&
+                    object.expression.left.property.name === 'src' &&
+                    object.expression.right.type === 'Literal' &&
+                    object.expression.right.value === src);
+        })
+    });
+}
+
 function addToAnswerAssignment(jsAst: Program, expressionToAdd: any) {
     const answerAssignment = jsAst.body.filter((object) => {
         return isAnswerAssignment(object);
@@ -849,12 +869,14 @@ export function setUserASTObjectValue(code: string, userASTObject: UserASTObject
                 object.expression.left.type === 'Identifier' &&
                 object.expression.left.name === 'answer'
             ) {
+                const userASTValue = userASTObject.type === 'USER_RADIO' || userASTObject.type === 'USER_CHECK' ? userASTObject.checked : userASTObject.value;
+
                 if (object.expression.right.type === 'BinaryExpression') {
                     return {
                         ...object,
                         expression: {
                             ...object.expression,
-                            right: setIdentifierValueInBinaryExpression(object.expression.right, userASTObject.varName, userASTObject.checked)
+                            right: setIdentifierValueInBinaryExpression(object.expression.right, userASTObject.varName, userASTValue)
                         }
                     };
                 }
@@ -864,7 +886,7 @@ export function setUserASTObjectValue(code: string, userASTObject: UserASTObject
                         ...object,
                         expression: {
                             ...object.expression,
-                            right: setIdentifierValueInLogicalExpression(object.expression.right, userASTObject.varName, userASTObject.checked)
+                            right: setIdentifierValueInLogicalExpression(object.expression.right, userASTObject.varName, userASTValue)
                         }
                     };
                 }
@@ -875,7 +897,29 @@ export function setUserASTObjectValue(code: string, userASTObject: UserASTObject
     });
 }
 
-export function getUserASTObjects(text: string, code: string, type: ASTObjectType): UserASTObject[]  {
+export function getUserASTObjectValue(code: string, userASTObject: UserASTObject) {
+    const jsAst: Program = esprima.parse(code);
+    return jsAst.body.reduce((result, object) => {
+        if (
+            object.type === 'ExpressionStatement' &&
+            object.expression.type === 'AssignmentExpression' &&
+            object.expression.left.type === 'Identifier' &&
+            object.expression.left.name === 'answer'
+        ) {
+            if (object.expression.right.type === 'BinaryExpression') {
+                return getIdentifierValueFromBinaryExpression(object.expression.right, userASTObject.varName);
+            }
+
+            if (object.expression.right.type === 'LogicalExpression') {
+                return getIdentifierValueFromLogicalExpression(object.expression.right, userASTObject.varName);
+            }
+        }
+
+        return result;
+    }, null);
+}
+
+export function getUserASTObjectsFromAnswerAssignment(text: string, code: string, type: ASTObjectType): UserASTObject[]  {
     const astObjects: ASTObject[] = getAstObjects(
         parse(text, () => 5, () => '', () => [], () => []),
         type
@@ -894,14 +938,14 @@ export function getUserASTObjects(text: string, code: string, type: ASTObjectTyp
                 if (object.expression.right.type === 'BinaryExpression') {
                     return {
                         ...result,
-                        checked: getIdentifierValueFromBinaryExpression(object.expression.right, astObject.varName)
+                        [type === 'RADIO' || type === 'CHECK' ? 'checked' : 'value']: getIdentifierValueFromBinaryExpression(object.expression.right, astObject.varName)
                     };
                 }
 
                 if (object.expression.right.type === 'LogicalExpression') {
                     return {
                         ...result,
-                        checked: getIdentifierValueFromLogicalExpression(object.expression.right, astObject.varName)
+                        [type === 'RADIO' || type === 'CHECK' ? 'checked' : 'value']: getIdentifierValueFromLogicalExpression(object.expression.right, astObject.varName)
                     };
                 }
             }
@@ -910,8 +954,46 @@ export function getUserASTObjects(text: string, code: string, type: ASTObjectTyp
         }, {
             varName: astObject.varName,
             checked: false,
+            value: null,
             content: astObject.content
         });
+    });
+}
+
+export function nullifyUserASTObjectInAnswerAssignment(code: String, userASTObject: UserASTObject): string {
+    const jsAst: Program = esprima.parse(code);
+    return escodegen.generate({
+        ...jsAst,
+        body: jsAst.body.map((object) => {
+            if (
+                object.type === 'ExpressionStatement' &&
+                object.expression.type === 'AssignmentExpression' &&
+                object.expression.left.type === 'Identifier' &&
+                object.expression.left.name === 'answer'
+            ) {
+                if (object.expression.right.type === 'BinaryExpression') {
+                    return {
+                        ...object,
+                        expression: {
+                            ...object.expression,
+                            right: nullifyIdentifierInBinaryExpression(object.expression.right, userASTObject.varName)
+                        }
+                    };
+                }
+
+                if (object.expression.right.type === 'LogicalExpression') {
+                    return {
+                        ...object,
+                        expression: {
+                            ...object.expression,
+                            right: nullifyIdentifierInLogicalExpression(object.expression.right, userASTObject.varName)
+                        }
+                    };
+                }
+            }
+
+            return object;
+        })
     });
 }
 
@@ -1021,4 +1103,181 @@ function setIdentifierValueInLogicalExpression(expression: LogicalExpression, id
             return expression.right;
         })()
     };
+}
+
+function nullifyIdentifierInBinaryExpression(expression: BinaryExpression, identifierName: string): BinaryExpression {
+    if (
+        (
+            expression.right.type === 'Identifier' &&
+            expression.right.name === identifierName
+        ) ||
+        (
+            expression.left.type === 'Identifier' &&
+            expression.left.name === identifierName
+        )
+    ) {
+        return {
+            ...expression,
+            left: {
+                type: 'Literal',
+                value: true
+            },
+            right: {
+                type: 'Literal',
+                value: true
+            }
+        };
+    }
+
+    return expression;
+}
+
+function nullifyIdentifierInLogicalExpression(expression: LogicalExpression, identifierName: string): LogicalExpression {
+    return {
+        ...expression,
+        left: (() => {
+            if (expression.left.type === 'BinaryExpression') {
+                return nullifyIdentifierInBinaryExpression(expression.left, identifierName);
+            }
+
+            if (expression.left.type === 'LogicalExpression') {
+                return nullifyIdentifierInLogicalExpression(expression.left, identifierName);
+            }
+
+            return expression.left;
+        })(),
+        right: (() => {
+            if (expression.right.type === 'BinaryExpression') {
+                return nullifyIdentifierInBinaryExpression(expression.right, identifierName);
+            }
+
+            if (expression.right.type === 'LogicalExpression') {
+                return nullifyIdentifierInLogicalExpression(expression.right, identifierName);
+            }
+
+            return expression.right;
+        })()
+    };
+}
+
+export function setUserASTObjectIdentifierNameInAnswerAssignment(code: string, userASTObject: UserASTObject, newName: string): string {
+    const jsAst: Program = esprima.parse(code);
+    return escodegen.generate({
+        ...jsAst,
+        body: jsAst.body.map((object) => {
+            if (
+                object.type === 'ExpressionStatement' &&
+                object.expression.type === 'AssignmentExpression' &&
+                object.expression.left.type === 'Identifier' &&
+                object.expression.left.name === 'answer'
+            ) {
+                if (object.expression.right.type === 'BinaryExpression') {
+                    return {
+                        ...object,
+                        expression: {
+                            ...object.expression,
+                            right: setIdentifierNameInBinaryExpression(object.expression.right, userASTObject.varName, newName)
+                        }
+                    };
+                }
+
+                if (object.expression.right.type === 'LogicalExpression') {
+                    return {
+                        ...object,
+                        expression: {
+                            ...object.expression,
+                            right: setIdentifierNameInLogicalExpression(object.expression.right, userASTObject.varName, newName)
+                        }
+                    };
+                }
+            }
+
+            return object;
+        })
+    });
+}
+
+function setIdentifierNameInBinaryExpression(expression: BinaryExpression, identifierName: string, newName: string): BinaryExpression {
+    return {
+        ...expression,
+        left: (() => {
+            if (expression.left.type === 'Identifier' && expression.left.name === identifierName) {
+                return {
+                    ...expression.left,
+                    name: newName
+                };
+            }
+
+            return expression.left;
+        })(),
+        right: (() => {
+            if (expression.right.type === 'Identifier' && expression.right.name === identifierName) {
+                return {
+                    ...expression.right,
+                    name: newName
+                };
+            }
+
+            return expression.right;
+        })()
+    };
+}
+
+function setIdentifierNameInLogicalExpression(expression: LogicalExpression, identifierName: string, newName: string): LogicalExpression {
+    return {
+        ...expression,
+        left: (() => {
+            if (expression.left.type === 'BinaryExpression') {
+                return setIdentifierNameInBinaryExpression(expression.left, identifierName, newName);
+            }
+
+            if (expression.left.type === 'LogicalExpression') {
+                return setIdentifierNameInLogicalExpression(expression.left, identifierName, newName);
+            }
+
+            return expression.left;
+        })(),
+        right: (() => {
+            if (expression.right.type === 'BinaryExpression') {
+                return setIdentifierNameInBinaryExpression(expression.right, identifierName, newName);
+            }
+
+            if (expression.right.type === 'LogicalExpression') {
+                return setIdentifierNameInLogicalExpression(expression.right, identifierName, newName);
+            }
+
+            return expression.right;
+        })()
+    };
+}
+
+export function decrementUserASTObjectVarNamesInAnswerAssignment(code: string, originalUserASTObjects: UserASTObject[], currentUserASTObjects: UserASTObject[]): string {
+    const userASTObjectsToRemove = originalUserASTObjects.filter((originalUserASTObject) => {
+        return currentUserASTObjects.filter((currentUserASTObject) => {
+            //TODO using JSON.stringify for deep equality might not be good enough...for example, ordering of properties matters
+            return originalUserASTObject.type === 'USER_RADIO' || originalUserASTObject.type === 'USER_CHECK' ?
+                JSON.stringify(originalUserASTObject.content) === JSON.stringify(currentUserASTObject.content) :
+                originalUserASTObject.value === currentUserASTObject.value;
+        }).length === 0;
+    });
+    const nullifiedUserASTObjectsCode = userASTObjectsToRemove.reduce((result, userASTObjectToRemove) => {
+        return nullifyUserASTObjectInAnswerAssignment(result, userASTObjectToRemove);
+    }, code);
+
+    const decrementedVarNameCode = userASTObjectsToRemove.reduce((result, userASTObjectToRemove, index) => {
+        const nextUserASTObjectToRemove = userASTObjectsToRemove[index + 1];
+
+        const originalStartingIndex = originalUserASTObjects.map(originalUserASTObject => originalUserASTObject.varName).indexOf(userASTObjectToRemove.varName);
+        const originalEndingIndex = originalUserASTObjects.map(originalUserASTObject => originalUserASTObject.varName).indexOf(nextUserASTObjectToRemove ? nextUserASTObjectToRemove.varName : '');
+
+        return originalUserASTObjects.splice(originalStartingIndex, originalEndingIndex !== -1 ? originalEndingIndex : originalUserASTObjects.length).reduce((innerResult, originalUserASTObject) => {
+            const varNameStem = originalUserASTObject.varName.replace(/\d/g, '');
+            const varNameIndex = +originalUserASTObject.varName.replace(/[a-z]/g, '');
+            const newName = `${varNameStem}${varNameIndex - 1}`;
+
+            return setUserASTObjectIdentifierNameInAnswerAssignment(innerResult, originalUserASTObject, newName);
+        }, result);
+    }, nullifiedUserASTObjectsCode);
+
+    return decrementedVarNameCode;
 }

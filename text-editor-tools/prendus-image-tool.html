@@ -15,7 +15,10 @@
         <paper-tooltip id="tooltip" for="button" position="[[tooltipPosition]]" offset="5">
 			<span>Image</span>
 		</paper-tooltip>
-        <input hidden id="imageInput" type="file" accept="image/*" on-change="imageInputChange">
+
+        <div id="imageInputContainer">
+            <input hidden id="imageInput" type="file" accept="image/*" on-change="imageInputChange">
+        </div>
     </template>
 
     <script src="prendus-image-tool.ts"></script>

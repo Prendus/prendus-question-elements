@@ -72,26 +72,31 @@ export interface User {
 export type UserASTObject = UserVariable | UserInput | UserEssay | UserCheck | UserRadio;
 
 export interface UserVariable {
+    readonly type: 'USER_VARIABLE';
     readonly varName: string;
     readonly value: number;
 }
 
 export interface UserInput {
+    readonly type: 'USER_INPUT';
     readonly varName: string;
     readonly value: string;
 }
 
 export interface UserEssay {
+    readonly type: 'USER_ESSAY';
     readonly varName: string;
     readonly value: string;
 }
 
 export interface UserCheck {
+    readonly type: 'USER_CHECK';
     readonly varName: string;
     readonly checked: boolean;
 }
 
 export interface UserRadio {
+    readonly type: 'USER_RADIO';
     readonly varName: string;
     readonly checked: boolean;
 }

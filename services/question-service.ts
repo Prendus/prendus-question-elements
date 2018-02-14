@@ -1254,8 +1254,10 @@ function setIdentifierNameInLogicalExpression(expression: LogicalExpression, ide
 export function decrementUserASTObjectVarNamesInAnswerAssignment(code: string, originalUserASTObjects: UserASTObject[], currentUserASTObjects: UserASTObject[]): string {
     const userASTObjectsToRemove = originalUserASTObjects.filter((originalUserASTObject) => {
         return currentUserASTObjects.filter((currentUserASTObject) => {
+            console.log('originalUserASTObject', originalUserASTObject);
             //TODO using JSON.stringify for deep equality might not be good enough...for example, ordering of properties matters
-            return originalUserASTObject.type === 'USER_RADIO' || originalUserASTObject.type === 'USER_CHECK' ?
+            //TODO this is not a good way to check the type...but I guess it works for now
+            return typeof originalUserASTObject.checked === 'boolean' ?
                 JSON.stringify(originalUserASTObject.content) === JSON.stringify(currentUserASTObject.content) :
                 originalUserASTObject.value === currentUserASTObject.value;
         }).length === 0;

@@ -32,8 +32,10 @@ import {
     insertRadioOrCheckIntoCode,
     insertVariableIntoCode,
     insertImageIntoCode,
-    getUserASTObjects,
-    setUserASTObjectValue
+    getUserASTObjectsFromAnswerAssignment,
+    nullifyUserASTObjectInAnswerAssignment,
+    setUserASTObjectValue,
+    setUserASTObjectIdentifierNameInAnswerAssignment
 } from './services/question-service';
 import {
     execute,
@@ -191,19 +193,47 @@ class PrendusEditQuestion extends Polymer.Element {
                 }
             `, {
                 prepareToSaveText: (previousResult) => {
+                    const originalUserRadioASTObjects = getUserASTObjectsFromAnswerAssignment(this._question ? this._question.text : '', this._question ? this._question.code : '', 'RADIO');
+                    const currentUserRadioASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'RADIO');
+                    const userRadioASTObjectsToRemove = originalUserRadioASTObjects.filter((originalUserRadioASTObject) => {
+                        return currentUserRadioASTObjects.filter((currentUserRadioASTObject) => {
+                            //TODO using JSON.stringify for deep equality might not be good enough...for example, ordering of properties matters
+                            return JSON.stringify(originalUserRadioASTObject.content) === JSON.stringify(currentUserRadioASTObject.content);
+                        }).length === 0;
+                    });
+                    const nullifiedRadiosCode = userRadioASTObjectsToRemove.reduce((result, userRadioASTObjectToRemove) => {
+                        return nullifyUserASTObjectInAnswerAssignment(result, userRadioASTObjectToRemove);
+                    }, this._question ? this._question.code : '');
+
+                    const code = userRadioASTObjectsToRemove.reduce((result, userRadioASTObjectToRemove, index) => {
+                        const nextUserRadioASTObjectToRemove = userRadioASTObjectsToRemove[index + 1];
+
+                        const originalStartingIndex = originalUserRadioASTObjects.map(originalUserRadioASTObject => originalUserRadioASTObject.varName).indexOf(userRadioASTObjectToRemove.varName);
+                        const originalEndingIndex = originalUserRadioASTObjects.map(originalUserRadioASTObject => originalUserRadioASTObject.varName).indexOf(nextUserRadioASTObjectToRemove ? nextUserRadioASTObjectToRemove.varName : '');
+
+                        return originalUserRadioASTObjects.splice(originalStartingIndex, originalEndingIndex !== -1 ? originalEndingIndex : originalUserRadioASTObjects.length).reduce((innerResult, originalUserRadioASTObject) => {
+                            const varNameStem = originalUserRadioASTObject.varName.replace(/\d/g, '');
+                            const varNameIndex = +originalUserRadioASTObject.varName.replace(/[a-z]/g, '');
+                            const newName = `${varNameStem}${varNameIndex - 1}`;
+
+                            return setUserASTObjectIdentifierNameInAnswerAssignment(innerResult, originalUserRadioASTObject, newName);
+                        }, result);
+                    }, nullifiedRadiosCode);
+
                     const newQuestion = {
                         ...this._question,
                         text,
-                        code: this._question ? this._question.code : ''
+                        code
                     };
+
                     return {
                         componentId: this.componentId,
                         props: {
                             saving: true,
                             question: newQuestion,
-                            userRadiosFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'RADIO'),
-                            userChecksFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'CHECK'),
-                            userInputsFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'INPUT')
+                            userRadiosFromCode: getUserASTObjectsFromAnswerAssignment(newQuestion.text, newQuestion.code, 'RADIO'),
+                            userChecksFromCode: getUserASTObjectsFromAnswerAssignment(newQuestion.text, newQuestion.code, 'CHECK'),
+                            userInputsFromCode: getUserASTObjectsFromAnswerAssignment(newQuestion.text, newQuestion.code, 'INPUT')
                         }
                     };
                 },
@@ -256,9 +286,9 @@ class PrendusEditQuestion extends Polymer.Element {
                         props: {
                             saving: true,
                             question: newQuestion,
-                            userRadiosFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'RADIO'),
-                            userChecksFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'CHECK'),
-                            userInputsFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'INPUT')
+                            userRadiosFromCode: getUserASTObjectsFromAnswerAssignment(newQuestion.text, newQuestion.code, 'RADIO'),
+                            userChecksFromCode: getUserASTObjectsFromAnswerAssignment(newQuestion.text, newQuestion.code, 'CHECK'),
+                            userInputsFromCode: getUserASTObjectsFromAnswerAssignment(newQuestion.text, newQuestion.code, 'INPUT')
                         }
                     };
                 },
@@ -463,7 +493,7 @@ class PrendusEditQuestion extends Polymer.Element {
                         question: newQuestion,
                         textEditorLock:  false,
                         codeEditorLock: false,
-                        userInputsFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'INPUT')
+                        userInputsFromCode: getUserASTObjectsFromAnswerAssignment(newQuestion.text, newQuestion.code, 'INPUT')
                     }
                 };
             }
@@ -640,7 +670,7 @@ class PrendusEditQuestion extends Polymer.Element {
                     componentId: this.componentId,
                     props: {
                         question: newQuestion,
-                        userRadiosFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'RADIO'),
+                        userRadiosFromCode: getUserASTObjectsFromAnswerAssignment(newQuestion.text, newQuestion.code, 'RADIO'),
                         textEditorLock: false,
                         codeEditorLock: false
                     }
@@ -705,7 +735,7 @@ class PrendusEditQuestion extends Polymer.Element {
                     componentId: this.componentId,
                     props: {
                         question: newQuestion,
-                        userChecksFromCode: getUserASTObjects(newQuestion.text, newQuestion.code, 'CHECK'),
+                        userChecksFromCode: getUserASTObjectsFromAnswerAssignment(newQuestion.text, newQuestion.code, 'CHECK'),
                         textEditorLock: false,
                         codeEditorLock: false
                     }

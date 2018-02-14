@@ -899,7 +899,7 @@ export function getUserASTObjectValue(code: string, userASTObject: UserASTObject
     }, null);
 }
 
-export function getUserASTObjects(text: string, code: string, type: ASTObjectType): UserASTObject[]  {
+export function getUserASTObjectsFromAnswerAssignment(text: string, code: string, type: ASTObjectType): UserASTObject[]  {
     const astObjects: ASTObject[] = getAstObjects(
         parse(text, () => 5, () => '', () => [], () => []),
         type
@@ -936,6 +936,43 @@ export function getUserASTObjects(text: string, code: string, type: ASTObjectTyp
             checked: false,
             content: astObject.content
         });
+    });
+}
+
+export function nullifyUserASTObjectInAnswerAssignment(code: String, userASTObject: UserASTObject): string {
+    const jsAst: Program = esprima.parse(code);
+    return escodegen.generate({
+        ...jsAst,
+        body: jsAst.body.map((object) => {
+            if (
+                object.type === 'ExpressionStatement' &&
+                object.expression.type === 'AssignmentExpression' &&
+                object.expression.left.type === 'Identifier' &&
+                object.expression.left.name === 'answer'
+            ) {
+                if (object.expression.right.type === 'BinaryExpression') {
+                    return {
+                        ...object,
+                        expression: {
+                            ...object.expression,
+                            right: nullifyIdentifierInBinaryExpression(object.expression.right, userASTObject.varName)
+                        }
+                    };
+                }
+
+                if (object.expression.right.type === 'LogicalExpression') {
+                    return {
+                        ...object,
+                        expression: {
+                            ...object.expression,
+                            right: nullifyIdentifierInLogicalExpression(object.expression.right, userASTObject.varName)
+                        }
+                    };
+                }
+            }
+
+            return object;
+        })
     });
 }
 
@@ -1040,6 +1077,152 @@ function setIdentifierValueInLogicalExpression(expression: LogicalExpression, id
 
             if (expression.right.type === 'LogicalExpression') {
                 return setIdentifierValueInLogicalExpression(expression.right, identifierName, value);
+            }
+
+            return expression.right;
+        })()
+    };
+}
+
+function nullifyIdentifierInBinaryExpression(expression: BinaryExpression, identifierName: string): BinaryExpression {
+    if (
+        (
+            expression.right.type === 'Identifier' &&
+            expression.right.name === identifierName
+        ) ||
+        (
+            expression.left.type === 'Identifier' &&
+            expression.left.name === identifierName
+        )
+    ) {
+        return {
+            ...expression,
+            left: {
+                type: 'Literal',
+                value: true
+            },
+            right: {
+                type: 'Literal',
+                value: true
+            }
+        };
+    }
+
+    return expression;
+}
+
+function nullifyIdentifierInLogicalExpression(expression: LogicalExpression, identifierName: string): LogicalExpression {
+    return {
+        ...expression,
+        left: (() => {
+            if (expression.left.type === 'BinaryExpression') {
+                return nullifyIdentifierInBinaryExpression(expression.left, identifierName);
+            }
+
+            if (expression.left.type === 'LogicalExpression') {
+                return nullifyIdentifierInLogicalExpression(expression.left, identifierName);
+            }
+
+            return expression.left;
+        })(),
+        right: (() => {
+            if (expression.right.type === 'BinaryExpression') {
+                return nullifyIdentifierInBinaryExpression(expression.right, identifierName);
+            }
+
+            if (expression.right.type === 'LogicalExpression') {
+                return nullifyIdentifierInLogicalExpression(expression.right, identifierName);
+            }
+
+            return expression.right;
+        })()
+    };
+}
+
+export function setUserASTObjectIdentifierNameInAnswerAssignment(code: string, userASTObject: UserASTObject, newName: string): string {
+    const jsAst: Program = esprima.parse(code);
+    return escodegen.generate({
+        ...jsAst,
+        body: jsAst.body.map((object) => {
+            if (
+                object.type === 'ExpressionStatement' &&
+                object.expression.type === 'AssignmentExpression' &&
+                object.expression.left.type === 'Identifier' &&
+                object.expression.left.name === 'answer'
+            ) {
+                if (object.expression.right.type === 'BinaryExpression') {
+                    return {
+                        ...object,
+                        expression: {
+                            ...object.expression,
+                            right: setIdentifierNameInBinaryExpression(object.expression.right, userASTObject.varName, newName)
+                        }
+                    };
+                }
+
+                if (object.expression.right.type === 'LogicalExpression') {
+                    return {
+                        ...object,
+                        expression: {
+                            ...object.expression,
+                            right: setIdentifierNameInLogicalExpression(object.expression.right, userASTObject.varName, newName)
+                        }
+                    };
+                }
+            }
+
+            return object;
+        })
+    });
+}
+
+function setIdentifierNameInBinaryExpression(expression: BinaryExpression, identifierName: string, newName: string): BinaryExpression {
+    return {
+        ...expression,
+        left: (() => {
+            if (expression.left.type === 'Identifier' && expression.left.name === identifierName) {
+                return {
+                    ...expression.left,
+                    name: newName
+                };
+            }
+
+            return expression.left;
+        })(),
+        right: (() => {
+            if (expression.right.type === 'Identifier' && expression.right.name === identifierName) {
+                return {
+                    ...expression.right,
+                    name: newName
+                };
+            }
+
+            return expression.right;
+        })()
+    };
+}
+
+function setIdentifierNameInLogicalExpression(expression: LogicalExpression, identifierName: string, newName: string): LogicalExpression {
+    return {
+        ...expression,
+        left: (() => {
+            if (expression.left.type === 'BinaryExpression') {
+                return setIdentifierNameInBinaryExpression(expression.left, identifierName, newName);
+            }
+
+            if (expression.left.type === 'LogicalExpression') {
+                return setIdentifierNameInLogicalExpression(expression.left, identifierName, newName);
+            }
+
+            return expression.left;
+        })(),
+        right: (() => {
+            if (expression.right.type === 'BinaryExpression') {
+                return setIdentifierNameInBinaryExpression(expression.right, identifierName, newName);
+            }
+
+            if (expression.right.type === 'LogicalExpression') {
+                return setIdentifierNameInLogicalExpression(expression.right, identifierName, newName);
             }
 
             return expression.right;

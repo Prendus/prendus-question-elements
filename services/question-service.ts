@@ -1254,7 +1254,6 @@ function setIdentifierNameInLogicalExpression(expression: LogicalExpression, ide
 export function decrementUserASTObjectVarNamesInAnswerAssignment(code: string, originalUserASTObjects: UserASTObject[], currentUserASTObjects: UserASTObject[]): string {
     const userASTObjectsToRemove = originalUserASTObjects.filter((originalUserASTObject) => {
         return currentUserASTObjects.filter((currentUserASTObject) => {
-            console.log('originalUserASTObject', originalUserASTObject);
             //TODO using JSON.stringify for deep equality might not be good enough...for example, ordering of properties matters
             //TODO this is not a good way to check the type...but I guess it works for now
             return typeof originalUserASTObject.checked === 'boolean' ?
@@ -1272,10 +1271,10 @@ export function decrementUserASTObjectVarNamesInAnswerAssignment(code: string, o
         const originalStartingIndex = originalUserASTObjects.map(originalUserASTObject => originalUserASTObject.varName).indexOf(userASTObjectToRemove.varName);
         const originalEndingIndex = originalUserASTObjects.map(originalUserASTObject => originalUserASTObject.varName).indexOf(nextUserASTObjectToRemove ? nextUserASTObjectToRemove.varName : '');
 
-        return originalUserASTObjects.splice(originalStartingIndex, originalEndingIndex !== -1 ? originalEndingIndex : originalUserASTObjects.length).reduce((innerResult, originalUserASTObject) => {
+        return originalUserASTObjects.slice(originalStartingIndex, originalEndingIndex !== -1 ? originalEndingIndex - 1 : originalUserASTObjects.length).reduce((innerResult, originalUserASTObject) => {
             const varNameStem = originalUserASTObject.varName.replace(/\d/g, '');
             const varNameIndex = +originalUserASTObject.varName.replace(/[a-z]/g, '');
-            const newName = `${varNameStem}${varNameIndex - 1}`;
+            const newName = `${varNameStem}${varNameIndex - userASTObjectsToRemove.length}`;
 
             return setUserASTObjectIdentifierNameInAnswerAssignment(innerResult, originalUserASTObject, newName);
         }, result);

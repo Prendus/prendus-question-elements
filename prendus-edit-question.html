@@ -10,6 +10,7 @@
 <!-- <link rel="import" href="text-editor-tools/prendus-math-tool.html"> -->
 <link rel="import" href="text-editor-tools/prendus-image-tool.html">
 <!-- <link rel="import" href="text-editor-tools/prendus-graph-tool.html"> -->
+<link rel="import" href="text-editor-tools/prendus-reset-tool.html">
 <link rel="import" href="../../node_modules/juicy-ace-editor/juicy-ace-editor.html">
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
 <link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
@@ -128,6 +129,7 @@
                             <prendus-math-tool id="prendus-math-tool" on-insert-math="insertMath"></prendus-math-tool>
                             <prendus-image-tool id="prendus-image-tool" on-insert-image="insertImage"></prendus-image-tool>
                             <prendus-graph-tool id="prendus-graph-tool" on-insert-graph="insertGraph"></prendus-graph-tool>
+                            <prendus-reset-tool id="prendus-reset-tool" on-reset-text-and-code="resetTextAndCode"></prendus-reset-tool>
                         </wysiwyg-e>
                         <div class="savingText">[[getSavingText(saving)]]</div>
                     </div>

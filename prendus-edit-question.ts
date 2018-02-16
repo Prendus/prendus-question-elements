@@ -1081,6 +1081,27 @@ class PrendusEditQuestion extends Polymer.Element {
         ];
     }
 
+    async resetTextAndCode() {
+        await execute(`
+            mutation resetTextAndCode($componentId: String!, $props: Any) {
+                updateComponentState(componentId: $componentId, props: $props)
+            }
+        `, {
+            resetTextAndCode: (previousResult: any) => {
+                return {
+                    componentId: this.componentId,
+                    props: {
+                        question: {
+                            ...this._question,
+                            text: '',
+                            code: ''
+                        }
+                    }
+                };
+            }
+        }, this.usertoken);
+    }
+
     render(state) {
         const componentState = state.components[this.componentId];
         if (componentState) {

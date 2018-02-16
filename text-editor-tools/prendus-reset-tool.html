@@ -17,9 +17,13 @@
 		</paper-tooltip>
 
         <paper-dialog id="sureDialog" on-click="sureDialogClick">
-            Are you sure you want to reset the text and code?
-            <button on-click="yesClick">Yes</button>
-            <button on-click="noClick">No</button>
+            <h2>Are you sure you want to reset the text and code?</h2>
+            <div style="display: flex">
+                <div style="margin-left: auto">
+                    <paper-button on-click="noClick" dialog-dismiss>No</paper-button>
+                    <paper-button on-click="yesClick" dialog-confirm raised autofocus>Yes</paper-button>
+                </div>
+            </div>
         </paper-dialog>
     </template>
 

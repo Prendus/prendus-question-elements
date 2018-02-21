@@ -196,37 +196,67 @@ class PrendusEditQuestion extends Polymer.Element {
                     updateComponentState(componentId: $componentId, props: $props)
                 }
             `, {
-                prepareToSaveText: async (previousResult) => {
+                prepareToSaveText: async (previousResult: any) => {
                     const originalUserRadioASTObjects = getUserASTObjectsFromAnswerAssignment(this._question ? this._question.text : '', this._question ? this._question.code : '', 'RADIO');
                     const currentUserRadioASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'RADIO');
-                    const radiosDeletedCode = decrementUserASTObjectVarNamesInAnswerAssignment(this._question ? this._question.code : '', originalUserRadioASTObjects, currentUserRadioASTObjects);
+                    const deletedUserRadioASTObjects = originalUserRadioASTObjects.filter((originalUserRadioASTObject) => {
+                        return currentUserRadioASTObjects.filter((currentUserRadioASTObject) => {
+                            return originalUserRadioASTObject.varName === currentUserRadioASTObject.varName;
+                        }).length === 0;
+                    });
+                    const radiosDeletedCode = deletedUserRadioASTObjects.reduce((result, deletedUserRadioASTObject) => {
+                        return nullifyUserASTObjectInAnswerAssignment(result, deletedUserRadioASTObject);
+                    }, this._question ? this._question.code : '');
 
                     const originalUserCheckASTObjects = getUserASTObjectsFromAnswerAssignment(this._question ? this._question.text : '', this._question ? this._question.code : '', 'CHECK');
                     const currentUserCheckASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'CHECK');
-                    const checksDeletedCode = decrementUserASTObjectVarNamesInAnswerAssignment(radiosDeletedCode, originalUserCheckASTObjects, currentUserCheckASTObjects);
+                    const deletedUserCheckASTObjects = originalUserCheckASTObjects.filter((originalUserCheckASTObject) => {
+                        return currentUserCheckASTObjects.filter((currentUserCheckASTObject) => {
+                            return originalUserCheckASTObject.varName === currentUserCheckASTObject.varName;
+                        }).length === 0;
+                    });
+                    const checksDeletedCode = deletedUserCheckASTObjects.reduce((result, deletedUserCheckASTObject) => {
+                        return nullifyUserASTObjectInAnswerAssignment(result, deletedUserCheckASTObject);
+                    }, radiosDeletedCode);
 
                     const originalUserInputASTObjects = getUserASTObjectsFromAnswerAssignment(this._question ? this._question.text : '', this._question ? this._question.code : '', 'INPUT');
                     const currentUserInputASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'INPUT');
-                    const inputsDeletedCode = decrementUserASTObjectVarNamesInAnswerAssignment(checksDeletedCode, originalUserInputASTObjects, currentUserInputASTObjects);
-
-                    const originalUserImageASTObjects = getAstObjects(parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []), 'IMAGE');
-                    const currentUserImageASTObjects = getAstObjects(parse(text, () => 5, () => '', () => [], () => []), 'IMAGE');
-                    const userImageASTObjectsToRemove = originalUserImageASTObjects.filter((originalUserImageASTObject) => {
-                        return currentUserImageASTObjects.filter((currentUserImageASTObject) => {
-                            return originalUserImageASTObject.varName === currentUserImageASTObject.varName;
+                    const deletedUserInputASTObjects = originalUserInputASTObjects.filter((originalUserInputASTObject) => {
+                        return currentUserInputASTObjects.filter((currentUserInputASTObject) => {
+                            return originalUserInputASTObject.varName === currentUserInputASTObject.varName;
                         }).length === 0;
                     });
-                    const jsAst = esprima.parse(inputsDeletedCode);
-                    const amlAst = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-                    const imagesDeletedCode = await asyncReduce(userImageASTObjectsToRemove, async (result, userImageASTObjectToRemove) => {
-                        const imageSrc = await getPropertyValue(jsAst, amlAst, userImageASTObjectToRemove.varName, 'src', '');
-                        return removeImageFromCode(result, userImageASTObjectToRemove.varName, imageSrc);
-                    }, inputsDeletedCode);
+                    const inputsDeletedCode = deletedUserInputASTObjects.reduce((result, deletedUserInputASTObject) => {
+                        return nullifyUserASTObjectInAnswerAssignment(result, deletedUserInputASTObject);
+                    }, checksDeletedCode);
+                    // const radiosDeletedCode = decrementUserASTObjectVarNamesInAnswerAssignment(this._question ? this._question.code : '', originalUserRadioASTObjects, currentUserRadioASTObjects);
+                    //
+                    // const originalUserCheckASTObjects = getUserASTObjectsFromAnswerAssignment(this._question ? this._question.text : '', this._question ? this._question.code : '', 'CHECK');
+                    // const currentUserCheckASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'CHECK');
+                    // const checksDeletedCode = decrementUserASTObjectVarNamesInAnswerAssignment(radiosDeletedCode, originalUserCheckASTObjects, currentUserCheckASTObjects);
+                    //
+                    // const originalUserInputASTObjects = getUserASTObjectsFromAnswerAssignment(this._question ? this._question.text : '', this._question ? this._question.code : '', 'INPUT');
+                    // const currentUserInputASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'INPUT');
+                    // const inputsDeletedCode = decrementUserASTObjectVarNamesInAnswerAssignment(checksDeletedCode, originalUserInputASTObjects, currentUserInputASTObjects);
+                    //
+                    // const originalUserImageASTObjects = getAstObjects(parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []), 'IMAGE');
+                    // const currentUserImageASTObjects = getAstObjects(parse(text, () => 5, () => '', () => [], () => []), 'IMAGE');
+                    // const userImageASTObjectsToRemove = originalUserImageASTObjects.filter((originalUserImageASTObject) => {
+                    //     return currentUserImageASTObjects.filter((currentUserImageASTObject) => {
+                    //         return originalUserImageASTObject.varName === currentUserImageASTObject.varName;
+                    //     }).length === 0;
+                    // });
+                    // const jsAst = esprima.parse(inputsDeletedCode);
+                    // const amlAst = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                    // const imagesDeletedCode = await asyncReduce(userImageASTObjectsToRemove, async (result, userImageASTObjectToRemove) => {
+                    //     const imageSrc = await getPropertyValue(jsAst, amlAst, userImageASTObjectToRemove.varName, 'src', '');
+                    //     return removeImageFromCode(result, userImageASTObjectToRemove.varName, imageSrc);
+                    // }, inputsDeletedCode);
 
                     const newQuestion = {
                         ...this._question,
                         text,
-                        code: imagesDeletedCode
+                        code: inputsDeletedCode
                     };
 
                     return {
@@ -653,7 +683,7 @@ class PrendusEditQuestion extends Polymer.Element {
                 selection.addRange(textEditor.range0);
                 selection.collapseToEnd();
 
-                const radioString = `[radio start]${content || ''}[radio end]`;
+                const radioString = `[${varName}]${content || ''}[${varName}]`;
                 document.execCommand('insertHTML', false, '<p><br></p>');
                 document.execCommand('insertText', false, radioString);
 
@@ -718,7 +748,7 @@ class PrendusEditQuestion extends Polymer.Element {
                 selection.addRange(textEditor.range0);
                 selection.collapseToEnd();
 
-                const radioString = `[check start]${content || ''}[check end]`;
+                const radioString = `[${varName}]${content || ''}[${varName}]`;
                 document.execCommand('insertHTML', false, '<p><br></p>');
                 document.execCommand('insertText', false, radioString);
 

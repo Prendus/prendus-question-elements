@@ -1251,16 +1251,30 @@ function setIdentifierNameInLogicalExpression(expression: LogicalExpression, ide
     };
 }
 
+//TODO we are not using this function anymore, but it might be nice to keep around in case we need to do something similar in the future
+// we found a simpler way to accomplish what we needed to accomplish by changing the AssessML syntax
 export function decrementUserASTObjectVarNamesInAnswerAssignment(code: string, originalUserASTObjects: UserASTObject[], currentUserASTObjects: UserASTObject[]): string {
     const userASTObjectsToRemove = originalUserASTObjects.filter((originalUserASTObject) => {
         return currentUserASTObjects.filter((currentUserASTObject) => {
-            //TODO using JSON.stringify for deep equality might not be good enough...for example, ordering of properties matters
-            //TODO this is not a good way to check the type...but I guess it works for now
-            return typeof originalUserASTObject.checked === 'boolean' ?
+            console.log('originalUserASTObject', originalUserASTObject);
+            console.log('currentUserASTObject', currentUserASTObject);
+
+            const result = originalUserASTObject.content !== undefined ?
                 JSON.stringify(originalUserASTObject.content) === JSON.stringify(currentUserASTObject.content) :
                 originalUserASTObject.value === currentUserASTObject.value;
+
+            console.log('result', result);
+
+            throw new Error('Figure out how to determine which input should be deleted based off of client text');
+
+            //TODO using JSON.stringify for deep equality might not be good enough...for example, ordering of properties matters
+            //TODO this is not a good way to check the type...but I guess it works for now
+            return result;
         }).length === 0;
     });
+
+    console.log('userASTObjectsToRemove', userASTObjectsToRemove);
+
     const nullifiedUserASTObjectsCode = userASTObjectsToRemove.reduce((result, userASTObjectToRemove) => {
         return nullifyUserASTObjectInAnswerAssignment(result, userASTObjectToRemove);
     }, code);

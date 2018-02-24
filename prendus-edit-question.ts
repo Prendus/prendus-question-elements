@@ -229,34 +229,25 @@ class PrendusEditQuestion extends Polymer.Element {
                     const inputsDeletedCode = deletedUserInputASTObjects.reduce((result, deletedUserInputASTObject) => {
                         return nullifyUserASTObjectInAnswerAssignment(result, deletedUserInputASTObject);
                     }, checksDeletedCode);
-                    // const radiosDeletedCode = decrementUserASTObjectVarNamesInAnswerAssignment(this._question ? this._question.code : '', originalUserRadioASTObjects, currentUserRadioASTObjects);
-                    //
-                    // const originalUserCheckASTObjects = getUserASTObjectsFromAnswerAssignment(this._question ? this._question.text : '', this._question ? this._question.code : '', 'CHECK');
-                    // const currentUserCheckASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'CHECK');
-                    // const checksDeletedCode = decrementUserASTObjectVarNamesInAnswerAssignment(radiosDeletedCode, originalUserCheckASTObjects, currentUserCheckASTObjects);
-                    //
-                    // const originalUserInputASTObjects = getUserASTObjectsFromAnswerAssignment(this._question ? this._question.text : '', this._question ? this._question.code : '', 'INPUT');
-                    // const currentUserInputASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'INPUT');
-                    // const inputsDeletedCode = decrementUserASTObjectVarNamesInAnswerAssignment(checksDeletedCode, originalUserInputASTObjects, currentUserInputASTObjects);
-                    //
-                    // const originalUserImageASTObjects = getAstObjects(parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []), 'IMAGE');
-                    // const currentUserImageASTObjects = getAstObjects(parse(text, () => 5, () => '', () => [], () => []), 'IMAGE');
-                    // const userImageASTObjectsToRemove = originalUserImageASTObjects.filter((originalUserImageASTObject) => {
-                    //     return currentUserImageASTObjects.filter((currentUserImageASTObject) => {
-                    //         return originalUserImageASTObject.varName === currentUserImageASTObject.varName;
-                    //     }).length === 0;
-                    // });
-                    // const jsAst = esprima.parse(inputsDeletedCode);
-                    // const amlAst = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
-                    // const imagesDeletedCode = await asyncReduce(userImageASTObjectsToRemove, async (result, userImageASTObjectToRemove) => {
-                    //     const imageSrc = await getPropertyValue(jsAst, amlAst, userImageASTObjectToRemove.varName, 'src', '');
-                    //     return removeImageFromCode(result, userImageASTObjectToRemove.varName, imageSrc);
-                    // }, inputsDeletedCode);
+
+                    const originalUserImageASTObjects = getAstObjects(parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []), 'IMAGE');
+                    const currentUserImageASTObjects = getAstObjects(parse(text, () => 5, () => '', () => [], () => []), 'IMAGE');
+                    const userImageASTObjectsToRemove = originalUserImageASTObjects.filter((originalUserImageASTObject) => {
+                        return currentUserImageASTObjects.filter((currentUserImageASTObject) => {
+                            return originalUserImageASTObject.varName === currentUserImageASTObject.varName;
+                        }).length === 0;
+                    });
+                    const jsAst = esprima.parse(inputsDeletedCode);
+                    const amlAst = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
+                    const imagesDeletedCode = await asyncReduce(userImageASTObjectsToRemove, async (result, userImageASTObjectToRemove) => {
+                        const imageSrc = await getPropertyValue(jsAst, amlAst, userImageASTObjectToRemove.varName, 'src', '');
+                        return removeImageFromCode(result, userImageASTObjectToRemove.varName, imageSrc);
+                    }, inputsDeletedCode);
 
                     const newQuestion = {
                         ...this._question,
                         text,
-                        code: inputsDeletedCode
+                        code: imagesDeletedCode
                     };
 
                     return {
@@ -495,7 +486,7 @@ class PrendusEditQuestion extends Polymer.Element {
                 const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
                 const astInputs: Input[] = <Input[]> getAstObjects(ast, 'INPUT');
 
-                const varName = `input${astInputs.length + 1}`;
+                const varName = `input${determineFreeVariableNumber(astInputs)}`;
                 const answer = e.detail.answer;
 
                 const textEditor = this.shadowRoot.querySelector('#textEditor');
@@ -503,7 +494,7 @@ class PrendusEditQuestion extends Polymer.Element {
 
                 const code = codeEditor.value;
 
-                const inputString = `[input]`;
+                const inputString = `[${varName}]`;
                 const newTextNode = document.createTextNode(inputString);
                 textEditor.range0.insertNode(newTextNode);
                 textEditor.range0.setStart(newTextNode, inputString.length);
@@ -556,14 +547,14 @@ class PrendusEditQuestion extends Polymer.Element {
                 const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
                 const astEssays: Essay[] = <Essay[]> getAstObjects(ast, 'ESSAY');
 
-                const varName = `essay${astEssays.length + 1}`;
+                const varName = `essay${determineFreeVariableNumber(astEssays)}`;
 
                 const textEditor = this.shadowRoot.querySelector('#textEditor');
                 const codeEditor = this.shadowRoot.querySelector('#codeEditor');
 
                 const code = codeEditor.value;
 
-                const essayString = `[essay]`;
+                const essayString = `[${varName}]`;
                 const newTextNode = document.createTextNode(essayString);
                 textEditor.range0.insertNode(newTextNode);
                 textEditor.range0.setStart(newTextNode, essayString.length);
@@ -613,14 +604,14 @@ class PrendusEditQuestion extends Polymer.Element {
                 const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
                 const astCodes: Code[] = <Code[]> getAstObjects(ast, 'CODE');
 
-                const varName = `code${astCodes.length + 1}`;
+                const varName = `code${determineFreeVariableNumber(astCodes)}`;
 
                 const textEditor = this.shadowRoot.querySelector('#textEditor');
                 const codeEditor = this.shadowRoot.querySelector('#codeEditor');
 
                 const code = codeEditor.value;
 
-                const codeString = `[code]`;
+                const codeString = `[${varName}]`;
                 const newTextNode = document.createTextNode(codeString);
                 textEditor.range0.insertNode(newTextNode);
                 textEditor.range0.setStart(newTextNode, codeString.length);
@@ -670,7 +661,7 @@ class PrendusEditQuestion extends Polymer.Element {
                 const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
                 const astRadios: Radio[] = <Radio[]> getAstObjects(ast, 'RADIO');
 
-                const varName = `radio${astRadios.length + 1}`;
+                const varName = `radio${determineFreeVariableNumber(astRadios)}`;
 
                 const { content, correct } = e.detail;
                 const textEditor = this.shadowRoot.querySelector('#textEditor');
@@ -735,7 +726,7 @@ class PrendusEditQuestion extends Polymer.Element {
                 const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
                 const astChecks: Check[] = <Check[]> getAstObjects(ast, 'CHECK');
 
-                const varName = `check${astChecks.length + 1}`;
+                const varName = `check${determineFreeVariableNumber(astChecks)}`;
 
                 const { content, correct } = e.detail;
                 const textEditor = this.shadowRoot.querySelector('#textEditor');
@@ -850,10 +841,10 @@ class PrendusEditQuestion extends Polymer.Element {
                 const textEditor = this.shadowRoot.querySelector('#textEditor');
                 const codeEditor = this.shadowRoot.querySelector('#codeEditor');
                 const astImages: Image[] = <Image[]> getAstObjects(ast, 'IMAGE');
-                const varName = `img${astImages.length + 1}`;
+                const varName = `img${determineFreeVariableNumber(astImages)}`;
                 const code = codeEditor.value;
 
-                const imageString = `[img${astImages.length + 1}]`;
+                const imageString = `[${varName}]`;
                 const newTextNode = document.createTextNode(imageString);
                 textEditor.range0.insertNode(newTextNode);
                 textEditor.range0.setStart(newTextNode, imageString.length);
@@ -904,7 +895,7 @@ class PrendusEditQuestion extends Polymer.Element {
                 const textEditor = this.shadowRoot.querySelector('#textEditor');
                 const astGraphs: Graph[] = <Graph[]> getAstObjects(ast, 'GRAPH');
 
-                const graphString = `[graph${astGraphs.length + 1}]`;
+                const graphString = `[graph${determineFreeVariableNumber(astGraphs)}]`;
                 const newTextNode = document.createTextNode(graphString);
                 textEditor.range0.insertNode(newTextNode);
                 textEditor.range0.setStart(newTextNode, graphString.length);
@@ -1165,4 +1156,36 @@ function wait(milliseconds: number = 0) {
             resolve();
         }, milliseconds);
     });
+}
+
+function determineFreeVariableNumber(astObjects: ASTObject[]) {
+    const numbers = new Array(astObjects.length + 1).fill(0).map((x, i) => i + 1);
+    return numbers.reduce((result, number) => {
+        if (result.numberFound) {
+            return result;
+        }
+
+        const numberInAstObjectsVarNames = astObjects.filter((astObject: ASTObject) => {
+            const varNameContainsNumber = astObject.varName.indexOf(number.toString()) !== -1;
+            return varNameContainsNumber;
+        }).length !== 0;
+
+        if (numberInAstObjectsVarNames) {
+            return {
+                ...result,
+                numberFound: false,
+                number: number + 1
+            };
+        }
+        else {
+            return {
+                ...result,
+                numberFound: true,
+                number
+            };
+        }
+    }, {
+        numberFound: false,
+        number: 1
+    }).number;
 }

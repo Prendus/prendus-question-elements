@@ -482,28 +482,31 @@ class PrendusEditQuestion extends Polymer.Element {
                     }
                 };
             },
-            insertInput: (previousResult: any) => {
+            insertInput: async (previousResult: any) => {
                 const ast: AST = parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []);
                 const astInputs: Input[] = <Input[]> getAstObjects(ast, 'INPUT');
 
                 const varName = `input${determineFreeVariableNumber(astInputs)}`;
-                const answer = e.detail.answer;
 
+                const answer = e.detail.answer || '';
                 const textEditor = this.shadowRoot.querySelector('#textEditor');
-                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
 
-                const code = codeEditor.value;
+                textEditor.range0.selectNodeContents(textEditor.range0.endContainer);
+                textEditor.range0.collapse();
 
-                const inputString = `[${varName}]`;
-                const newTextNode = document.createTextNode(inputString);
-                textEditor.range0.insertNode(newTextNode);
-                textEditor.range0.setStart(newTextNode, inputString.length);
-                textEditor.range0.collapse(true);
                 const selection = window.getSelection();
                 selection.removeAllRanges();
                 selection.addRange(textEditor.range0);
+                selection.collapseToEnd();
 
-                const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+                const inputString = `[${varName}]`;
+                document.execCommand('insertText', false, inputString);
+
+                await wait(); //this wait is necessary to get the correct value from the textEditor (https://github.com/miztroh/wysiwyg-e/issues/202)
+                const text = textEditor.value;
+
+                const codeEditor = this.shadowRoot.querySelector('#codeEditor');
+                const code = codeEditor.value;
 
                 const newQuestion = {
                     ...this._question,

@@ -18,11 +18,6 @@
 		</paper-tooltip>
 
         <paper-dialog id="inputDialog" on-click="inputDialogClick">
-            <div style="display: flex">
-                <paper-input id="blankAnswerInput" type="text" label="Blank answer" autofocus></paper-input>
-                <button style="height: 100%; margin-top: 8%; margin-left: .5vw" on-click="addBlankAnswerClick">Add</button>
-            </div>
-
             <paper-dialog-scrollable>
                 <dom-repeat items="[[userInputs]]">
                     <template>
@@ -33,6 +28,11 @@
                     </template>
                 </dom-repeat>
             </paper-dialog-scrollable>
+
+            <div style="display: flex">
+                <paper-input id="blankAnswerInput" type="text" label="Blank answer" autofocus></paper-input>
+                <button style="height: 100%; margin-top: 8%; margin-left: .5vw" on-click="addBlankAnswerClick">Add</button>
+            </div>
 
             <div style="display: flex">
                 <paper-button style="margin-left: auto" raised on-click="doneClick">Done</paper-button>

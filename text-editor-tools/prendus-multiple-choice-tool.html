@@ -24,11 +24,6 @@
                 <paper-input id="questionStemInput" type="text" label="Question" autofocus on-value-changed="questionStemChanged" value="[[getQuestionStem(question)]]"></paper-input>
             </div>
 
-            <div style="display: flex">
-                <paper-input id="optionInput" type="text" label="Multiple choice option"></paper-input>
-                <button style="height: 100%; margin-top: 8%; margin-left: .5vw" on-click="addOptionClick">Add</button>
-            </div>
-
             <paper-dialog-scrollable>
                 <dom-repeat items="[[userRadios]]">
                     <template>
@@ -40,6 +35,11 @@
                     </template>
                 </dom-repeat>
             </paper-dialog-scrollable>
+
+            <div style="display: flex">
+                <paper-input id="optionInput" type="text" label="Multiple choice option"></paper-input>
+                <button style="height: 100%; margin-top: 8%; margin-left: .5vw" on-click="addOptionClick">Add</button>
+            </div>
 
             <div style="display: flex">
                 <paper-button style="margin-left: auto" raised on-click="doneClick">Done</paper-button>

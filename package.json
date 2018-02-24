@@ -38,8 +38,8 @@
     "@types/esprima": "^4.0.1",
     "bower": "^1.8.0",
     "deep-equal": "^1.0.1",
-    "guesswork": "^0.3.1",
+    "guesswork": "^0.5.3",
     "jsverify": "^0.8.2",
-    "scram-engine": "^0.6.17"
+    "scram-engine": "^0.6.18"
   }
 }

@@ -149,12 +149,13 @@ export class PrendusViewQuestion extends Polymer.Element {
 
         await loadQuestion(this.componentId, PRENDUS_VIEW_QUESTION, this.question, this.questionId, this.userToken);
 
+        //TODO this causes issues with the secureEval messaging, probably won't be hard to fix
         //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
-        window.parent.postMessage({
-            type: 'prendus-view-question-resize',
-            height: document.body.scrollHeight,
-            width: document.body.scrollWidth
-        }, '*');
+        // window.parent.postMessage({
+        //     type: 'prendus-view-question-resize',
+        //     height: document.body.scrollHeight,
+        //     width: document.body.scrollWidth
+        // }, '*');
 
         this.dispatchEvent(new CustomEvent('question-loaded'));
     }
@@ -217,17 +218,6 @@ export class PrendusViewQuestion extends Polymer.Element {
 
         const checkAnswerInfo = await checkAnswer(this._question.code, this.builtQuestion.originalVariableValues, userVariables, userInputs, userEssays, userCodes, userChecks, userRadios, userImages, userGraphs);
 
-        this.dispatchEvent(new CustomEvent('question-response', {
-            detail: {
-                userVariables,
-                userInputs,
-                userEssays,
-                userChecks,
-                userRadios,
-                userCodes
-            }
-        }));
-
         await execute(`
             mutation setCheckAnswerResponse($componentId: String!, $props: Any) {
                 updateComponentState(componentId: $componentId, props: $props)
@@ -242,6 +232,17 @@ export class PrendusViewQuestion extends Polymer.Element {
                 };
             }
         }, this.userToken);
+
+        this.dispatchEvent(new CustomEvent('question-response', {
+            detail: {
+                userVariables,
+                userInputs,
+                userEssays,
+                userChecks,
+                userRadios,
+                userCodes
+            }
+        }));
 
         this.shadowRoot.querySelector('#checkAnswerResponseToast').open();
     }

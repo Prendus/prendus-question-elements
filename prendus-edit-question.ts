@@ -162,12 +162,13 @@ class PrendusEditQuestion extends Polymer.Element {
 
         await loadQuestion(this.componentId, PRENDUS_EDIT_QUESTION, this.question, this.questionId, this.userToken);
 
+        //TODO this causes issues with the secureEval messaging, probably won't be hard to fix
         //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
-        window.parent.postMessage({
-            type: 'prendus-edit-question-resize',
-            height: document.body.scrollHeight,
-            width: document.body.scrollWidth
-        }, '*');
+        // window.parent.postMessage({
+        //     type: 'prendus-edit-question-resize',
+        //     height: document.body.scrollHeight,
+        //     width: document.body.scrollWidth
+        // }, '*');
 
         this.dispatchEvent(new CustomEvent('question-loaded'));
     }

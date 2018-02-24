@@ -1,7 +1,7 @@
 import {parse, compileToAssessML, compileToHTML} from '../node_modules/assessml/assessml';
 import {AST, ASTObject} from '../node_modules/assessml/assessml.d';
 import {GQLRequest} from '../node_modules/prendus-shared/services/graphql-service';
-import {arbAST, verifyHTML, resetNums} from '../node_modules/assessml/test-utilities';
+import {arbAST, verifyHTML} from '../node_modules/assessml/test-utilities';
 import {generateVarValue, getASTObjectPayload} from '../node_modules/assessml/assessml';
 import {generateArbQuestion} from '../node_modules/prendus-question-elements/test-utilities';
 import {UserCheck, UserRadio, UserInput, UserEssay, Question} from '../prendus-question-elements.d';
@@ -35,7 +35,6 @@ class PrendusViewQuestionTest extends HTMLElement {
 
         async function test1(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
-            resetNums();
             const prendusViewQuestion = new PrendusViewQuestion();
             const {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
             prendusViewQuestion.addEventListener('question-loaded', eventListener);
@@ -55,7 +54,6 @@ class PrendusViewQuestionTest extends HTMLElement {
         this.shadowRoot.appendChild(setQuestionPropertyMultipleTimesPrendusViewQuestion);
         async function test2(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
-            resetNums();
             const {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
             setQuestionPropertyMultipleTimesPrendusViewQuestion.addEventListener('question-loaded', eventListener);
             setQuestionPropertyMultipleTimesPrendusViewQuestion.question = arbQuestion;
@@ -70,7 +68,6 @@ class PrendusViewQuestionTest extends HTMLElement {
 
         async function test3(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
-            resetNums();
             const data = await createQuestion(prendusQuestionElementsTestUserId, prendusQuestionElementsTestJWT, arbQuestion);
             const questionId = data.createQuestion.id;
             const {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
@@ -93,7 +90,6 @@ class PrendusViewQuestionTest extends HTMLElement {
         this.shadowRoot.appendChild(setQuestionIdPropertyMultipleTimesPrendusViewQuestion);
         async function test4(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
-            resetNums();
             const data = await createQuestion(prendusQuestionElementsTestUserId, prendusQuestionElementsTestJWT, arbQuestion);
             const questionId = data.createQuestion.id;
             const {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
@@ -113,7 +109,6 @@ class PrendusViewQuestionTest extends HTMLElement {
         this.shadowRoot.appendChild(interleaveQuestionAndQuestionIdPropertyPrendusViewQuestion);
         async function test5(rawArbQuestion: JSVerify.Arbitrary<Question>, questionOrQuestionId: JSVerify.Arbitrary<boolean>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
-            resetNums();
             const data = questionOrQuestionId ? {
                 createQuestion: {
                     id: null
@@ -135,7 +130,6 @@ class PrendusViewQuestionTest extends HTMLElement {
 
         async function test6(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
-            resetNums();
             const prendusViewQuestion = new PrendusViewQuestion();
             let {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
             prendusViewQuestion.addEventListener('question-loaded', eventListener);
@@ -184,7 +178,6 @@ class PrendusViewQuestionTest extends HTMLElement {
         this.shadowRoot.appendChild(userInputsCorrectAnswerPrendusViewQuestion);
         async function test7(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
-            resetNums();
             let {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
             userInputsCorrectAnswerPrendusViewQuestion.addEventListener('question-loaded', eventListener);
             userInputsCorrectAnswerPrendusViewQuestion.question = arbQuestion;
@@ -227,7 +220,6 @@ class PrendusViewQuestionTest extends HTMLElement {
 
         async function test8(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
-            resetNums();
             const prendusViewQuestion = new PrendusViewQuestion();
             let {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
             prendusViewQuestion.addEventListener('question-loaded', eventListener);
@@ -276,7 +268,6 @@ class PrendusViewQuestionTest extends HTMLElement {
         this.shadowRoot.appendChild(userInputsInCorrectAnswerPrendusViewQuestion);
         async function test9(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);
-            resetNums();
             let {eventPromise, eventListener} = prepareEventListener(questionLoadedListener);
             userInputsInCorrectAnswerPrendusViewQuestion.addEventListener('question-loaded', eventListener);
             userInputsInCorrectAnswerPrendusViewQuestion.question = arbQuestion;
@@ -387,30 +378,30 @@ function prepareArbQuestion(rawArbQuestion) {
 }
 
 function verifyQuestionLoaded(prendusViewQuestion, arbQuestion) {
-    const result = (
-        deepEqual(prendusViewQuestion._question, arbQuestion) &&
-        deepEqual(prendusViewQuestion.loaded, true) &&
-        deepEqual(
-            compileToAssessML(
-                prendusViewQuestion.builtQuestion.ast,
-                (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'VARIABLE', varName),
-                (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'IMAGE', varName),
-                (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'GRAPH', varName),
-                (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'SHUFFLE', varName)
-            ),
-            arbQuestion.text
-        ) &&
-        verifyHTML(
-            parse(
-                arbQuestion.text,
-                (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'VARIABLE', varName),
-                (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'IMAGE', varName),
-                (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'GRAPH', varName),
-                (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'SHUFFLE', varName)
-            ),
-            prendusViewQuestion.builtQuestion.html
-        )
+    const questionCorrect = deepEqual(prendusViewQuestion._question, arbQuestion);
+    const loaded = deepEqual(prendusViewQuestion.loaded, undefined);
+    const builtQuestionCorrect = deepEqual(
+        compileToAssessML(
+            prendusViewQuestion.builtQuestion.ast,
+            (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'VARIABLE', varName),
+            (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'IMAGE', varName),
+            (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'GRAPH', varName),
+            (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'SHUFFLE', varName)
+        ),
+        arbQuestion.text
     );
+    const htmlCorrect = verifyHTML(
+        parse(
+            arbQuestion.text,
+            (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'VARIABLE', varName),
+            (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'IMAGE', varName),
+            (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'GRAPH', varName),
+            (varName: string) => getASTObjectPayload(prendusViewQuestion.builtQuestion.ast, 'SHUFFLE', varName)
+        ),
+        prendusViewQuestion.builtQuestion.html
+    );
+
+    const result = questionCorrect && loaded && builtQuestionCorrect && htmlCorrect;
 
     return result;
 }

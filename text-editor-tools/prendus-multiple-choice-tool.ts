@@ -91,7 +91,8 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
 
     getQuestionStem(question) {
         const assessMLAST = parse(question.text, () => 5, () => '', () => [], () => []);
-        return (assessMLAST.ast[0] && assessMLAST.ast[0].type === 'CONTENT' ? assessMLAST.ast[0].content : '').replace(/<p>|<\/p>|<br>/g, '');
+        //TODO the .replace(/&nbsp;/g, ' ') might be handled better by truly understanding why the text editor is using html encoding
+        return (assessMLAST.ast[0] && assessMLAST.ast[0].type === 'CONTENT' ? assessMLAST.ast[0].content : '').replace(/<p>|<\/p>|<br>/g, '').replace(/&nbsp;/g, ' ');
     }
 }
 

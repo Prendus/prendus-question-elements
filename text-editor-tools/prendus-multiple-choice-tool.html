@@ -37,8 +37,8 @@
             </paper-dialog-scrollable>
 
             <div style="display: flex">
-                <paper-input id="optionInput" type="text" label="Multiple choice option"></paper-input>
-                <button style="height: 100%; margin-top: 8%; margin-left: .5vw" on-click="addOptionClick">Add</button>
+                <paper-input id="optionInput" type="text" label="Multiple choice option" on-keydown="checkForEnter"></paper-input>
+                <paper-button style="margin-top: 8%; margin-left: .5vw" on-click="addOptionClick" raised>Add</paper-button>
             </div>
 
             <div style="display: flex">

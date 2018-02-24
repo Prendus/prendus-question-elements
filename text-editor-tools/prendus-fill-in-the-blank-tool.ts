@@ -26,7 +26,7 @@ class PrendusFillInTheBlankTool extends WysiwygTool {
         this.shadowRoot.querySelector('#inputDialog').close();
     }
 
-    addBlankAnswerClick(e: Event) {
+    addBlankAnswerClick() {
         const blankAnswerInput = this.shadowRoot.querySelector('#blankAnswerInput');
         const answer = blankAnswerInput.value;
 
@@ -37,6 +37,15 @@ class PrendusFillInTheBlankTool extends WysiwygTool {
         }));
 
         blankAnswerInput.value = '';
+        setTimeout(() => {
+            blankAnswerInput.focus()
+        });
+    }
+
+    checkForEnter(e: KeyboardEvent) {
+        if (e.keyCode === 13) {
+            this.addBlankAnswerClick();
+        }
     }
 
     inputAnswerChanged(e: CustomEvent) {

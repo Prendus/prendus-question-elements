@@ -41,6 +41,15 @@ class PrendusMultipleSelectTool extends WysiwygTool {
         }));
 
         contentInput.value = '';
+        setTimeout(() => {
+            contentInput.focus();
+        });
+    }
+
+    checkForEnter(e: KeyboardEvent) {
+        if (e.keyCode === 13) {
+            this.addOptionClick();
+        }
     }
 
     checkCorrectChanged(e: any) {

@@ -30,8 +30,8 @@
             </paper-dialog-scrollable>
 
             <div style="display: flex">
-                <paper-input id="blankAnswerInput" type="text" label="Blank answer" autofocus></paper-input>
-                <button style="height: 100%; margin-top: 8%; margin-left: .5vw" on-click="addBlankAnswerClick">Add</button>
+                <paper-input id="blankAnswerInput" type="text" label="Blank answer" autofocus on-keydown="checkForEnter"></paper-input>
+                <paper-button style="margin-top: 8%; margin-left: .5vw" on-click="addBlankAnswerClick" raised>Add</paper-button>
             </div>
 
             <div style="display: flex">

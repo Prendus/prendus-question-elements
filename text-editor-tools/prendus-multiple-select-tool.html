@@ -1,5 +1,6 @@
 <link rel="import" href="../../../bower_components/wysiwyg-e/wysiwyg-tool.html">
 <link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
 <link rel="import" href="../../../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../../bower_components/iron-icon/iron-icon.html">
@@ -28,15 +29,17 @@
                 <button style="height: 100%; margin-top: 8%; margin-left: .5vw" on-click="addOptionClick">Add</button>
             </div>
 
-            <dom-repeat items="[[userChecks]]">
-                <template>
-                    <div style="display: flex">
-                        <paper-input id="[[item.varName]]-input" type="text" value="[[getCompiledContent(item.content)]]" on-input="checkContentChanged"></paper-input>
-                        <div>Correct:</div>
-                        <paper-toggle-button id="[[item.varName]]-toggle" checked="[[item.checked]]" on-checked-changed="checkCorrectChanged"></paper-toggle-button>
-                    </div>
-                </template>
-            </dom-repeat>
+            <paper-dialog-scrollable>
+                <dom-repeat items="[[userChecks]]">
+                    <template>
+                        <div style="display: flex">
+                            <paper-input id="[[item.varName]]-input" type="text" value="[[getCompiledContent(item.content)]]" on-input="checkContentChanged"></paper-input>
+                            <div>Correct:</div>
+                            <paper-toggle-button id="[[item.varName]]-toggle" checked="[[item.checked]]" on-checked-changed="checkCorrectChanged"></paper-toggle-button>
+                        </div>
+                    </template>
+                </dom-repeat>
+            </paper-dialog-scrollable>
 
             <div style="display: flex">
                 <paper-button style="margin-left: auto" raised on-click="doneClick">Done</paper-button>

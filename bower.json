@@ -25,7 +25,8 @@
     "iron-icon": "^2.0.1",
     "paper-tooltip": "^2.0.1",
     "wysiwyg-e": "^2.1.0",
-    "paper-toggle-button": "^2.0.0"
+    "paper-toggle-button": "^2.0.0",
+    "paper-dialog-scrollable": "^2.2.0"
   },
   "resolutions": {
     "webcomponentsjs": "^v1.0.2"

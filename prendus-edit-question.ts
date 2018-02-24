@@ -198,6 +198,8 @@ class PrendusEditQuestion extends Polymer.Element {
                 }
             `, {
                 prepareToSaveText: async (previousResult: any) => {
+
+                    //TODO this all handles tag deletion and insertion. We might want to abstract this somehow
                     const originalUserRadioASTObjects = getUserASTObjectsFromAnswerAssignment(this._question ? this._question.text : '', this._question ? this._question.code : '', 'RADIO');
                     const currentUserRadioASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'RADIO');
                     const deletedUserRadioASTObjects = originalUserRadioASTObjects.filter((originalUserRadioASTObject) => {
@@ -205,9 +207,17 @@ class PrendusEditQuestion extends Polymer.Element {
                             return originalUserRadioASTObject.varName === currentUserRadioASTObject.varName;
                         }).length === 0;
                     });
+                    const insertedUserRadioASTObjects = currentUserRadioASTObjects.filter((currentUserRadioASTObject) => {
+                        return originalUserRadioASTObjects.filter((originalUserRadioASTObject) => {
+                            return currentUserRadioASTObject.varName === originalUserRadioASTObject.varName;
+                        }).length === 0;
+                    });
                     const radiosDeletedCode = deletedUserRadioASTObjects.reduce((result, deletedUserRadioASTObject) => {
                         return nullifyUserASTObjectInAnswerAssignment(result, deletedUserRadioASTObject);
                     }, this._question ? this._question.code : '');
+                    const radiosInsertedCode = insertedUserRadioASTObjects.reduce((result, insertedUserRadioAstObject) => {
+                        return insertRadioOrCheckIntoCode(result, insertedUserRadioAstObject.varName, false);
+                    }, radiosDeletedCode);
 
                     const originalUserCheckASTObjects = getUserASTObjectsFromAnswerAssignment(this._question ? this._question.text : '', this._question ? this._question.code : '', 'CHECK');
                     const currentUserCheckASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'CHECK');
@@ -216,9 +226,17 @@ class PrendusEditQuestion extends Polymer.Element {
                             return originalUserCheckASTObject.varName === currentUserCheckASTObject.varName;
                         }).length === 0;
                     });
+                    const insertedUserCheckASTObjects = currentUserCheckASTObjects.filter((currentUserCheckASTObject) => {
+                        return originalUserCheckASTObjects.filter((originalUserCheckASTObject) => {
+                            return currentUserCheckASTObject.varName === originalUserCheckASTObject.varName;
+                        }).length === 0;
+                    });
                     const checksDeletedCode = deletedUserCheckASTObjects.reduce((result, deletedUserCheckASTObject) => {
                         return nullifyUserASTObjectInAnswerAssignment(result, deletedUserCheckASTObject);
-                    }, radiosDeletedCode);
+                    }, radiosInsertedCode);
+                    const checksInsertedCode = insertedUserCheckASTObjects.reduce((result, insertedUserCheckAstObject) => {
+                        return insertRadioOrCheckIntoCode(result, insertedUserCheckAstObject.varName, false);
+                    }, checksDeletedCode);
 
                     const originalUserInputASTObjects = getUserASTObjectsFromAnswerAssignment(this._question ? this._question.text : '', this._question ? this._question.code : '', 'INPUT');
                     const currentUserInputASTObjects = getUserASTObjectsFromAnswerAssignment(text, this._question ? this._question.code : '', 'INPUT');
@@ -227,9 +245,17 @@ class PrendusEditQuestion extends Polymer.Element {
                             return originalUserInputASTObject.varName === currentUserInputASTObject.varName;
                         }).length === 0;
                     });
+                    const insertedUserInputASTObjects = currentUserInputASTObjects.filter((currentUserInputASTObject) => {
+                        return originalUserInputASTObjects.filter((originalUserInputASTObject) => {
+                            return currentUserInputASTObject.varName === originalUserInputASTObject.varName;
+                        }).length === 0;
+                    });
                     const inputsDeletedCode = deletedUserInputASTObjects.reduce((result, deletedUserInputASTObject) => {
                         return nullifyUserASTObjectInAnswerAssignment(result, deletedUserInputASTObject);
-                    }, checksDeletedCode);
+                    }, checksInsertedCode);
+                    const inputsInsertedCode = insertedUserInputASTObjects.reduce((result, insertedUserInputAstObject) => {
+                        return insertInputIntoCode(result, insertedUserInputAstObject.varName, '');
+                    }, inputsDeletedCode);
 
                     const originalUserImageASTObjects = getAstObjects(parse(this._question ? this._question.text : '', () => 5, () => '', () => [], () => []), 'IMAGE');
                     const currentUserImageASTObjects = getAstObjects(parse(text, () => 5, () => '', () => [], () => []), 'IMAGE');
@@ -243,7 +269,8 @@ class PrendusEditQuestion extends Polymer.Element {
                     const imagesDeletedCode = await asyncReduce(userImageASTObjectsToRemove, async (result, userImageASTObjectToRemove) => {
                         const imageSrc = await getPropertyValue(jsAst, amlAst, userImageASTObjectToRemove.varName, 'src', '');
                         return removeImageFromCode(result, userImageASTObjectToRemove.varName, imageSrc);
-                    }, inputsDeletedCode);
+                    }, inputsInsertedCode);
+                    //TODO this all handles tag deletion and insertion. We might want to abstract this somehow
 
                     const newQuestion = {
                         ...this._question,

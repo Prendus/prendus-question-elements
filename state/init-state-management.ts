@@ -52,5 +52,6 @@ GraphSMInit({
             };
         }
     },
-    reduxMiddlewares: []
+    reduxMiddlewares: [],
+    remoteEndpoint: 'https://api.graph.cool/simple/v1/cj48qaw2u6uyd01411y8gj8fr'
 });

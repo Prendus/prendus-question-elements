@@ -1,15 +1,15 @@
 <script type="module" src="state/init-state-management.ts"></script>
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="prendus-view-question.html">
-<!-- <link rel="import" href="text-editor-tools/prendus-variable-tool.html"> -->
+<link rel="import" href="text-editor-tools/prendus-variable-tool.html">
 <link rel="import" href="text-editor-tools/prendus-fill-in-the-blank-tool.html">
-<!-- <link rel="import" href="text-editor-tools/prendus-essay-tool.html"> -->
-<!-- <link rel="import" href="text-editor-tools/prendus-code-tool.html"> -->
+<link rel="import" href="text-editor-tools/prendus-essay-tool.html">
+<link rel="import" href="text-editor-tools/prendus-code-tool.html">
 <link rel="import" href="text-editor-tools/prendus-multiple-choice-tool.html">
 <link rel="import" href="text-editor-tools/prendus-multiple-select-tool.html">
-<!-- <link rel="import" href="text-editor-tools/prendus-math-tool.html"> -->
+<link rel="import" href="text-editor-tools/prendus-math-tool.html">
 <link rel="import" href="text-editor-tools/prendus-image-tool.html">
-<!-- <link rel="import" href="text-editor-tools/prendus-graph-tool.html"> -->
+<link rel="import" href="text-editor-tools/prendus-graph-tool.html">
 <link rel="import" href="text-editor-tools/prendus-reset-tool.html">
 <link rel="import" href="../../node_modules/juicy-ace-editor/juicy-ace-editor.html">
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
@@ -120,16 +120,65 @@
                         </paper-tooltip>
 
                         <wysiwyg-e id="textEditor" class="editor" value="[[_question.text]]" on-value-changed="textEditorChanged" allowed-tag-names="[[getAllowedTagNames()]]">
-                            <prendus-multiple-choice-tool id="prendus-multiple-choice-tool" on-insert-radio="insertRadio" user-radios="[[userRadiosFromCode]]" on-radio-correct-changed="radioCorrectChanged" on-radio-content-changed="radioContentChanged" on-question-stem-changed="insertQuestionStem" question="[[_question]]"></prendus-multiple-choice-tool>
-                            <prendus-multiple-select-tool id="prendus-multiple-select-tool" on-insert-check="insertCheck" user-checks="[[userChecksFromCode]]" on-check-correct-changed="checkCorrectChanged" on-check-content-changed="checkContentChanged" on-question-stem-changed="insertQuestionStem" question="[[_question]]"></prendus-multiple-select-tool>
-                            <prendus-fill-in-the-blank-tool id="prendus-fill-in-the-blank-tool" on-insert-input="insertInput" user-inputs="[[userInputsFromCode]]" on-input-answer-changed="inputAnswerChanged" question="[[_question]]"></prendus-fill-in-the-blank-tool>
-                            <prendus-essay-tool id="prendus-essay-tool" on-insert-essay="insertEssay"></prendus-essay-tool>
-                            <prendus-code-tool id="prendus-code-tool" on-insert-code="insertCode"></prendus-code-tool>
-                            <prendus-variable-tool id="prendus-variable-tool" on-insert-variable="insertVariable"></prendus-variable-tool>
-                            <prendus-math-tool id="prendus-math-tool" on-insert-math="insertMath"></prendus-math-tool>
-                            <prendus-image-tool id="prendus-image-tool" on-insert-image="insertImage"></prendus-image-tool>
-                            <prendus-graph-tool id="prendus-graph-tool" on-insert-graph="insertGraph"></prendus-graph-tool>
-                            <prendus-reset-tool id="prendus-reset-tool" on-reset-text-and-code="resetTextAndCode"></prendus-reset-tool>
+                            <dom-if if="[[multipleChoiceTool]]">
+                                <template>
+                                    <prendus-multiple-choice-tool id="prendus-multiple-choice-tool" on-insert-radio="insertRadio" user-radios="[[userRadiosFromCode]]" on-radio-correct-changed="radioCorrectChanged" on-radio-content-changed="radioContentChanged" on-question-stem-changed="insertQuestionStem" question="[[_question]]"></prendus-multiple-choice-tool>
+                                </template>
+                            </dom-if>
+
+                            <dom-if if="[[multipleSelectTool]]">
+                                <template>
+                                    <prendus-multiple-select-tool id="prendus-multiple-select-tool" on-insert-check="insertCheck" user-checks="[[userChecksFromCode]]" on-check-correct-changed="checkCorrectChanged" on-check-content-changed="checkContentChanged" on-question-stem-changed="insertQuestionStem" question="[[_question]]"></prendus-multiple-select-tool>
+                                </template>
+                            </dom-if>
+
+                            <dom-if if="[[fillInTheBlankTool]]">
+                                <template>
+                                    <prendus-fill-in-the-blank-tool id="prendus-fill-in-the-blank-tool" on-insert-input="insertInput" user-inputs="[[userInputsFromCode]]" on-input-answer-changed="inputAnswerChanged" question="[[_question]]"></prendus-fill-in-the-blank-tool>
+                                </template>
+                            </dom-if>
+
+                            <dom-if if="[[essayTool]]">
+                                <template>
+                                    <prendus-essay-tool id="prendus-essay-tool" on-insert-essay="insertEssay"></prendus-essay-tool>
+                                </template>
+                            </dom-if>
+
+                            <dom-if if="[[codeTool]]">
+                                <template>
+                                    <prendus-code-tool id="prendus-code-tool" on-insert-code="insertCode"></prendus-code-tool>
+                                </template>
+                            </dom-if>
+
+                            <dom-if if="[[variableTool]]">
+                                <template>
+                                    <prendus-variable-tool id="prendus-variable-tool" on-insert-variable="insertVariable"></prendus-variable-tool>
+                                </template>
+                            </dom-if>
+
+                            <dom-if if="[[mathTool]]">
+                                <template>
+                                    <prendus-math-tool id="prendus-math-tool" on-insert-math="insertMath"></prendus-math-tool>
+                                </template>
+                            </dom-if>
+
+                            <dom-if if="[[imageTool]]">
+                                <template>
+                                    <prendus-image-tool id="prendus-image-tool" on-insert-image="insertImage"></prendus-image-tool>
+                                </template>
+                            </dom-if>
+
+                            <dom-if if="[[graphTool]]">
+                                <template>
+                                    <prendus-graph-tool id="prendus-graph-tool" on-insert-graph="insertGraph"></prendus-graph-tool>
+                                </template>
+                            </dom-if>
+
+                            <dom-if if="[[resetTool]]">
+                                <template>
+                                    <prendus-reset-tool id="prendus-reset-tool" on-reset-text-and-code="resetTextAndCode"></prendus-reset-tool>
+                                </template>
+                            </dom-if>
                         </wysiwyg-e>
                         <div class="savingText">[[getSavingText(saving)]]</div>
                     </div>

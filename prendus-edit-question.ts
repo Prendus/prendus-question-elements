@@ -110,6 +110,36 @@ class PrendusEditQuestion extends Polymer.Element {
             },
             userToken: {
                 type: String
+            },
+            multipleChoiceTool: {
+                type: Boolean
+            },
+            multipleSelectTool: {
+                type: Boolean
+            },
+            fillInTheBlankTool: {
+                type: Boolean
+            },
+            essayTool: {
+                type: Boolean
+            },
+            codeTool: {
+                type: Boolean
+            },
+            variableTool: {
+                type: Boolean
+            },
+            mathTool: {
+                type: Boolean
+            },
+            imageTool: {
+                type: Boolean
+            },
+            graphTool: {
+                type: Boolean
+            },
+            resetTool: {
+                type: Boolean
             }
         };
     }

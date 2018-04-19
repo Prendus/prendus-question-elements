@@ -13,11 +13,11 @@ import {
 } from './services/question-service';
 import {
     createUUID
-} from '../prendus-shared/services/utilities-service';
+} from './node_modules/prendus-shared/services/utilities-service';
 import {
     getAstObjects,
     compileToHTML
-} from '../assessml/assessml';
+} from 'assessml';
 import {
     AST,
     Variable,
@@ -28,13 +28,13 @@ import {
     Drag,
     Drop,
     Image
-} from '../assessml/assessml.d';
+} from 'assessml/assessml.d';
 import {
     execute,
     subscribe,
     extendSchema,
     addIsTypeOf
-} from '../graphsm/graphsm';
+} from './node_modules/graphsm/graphsm';
 import {
     loadQuestion
 } from './services/shared-service';

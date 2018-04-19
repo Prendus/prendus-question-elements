@@ -6,7 +6,8 @@
     "test": "npm run link && xvfb-run -a electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --auto-run",
     "test-window": "npm run link && electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --window",
     "test-auto": "npm run link && electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --auto-run",
-    "link": "npm link && npm link prendus-question-elements"
+    "link": "npm link && npm link prendus-question-elements",
+    "test-guesswork": "guesswork --entry test/index.js"
   },
   "repository": {
     "type": "git",
@@ -20,7 +21,7 @@
   },
   "homepage": "https://github.com/Prendus/prendus-question-elements#readme",
   "dependencies": {
-    "assessml": "^0.12.1",
+    "assessml": "^0.12.3",
     "d3": "^3.5.17",
     "dompurify": "^1.0.1",
     "escodegen-temp": "git+https://github.com/Prendus/escodegen-temp.git",
@@ -37,9 +38,7 @@
   "devDependencies": {
     "@types/esprima": "^4.0.1",
     "bower": "^1.8.0",
-    "deep-equal": "^1.0.1",
-    "guesswork": "^0.5.3",
-    "jsverify": "^0.8.2",
-    "scram-engine": "^0.6.18"
+    "deep-equal-es-module": "0.0.0",
+    "guesswork": "^0.10.5"
   }
 }

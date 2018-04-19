@@ -1,6 +1,6 @@
-import {parse, compileToHTML, getAstObjects, generateRandomInteger} from '../../assessml/assessml';
-import {asyncMap, asyncReduce} from '../../prendus-shared/services/utilities-service';
-import {secureEval} from '../../secure-eval/secure-eval';
+import {parse, compileToHTML, getAstObjects, generateRandomInteger} from 'assessml';
+import {asyncMap, asyncReduce} from '../node_modules/prendus-shared/services/utilities-service';
+import {secureEval} from '../node_modules/secure-eval/secure-eval';
 import {
     AST,
     ASTObject,
@@ -17,7 +17,7 @@ import {
     Code,
     Graph,
     ASTObjectType
-} from '../../assessml/assessml.d';
+} from 'assessml/assessml.d';
 import {
     Program,
     ExpressionStatement,
@@ -40,7 +40,7 @@ import {
     LogicalExpression
 } from 'estree';
 import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay, UserASTObject} from '../prendus-question-elements.d';
-import {normalizeASTObjectPayloads} from '../../assessml/assessml';
+import {normalizeASTObjectPayloads} from 'assessml';
 
 declare var esprima: any;
 

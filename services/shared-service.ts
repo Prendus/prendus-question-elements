@@ -1,6 +1,6 @@
-import {execute} from '../../graphsm/graphsm';
+import {execute} from '../node_modules/graphsm/graphsm';
 import {buildQuestion} from './question-service';
-import {getAstObjects} from '../../assessml/assessml';
+import {getAstObjects} from 'assessml';
 
 export async function loadQuestion(componentId: string, componentType: string, question: any, questionId: string, userToken: string | null) {
     await execute(`

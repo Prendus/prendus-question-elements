@@ -1,5 +1,5 @@
 import {execute} from '../../graphsm/graphsm';
-import {buildQuestion} from './question-service';
+import {buildQuestion, getUserASTObjectsFromAnswerAssignment} from './question-service';
 import {getAstObjects} from '../../assessml/assessml';
 
 export async function loadQuestion(componentId: string, componentType: string, question: any, questionId: string, userToken: string | null) {
@@ -68,7 +68,10 @@ export async function loadQuestion(componentId: string, componentType: string, q
                     props: {
                         question,
                         builtQuestion,
-                        showSolution: builtQuestion ? getAstObjects(builtQuestion.ast, 'SOLUTION').length > 0 : false
+                        showSolution: builtQuestion ? getAstObjects(builtQuestion.ast, 'SOLUTION').length > 0 : false,
+                        userRadiosFromCode: getUserASTObjectsFromAnswerAssignment(question.text, question.code, 'RADIO'),
+                        userChecksFromCode: getUserASTObjectsFromAnswerAssignment(question.text, question.code, 'CHECK'),
+                        userInputsFromCode: getUserASTObjectsFromAnswerAssignment(question.text, question.code, 'INPUT')
                     }
                 };
             }
@@ -81,7 +84,10 @@ export async function loadQuestion(componentId: string, componentType: string, q
                     props: {
                         question,
                         builtQuestion,
-                        showSolution: builtQuestion ? getAstObjects(builtQuestion.ast, 'SOLUTION').length > 0 : false
+                        showSolution: builtQuestion ? getAstObjects(builtQuestion.ast, 'SOLUTION').length > 0 : false,
+                        userRadiosFromCode: getUserASTObjectsFromAnswerAssignment(question.text, question.code, 'RADIO'),
+                        userChecksFromCode: getUserASTObjectsFromAnswerAssignment(question.text, question.code, 'CHECK'),
+                        userInputsFromCode: getUserASTObjectsFromAnswerAssignment(question.text, question.code, 'INPUT')
                     }
                 };
             }

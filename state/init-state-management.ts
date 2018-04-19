@@ -2,6 +2,7 @@ import {
     GraphSMInit,
     Any
 } from '../../graphsm/graphsm';
+import {getGraphcoolHTTPEndpoint} from '../../prendus-shared/services/utilities-service';
 
 const reduxLogger = (store) => (next) => (action) => {
     console.log('dispatching', action);
@@ -52,5 +53,6 @@ GraphSMInit({
             };
         }
     },
-    reduxMiddlewares: []
+    reduxMiddlewares: [],
+    remoteEndpoint: getGraphcoolHTTPEndpoint()
 });

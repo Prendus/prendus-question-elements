@@ -10,8 +10,8 @@ import {PrendusViewQuestion} from '../node_modules/prendus-question-elements/pre
 
 const jsc = require('jsverify');
 const deepEqual = require('deep-equal');
-const prendusQuestionElementsTestUserId = 'cj4oe24w1ei1u0160f2daribf';
-const prendusQuestionElementsTestJWT = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE1MDMwMDE3MjAsImNsaWVudElkIjoiY2oyd2lmdnZmM29raTAxNTRtZnN0c2lscCIsInByb2plY3RJZCI6ImNqMzZkZTlxNGRlbTAwMTM0Ymhrd200NHIiLCJwZXJtYW5lbnRBdXRoVG9rZW5JZCI6ImNqNmd3ZjF6NjF2YTYwMTEwbDlra2hwMWIifQ.I-3cxsgRzg1ArFylmkdNTxobkqKiEdpHNZ0_9vQ1kfQ';
+const prendusQuestionElementsTestUserId = 'cje4i8o2e1s4x01314c4nt9v4';
+const prendusQuestionElementsTestJWT = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MjY3NTI4MTcsImlhdCI6MTUyNDE2MDgxNywicHJvamVjdElkIjoiY2o4ZGx6eGduMG95cjAxNDQ1NzR1Mml2YiIsInVzZXJJZCI6ImNqZTRpOG8yZTFzNHgwMTMxNGM0bnQ5djQiLCJtb2RlbE5hbWUiOiJVc2VyIn0.FLTVHAQYH5h-Tzk-DlxAP0E8u6l0kJqx2GMh-TQmsCI';
 
 class PrendusViewQuestionTest extends HTMLElement {
     shadowRoot: ShadowRoot;
@@ -336,13 +336,17 @@ function prepareEventListener(eventListener: EventListener) {
 }
 
 async function createQuestion(prendusQuestionElementsTestUserId: string, prendusQuestionElementsTestJWT: string, arbQuestion) {
+    const DEFAULT_QUESTION_VISIBILITY_ID = window.process.env.NODE_ENV === 'production' ? 'cjeeq78rc6h6h0189oq3yrbgv' : 'cjebyzjku5yiq018991vwbbyo';
+    const DEFAULT_QUESTION_LICENSE_ID = window.process.env.NODE_ENV === 'production' ? 'cje7p5cg051940189kq9gy6to' : 'cje4ugv8u4fjx0189dmif4moc';
+
     return await GQLRequest(`
         mutation createQuestion($authorId: ID!, $text: String!, $code: String!) {
             createQuestion(
                 authorId: $authorId
                 text: $text
                 code: $code
-                visibility: PUBLIC
+                visibilityId: "${DEFAULT_QUESTION_VISIBILITY_ID}"
+                licenseId: "${DEFAULT_QUESTION_LICENSE_ID}"
             ) {
                 id
             }

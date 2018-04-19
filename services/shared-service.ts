@@ -60,16 +60,33 @@ export async function loadQuestion(componentId: string, componentType: string, q
             };
         },
         questionPrepared: async (previousResult: any) => {
-            const question = previousResult.data.componentState.question;
-            const builtQuestion = await buildQuestion(question.text, question.code);
-            return {
-                componentId: componentId,
-                props: {
-                    question,
-                    builtQuestion,
-                    showSolution: builtQuestion ? getAstObjects(builtQuestion.ast, 'SOLUTION').length > 0 : false
-                }
-            };
+            if (previousResult.data.question) {
+                const question = previousResult.data.question;
+                const builtQuestion = await buildQuestion(question.text, question.code);
+                return {
+                    componentId: componentId,
+                    props: {
+                        question,
+                        builtQuestion,
+                        showSolution: builtQuestion ? getAstObjects(builtQuestion.ast, 'SOLUTION').length > 0 : false
+                    }
+                };
+            }
+
+            if (previousResult.data.componentState) {
+                const question = previousResult.data.componentState.question;
+                const builtQuestion = await buildQuestion(question.text, question.code);
+                return {
+                    componentId: componentId,
+                    props: {
+                        question,
+                        builtQuestion,
+                        showSolution: builtQuestion ? getAstObjects(builtQuestion.ast, 'SOLUTION').length > 0 : false
+                    }
+                };
+            }
+
+            return {};
         }
     }, userToken);
 }

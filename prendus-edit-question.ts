@@ -328,12 +328,6 @@ class PrendusEditQuestion extends Polymer.Element {
                     };
                 }
             }, this.userToken);
-
-            this.dispatchEvent(new CustomEvent('text-changed', {
-                detail: {
-                    text
-                }
-            }));
         }, 200);
     }
 
@@ -383,12 +377,6 @@ class PrendusEditQuestion extends Polymer.Element {
                     };
                 }
             }, this.userToken);
-
-            this.dispatchEvent(new CustomEvent('code-changed', {
-                detail: {
-                    code
-                }
-            }));
         }, 200);
     }
 
@@ -492,7 +480,7 @@ class PrendusEditQuestion extends Polymer.Element {
                 const textEditor = this.shadowRoot.querySelector('#textEditor');
                 const codeEditor = this.shadowRoot.querySelector('#codeEditor');
 
-                const code = codeEditor.value;
+                const currentCode = codeEditor.value;
 
                 const varString = `[${varName}]`;
                 const newTextNode = document.createTextNode(varString);
@@ -504,6 +492,7 @@ class PrendusEditQuestion extends Polymer.Element {
                 selection.addRange(textEditor.range0);
 
                 const text = textEditor.shadowRoot.querySelector('#editable').innerHTML;
+                const code = await insertVariableIntoCode(currentCode, varName, minValue, maxValue, precisionValue);
 
                 return {
                     componentId: this.componentId,
@@ -511,7 +500,7 @@ class PrendusEditQuestion extends Polymer.Element {
                         question: {
                             ...this._question,
                             text,
-                            code: await insertVariableIntoCode(code, varName, minValue, maxValue, precisionValue)
+                            code
                         },
                         textEditorLock: false,
                         codeEditorLock: false
@@ -1187,6 +1176,25 @@ class PrendusEditQuestion extends Polymer.Element {
     render(state) {
         const componentState = state.components[this.componentId];
         if (componentState) {
+
+            //TODO is the render function the appropriate place to put these events? I think a Redux middleware would probably be best
+            if (this._question && componentState.question && this._question.text !== componentState.question.text) {
+                this.dispatchEvent(new CustomEvent('text-changed', {
+                    detail: {
+                        text: componentState.question.text
+                    }
+                }));
+            }
+
+            //TODO is the render function the appropriate place to put these events? I think a Redux middleware would probably be best
+            if (this._question && componentState.question && this._question.code !== componentState.question.code) {
+                this.dispatchEvent(new CustomEvent('code-changed', {
+                    detail: {
+                        code: componentState.question.code
+                    }
+                }));
+            }
+
             this._question = componentState.question;
             this.loaded = componentState.loaded;
             this.selected = componentState.selected;

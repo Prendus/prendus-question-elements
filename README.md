@@ -6,11 +6,54 @@
 
 Fully embeddable custom HTML elements for questions made with [AssessML](https://github.com/Prendus/assessml). Use these elements in any web platform project, including [Web Components](https://www.webcomponents.org/), [Polymer](https://www.polymer-project.org/), [SkateJS](https://github.com/skatejs/skatejs), [React](https://facebook.github.io/react/), [Vue.js](https://vuejs.org/), [Angular](https://angular.io/), [Ember.js](https://www.emberjs.com/), and Vanilla.
 
-## Demo
+## Demos
 
-* [Click to see a live question editor](https://prendus.com/question/cj4yhatlcphu20137xdwhb3pu/demo)
-* [Click to see a live question](https://prendus.com/question/cj4yhatlcphu20137xdwhb3pu/view)
-* [Click to see many more examples](https://prendus.com/question/examples)
+[Playground with blank editor](https://www.prendus.com/question/playground)
+
+### Multiple choice
+
+[Basic demo]()
+[Advanced demo]()
+
+### Multiple select
+
+[Basic demo]()
+[Advanced demo]()
+
+### Fill in the blank
+
+[Basic demo]()
+[Advanced demo]()
+
+### Essay
+
+[Basic demo]()
+[Advanced demo]()
+
+### Code
+
+[Basic demo]()
+[Advanced demo]()
+
+### Variables
+
+[Basic demo]()
+[Advanced demo]()
+
+### Math symbols
+
+[Basic demo]()
+[Advanced demo]()
+
+### Images
+
+[Basic demo]()
+[Advanced demo]()
+
+### Graphs
+
+[Basic demo]()
+[Advanced demo]()
 
 ## Installation
 

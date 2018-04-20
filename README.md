@@ -12,48 +12,53 @@ Fully embeddable custom HTML elements for questions made with [AssessML](https:/
 
 ### Multiple choice
 
-[Basic demo]()
-[Advanced demo]()
+[Basic demo](https://www.prendus.com/question/cjg7hm4ysanc001208wyufca1/demo)
+[Advanced demo](https://www.prendus.com/question/cjg7i2u5gb3e801382ly78oyp/demo)
 
 ### Multiple select
 
-[Basic demo]()
-[Advanced demo]()
+[Basic demo](https://www.prendus.com/question/cjg7i6q89b6z801154qf7cmzx/demo)
+[Advanced demo](https://www.prendus.com/question/cjg7iik10bd3301266hfj6qlb/demo)
 
 ### Fill in the blank
 
-[Basic demo]()
-[Advanced demo]()
+[Basic demo](https://www.prendus.com/question/cjg7im37lb2s50114aod9vpkd/demo)
+[Advanced demo](https://www.prendus.com/question/cjg7iqz5nb4p70114nodd157x/demo)
 
 ### Essay
 
-[Basic demo]()
-[Advanced demo]()
+[Basic demo](https://www.prendus.com/question/cjg7ivcm4b36k0120t8tceqjc/demo)
+[Advanced demo](https://www.prendus.com/question/cj4zyq5qbfjhs0121ced4hecl/demo)
 
 ### Code
 
-[Basic demo]()
-[Advanced demo]()
+[Basic demo](https://www.prendus.com/question/cjg863dp15hcd0102v4y5olus/demo)
+[Advanced demo](https://www.prendus.com/question/cjg86aar45l5p0113463xjk69/demo)
 
 ### Variables
 
-[Basic demo]()
-[Advanced demo]()
+[Basic demo](https://www.prendus.com/question/cjg86joz35q4i0144ouidk5c5/demo)
+[Advanced demo](https://www.prendus.com/question/cj9oy530qftpd0194ovo8g5z2/demo)
 
 ### Math symbols
 
-[Basic demo]()
-[Advanced demo]()
+[Basic demo](https://www.prendus.com/question/cjg86vw4a5sf50115pi3v8liq/demo)
+[Advanced demo](https://www.prendus.com/question/cjg87frjn61o001958jwxvmi5/demo)
 
 ### Images
 
-[Basic demo]()
-[Advanced demo]()
+[Basic demo](https://www.prendus.com/question/cjg86oncn5r780195ubdk450g/demo)
+[Advanced demo](https://www.prendus.com/question/cj9t1lb4z774s01125a24euff/demo)
 
 ### Graphs
 
-[Basic demo]()
-[Advanced demo]()
+[Basic demo](https://www.prendus.com/question/cjg87jws2620a01135bt358gb/demo)
+[Advanced demo](https://www.prendus.com/question/cjg87t1xf651i01862wiylhdp/demo)
+
+### Solution
+
+[Basic demo](https://www.prendus.com/question/cjg87xs6r67n101215xzfirsu/demo)
+[Advanced demo](https://www.prendus.com/question/cj9ujbolb9tp60186ejo0ztx3/demo)
 
 ## Installation
 

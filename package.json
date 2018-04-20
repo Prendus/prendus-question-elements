@@ -1,6 +1,6 @@
 {
   "name": "prendus-question-elements",
-  "version": "0.14.10",
+  "version": "0.15.2",
   "description": "Fully embeddable custom HTML elements for Prendus questions.",
   "scripts": {
     "test": "npm run link && xvfb-run -a electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --auto-run",
@@ -28,9 +28,9 @@
     "esprima": "^4.0.0",
     "function-plot": "^1.18.1",
     "function-plot-element": "0.0.3",
-    "graphsm": "^0.3.2",
+    "graphsm": "^0.3.3",
     "juicy-ace-editor": "^2.0.5",
-    "prendus-shared": "^0.3.0",
+    "prendus-shared": "^0.3.2",
     "redux-store-element": "^1.3.0",
     "secure-eval": "^0.3.2",
     "ubuntu-fontface": "^0.1.13"

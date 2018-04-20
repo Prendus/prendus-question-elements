@@ -1,6 +1,9 @@
 import {execute} from '../node_modules/graphsm/graphsm';
 import {buildQuestion} from './question-service';
 import {getAstObjects} from 'assessml';
+import {execute} from '../../graphsm/graphsm';
+import {buildQuestion, getUserASTObjectsFromAnswerAssignment} from './question-service';
+import {getAstObjects} from '../../assessml/assessml';
 
 export async function loadQuestion(componentId: string, componentType: string, question: any, questionId: string, userToken: string | null) {
     await execute(`
@@ -60,16 +63,39 @@ export async function loadQuestion(componentId: string, componentType: string, q
             };
         },
         questionPrepared: async (previousResult: any) => {
-            const question = previousResult.data.componentState.question;
-            const builtQuestion = await buildQuestion(question.text, question.code);
-            return {
-                componentId: componentId,
-                props: {
-                    question,
-                    builtQuestion,
-                    showSolution: builtQuestion ? getAstObjects(builtQuestion.ast, 'SOLUTION').length > 0 : false
-                }
-            };
+            if (previousResult.data.question) {
+                const question = previousResult.data.question;
+                const builtQuestion = await buildQuestion(question.text, question.code);
+                return {
+                    componentId: componentId,
+                    props: {
+                        question,
+                        builtQuestion,
+                        showSolution: builtQuestion ? getAstObjects(builtQuestion.ast, 'SOLUTION').length > 0 : false,
+                        userRadiosFromCode: getUserASTObjectsFromAnswerAssignment(question.text, question.code, 'RADIO'),
+                        userChecksFromCode: getUserASTObjectsFromAnswerAssignment(question.text, question.code, 'CHECK'),
+                        userInputsFromCode: getUserASTObjectsFromAnswerAssignment(question.text, question.code, 'INPUT')
+                    }
+                };
+            }
+
+            if (previousResult.data.componentState) {
+                const question = previousResult.data.componentState.question;
+                const builtQuestion = await buildQuestion(question.text, question.code);
+                return {
+                    componentId: componentId,
+                    props: {
+                        question,
+                        builtQuestion,
+                        showSolution: builtQuestion ? getAstObjects(builtQuestion.ast, 'SOLUTION').length > 0 : false,
+                        userRadiosFromCode: getUserASTObjectsFromAnswerAssignment(question.text, question.code, 'RADIO'),
+                        userChecksFromCode: getUserASTObjectsFromAnswerAssignment(question.text, question.code, 'CHECK'),
+                        userInputsFromCode: getUserASTObjectsFromAnswerAssignment(question.text, question.code, 'INPUT')
+                    }
+                };
+            }
+
+            return {};
         }
     }, userToken);
 }

@@ -1,3 +1,7 @@
+import DOMPurify from 'dompurify';
+import {html, render} from 'lit-html/lib/lit-extended.js';
+import {unsafeHTML} from 'lit-html/lib/unsafe-html.js';
+import './state/init-state-management.ts';
 import {
     Question,
     BuiltQuestion,
@@ -13,7 +17,7 @@ import {
 } from './services/question-service';
 import {
     createUUID
-} from './node_modules/prendus-shared/services/utilities-service';
+} from 'prendus-shared/services/utilities-service.ts';
 import {
     getAstObjects,
     compileToHTML
@@ -28,13 +32,13 @@ import {
     Drag,
     Drop,
     Image
-} from 'assessml/assessml.d';
+} from 'assessml';
 import {
     execute,
     subscribe,
     extendSchema,
     addIsTypeOf
-} from './node_modules/graphsm/graphsm';
+} from 'graphsm';
 import {
     loadQuestion
 } from './services/shared-service';
@@ -58,32 +62,45 @@ addIsTypeOf('ComponentState', PRENDUS_VIEW_QUESTION, (value: any) => {
     return value.componentType === PRENDUS_VIEW_QUESTION;
 });
 
-export class PrendusViewQuestion extends Polymer.Element {
+export class PrendusViewQuestion extends HTMLElement {
     shadowRoot: ShadowRoot;
     componentId: string;
-    question: Question;
-    questionId: string;
+    _question: Question;
+    _questionId: string;
     builtQuestion: BuiltQuestion;
     userToken: string | null;
     loaded: boolean;
     showEmbedCode: boolean;
     checkAnswerResponse: string;
     solutionButtonText: 'Solution' | 'Question';
+    showSolution: boolean;
 
-    static get is() { return 'prendus-view-question'; }
-    static get properties() {
-        return {
-            question: {
-                observer: 'questionInfoChanged'
-            },
-            questionId: {
-                observer: 'questionInfoChanged'
-            }
-        };
+    get question(): Question {
+        //TODO return this from the global state store
+        return this._question;
+    }
+
+    set question(val) {
+        //TODO set this on the global state store
+        this._question = val;
+        this.questionInfoChanged();
+    }
+
+    get questionId(): string {
+        //TODO return this from the global state store
+        return this._questionId;
+    }
+
+    set questionId(val) {
+        //TODO set this on the global state store
+        this._questionId = val;
+        this.questionInfoChanged();
     }
 
     constructor() {
         super();
+
+        this.attachShadow({mode: 'open'});
 
         this.componentId = createUUID();
         subscribe(this.render.bind(this));
@@ -142,7 +159,7 @@ export class PrendusViewQuestion extends Polymer.Element {
         }, 0);
     }
 
-    async questionInfoChanged(newValue: any, oldValue: any) {
+    async questionInfoChanged() {
         if (!this.question && !this.questionId) {
             return;
         }
@@ -161,12 +178,14 @@ export class PrendusViewQuestion extends Polymer.Element {
     }
 
     getSanitizedHTML(html: string) {
+        console.log('html', html);
+        console.log(DOMPurify);
         const sanitizedHTML = DOMPurify.sanitize(html, {
             ADD_ATTR: ['contenteditable', 'fontsize', 'data'],
             ADD_TAGS: ['juicy-ace-editor', 'function-plot'],
             SANITIZE_DOM: false // This allows DOMPurify.sanitize to be called multiple times in succession without changing the output (it was removing ids before)
         });
-
+        console.log('sanitizedHTML', sanitizedHTML);
         return sanitizedHTML;
     }
 
@@ -278,6 +297,7 @@ export class PrendusViewQuestion extends Polymer.Element {
     }
 
     render(state) {
+        console.log(state);
         const componentState = state.components[this.componentId];
         if (componentState) {
             this._question = componentState.question;
@@ -290,26 +310,68 @@ export class PrendusViewQuestion extends Polymer.Element {
             this.solutionButtonText = componentState.solutionButtonText;
 
             const contentDiv = this.shadowRoot.querySelector('#contentDiv');
-            if (contentDiv) {
-                setTimeout(() => {
-                    window.renderMathInElement(contentDiv, {
-                        delimiters: [
-                          {left: "$$", right: "$$", display: false}
-                        ]
-                    });
-                });
-            }
-            else {
-                //TODO this seems to me to be a bad way to do this...the problem is that the contentDiv is not defined, and I do not know how to know when it will be defined. It is inside of a dom-if, and that gets stamped when the loaded property is true
-                setTimeout(() => {
-                    this.render(state);
-                });
-            }
+        //     if (contentDiv) {
+        //         setTimeout(() => {
+        //             window.renderMathInElement(contentDiv, {
+        //                 delimiters: [
+        //                   {left: "$$", right: "$$", display: false}
+        //                 ]
+        //             });
+        //         });
+        //     }
+        //     else {
+        //         //TODO this seems to me to be a bad way to do this...the problem is that the contentDiv is not defined, and I do not know how to know when it will be defined. It is inside of a dom-if, and that gets stamped when the loaded property is true
+        //         setTimeout(() => {
+        //             this.render(state);
+        //         });
+        //     }
         }
+
+        console.log('this.builtQuestion', this.builtQuestion);
+
+        render(html`
+            <style>
+                .mainContainer {
+                    position: relative;
+                }
+
+                .questionPreviewPlaceholder {
+                    color: rgba(1, 1, 1, .25);
+                    text-align: center;
+                }
+
+                .bottomButtons {
+                    display: flex;
+                    flex-direction: row;
+                    text-align: center;
+                    cursor: pointer;
+                    color: grey;
+                }
+
+                .checkButton {
+                    flex: 1;
+                }
+            </style>
+
+            <div class="mainContainer" hidden="${!this.builtQuestion}">
+                <div id="contentDiv">
+                    ${unsafeHTML(this.getSanitizedHTML(this.builtQuestion ? this.builtQuestion.html : ''))}
+                </div>
+
+                <div class="bottomButtons">
+                    <div onclick="${() => this.checkAnswer()}" class="checkButton">Check</div>
+                    ${this.showSolution ? html`<div onclick="${() => this.showSolutionClick()}" class="checkButton">${this.solutionButtonText}</div>` : ''}
+                </div>
+            </div>
+
+            <div class="questionPreviewPlaceholder" hidden="${this.builtQuestion}">
+                Question preview will appear here
+            </div>
+        `, this.shadowRoot);
     }
 }
 
-window.customElements.define(PrendusViewQuestion.is, PrendusViewQuestion);
+window.customElements.define('prendus-view-question', PrendusViewQuestion);
 
 async function createNotFoundQuestion(questionId: string) {
     const notFoundQuestion = {

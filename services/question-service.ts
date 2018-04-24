@@ -42,6 +42,7 @@ import {
 import {UserVariable, UserCheck, UserRadio, UserInput, UserEssay, UserASTObject} from '../prendus-question-elements.d';
 import {normalizeASTObjectPayloads} from 'assessml';
 import esprima from 'esprima-es-module';
+import escodegen from 'escodegen-es-module';
 
 //TODO there is a lot of repeated code in here
 export async function buildQuestion(text: string, code: string): Promise<{

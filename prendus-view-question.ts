@@ -42,6 +42,8 @@ import {
 import {
     loadQuestion
 } from './services/shared-service';
+import '@polymer/paper-toast';
+import 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.8.3/katex.min.js';
 
 const PRENDUS_VIEW_QUESTION = 'PrendusViewQuestion';
 extendSchema(`
@@ -129,10 +131,6 @@ export class PrendusViewQuestion extends HTMLElement {
         }, this.userToken);
     }
 
-    getThis() {
-        return this;
-    }
-
     getQuestionDefined(builtQuestion) {
         return builtQuestion ? builtQuestion.html === '' ? null : builtQuestion.html : null;
     }
@@ -178,14 +176,11 @@ export class PrendusViewQuestion extends HTMLElement {
     }
 
     getSanitizedHTML(html: string) {
-        console.log('html', html);
-        console.log(DOMPurify);
         const sanitizedHTML = DOMPurify.sanitize(html, {
             ADD_ATTR: ['contenteditable', 'fontsize', 'data'],
             ADD_TAGS: ['juicy-ace-editor', 'function-plot'],
             SANITIZE_DOM: false // This allows DOMPurify.sanitize to be called multiple times in succession without changing the output (it was removing ids before)
         });
-        console.log('sanitizedHTML', sanitizedHTML);
         return sanitizedHTML;
     }
 
@@ -297,7 +292,6 @@ export class PrendusViewQuestion extends HTMLElement {
     }
 
     render(state) {
-        console.log(state);
         const componentState = state.components[this.componentId];
         if (componentState) {
             this._question = componentState.question;
@@ -308,26 +302,11 @@ export class PrendusViewQuestion extends HTMLElement {
             this.showEmbedCode = componentState.showEmbedCode;
             this.checkAnswerResponse = componentState.checkAnswerResponse;
             this.solutionButtonText = componentState.solutionButtonText;
-
-            const contentDiv = this.shadowRoot.querySelector('#contentDiv');
-        //     if (contentDiv) {
-        //         setTimeout(() => {
-        //             window.renderMathInElement(contentDiv, {
-        //                 delimiters: [
-        //                   {left: "$$", right: "$$", display: false}
-        //                 ]
-        //             });
-        //         });
-        //     }
-        //     else {
-        //         //TODO this seems to me to be a bad way to do this...the problem is that the contentDiv is not defined, and I do not know how to know when it will be defined. It is inside of a dom-if, and that gets stamped when the loaded property is true
-        //         setTimeout(() => {
-        //             this.render(state);
-        //         });
-        //     }
         }
 
-        console.log('this.builtQuestion', this.builtQuestion);
+        const mathRenderedHTML = this.getSanitizedHTML(this.builtQuestion ? this.builtQuestion.html : '').replace(/\$\$.*\$\$/g, (replacement) => {
+            return window.katex.renderToString(replacement.replace(/\$/g, ''));
+        });
 
         render(html`
             <style>
@@ -351,17 +330,23 @@ export class PrendusViewQuestion extends HTMLElement {
                 .checkButton {
                     flex: 1;
                 }
+
+                #checkAnswerResponseToast {
+                    z-index: 1000;
+                }
             </style>
 
             <div class="mainContainer" hidden="${!this.builtQuestion}">
                 <div id="contentDiv">
-                    ${unsafeHTML(this.getSanitizedHTML(this.builtQuestion ? this.builtQuestion.html : ''))}
+                    ${unsafeHTML(mathRenderedHTML)}
                 </div>
 
                 <div class="bottomButtons">
                     <div onclick="${() => this.checkAnswer()}" class="checkButton">Check</div>
                     ${this.showSolution ? html`<div onclick="${() => this.showSolutionClick()}" class="checkButton">${this.solutionButtonText}</div>` : ''}
                 </div>
+
+                <paper-toast id="checkAnswerResponseToast" text="Hello" duration="1500" fitInto="${this}" horizontal-align="right"></paper-toast>
             </div>
 
             <div class="questionPreviewPlaceholder" hidden="${this.builtQuestion}">

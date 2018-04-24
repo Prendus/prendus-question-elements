@@ -10,6 +10,6 @@ window.document.body.innerHTML = `
 `;
 
 document.body.querySelector('#prendusViewQuestion').question = {
-    text: '<p>Just testing</p>',
+    text: '<p>Just testing $$x^5$$</p>',
     code: 'answer = true;'
 };

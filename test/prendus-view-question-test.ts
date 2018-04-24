@@ -1,15 +1,13 @@
-import {parse, compileToAssessML, compileToHTML} from '../node_modules/assessml/assessml';
-import {AST, ASTObject} from '../node_modules/assessml/assessml.d';
-import {GQLRequest} from '../node_modules/prendus-shared/services/graphql-service';
-import {arbAST, verifyHTML} from '../node_modules/assessml/test-utilities';
-import {generateVarValue, getASTObjectPayload} from '../node_modules/assessml/assessml';
-import {generateArbQuestion} from '../node_modules/prendus-question-elements/test-utilities';
+import {parse, compileToAssessML, compileToHTML, generateVarValue, getASTObjectPayload} from 'assessml';
+import {AST, ASTObject} from 'assessml/assessml.d';
+import {GQLRequest} from 'prendus-shared/services/graphql-service.ts';
+import {arbAST, verifyHTML} from 'assessml/test-utilities.ts';
+import {generateArbQuestion} from '../test-utilities';
 import {UserCheck, UserRadio, UserInput, UserEssay, Question} from '../prendus-question-elements.d';
-import * as JSVerify from 'jsverify';
-import {PrendusViewQuestion} from '../node_modules/prendus-question-elements/prendus-view-question';
+import {PrendusViewQuestion} from '../prendus-view-question';
+import jsverify from 'jsverify-es-module';
+import deepEqual from 'deep-equal-es-module';
 
-const jsc = require('jsverify');
-const deepEqual = require('deep-equal');
 const prendusQuestionElementsTestUserId = 'cje4i8o2e1s4x01314c4nt9v4';
 const prendusQuestionElementsTestJWT = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MjY3NTI4MTcsImlhdCI6MTUyNDE2MDgxNywicHJvamVjdElkIjoiY2o4ZGx6eGduMG95cjAxNDQ1NzR1Mml2YiIsInVzZXJJZCI6ImNqZTRpOG8yZTFzNHgwMTMxNGM0bnQ5djQiLCJtb2RlbE5hbWUiOiJVc2VyIn0.FLTVHAQYH5h-Tzk-DlxAP0E8u6l0kJqx2GMh-TQmsCI';
 
@@ -21,17 +19,17 @@ class PrendusViewQuestionTest extends HTMLElement {
     }
 
     prepareTests(test: any) {
-        test('set question property once with no residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test1.bind(this));
-        test('set question property multiple times with residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test2.bind(this));
-        test('set questionId property once with no residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test3.bind(this));
-        test('set questionId property multiple times with residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test4.bind(this));
-        test('interleave the setting of the question and questionId properties with residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)()), jsc.bool], test5.bind(this));
+        test('set question property once with no residual state', [generateArbQuestion(jsverify.sampler(jsverify.nat, 10)())], test1.bind(this));
+        test('set question property multiple times with residual state', [generateArbQuestion(jsverify.sampler(jsverify.nat, 10)())], test2.bind(this));
+        test('set questionId property once with no residual state', [generateArbQuestion(jsverify.sampler(jsverify.nat, 10)())], test3.bind(this));
+        test('set questionId property multiple times with residual state', [generateArbQuestion(jsverify.sampler(jsverify.nat, 10)())], test4.bind(this));
+        test('interleave the setting of the question and questionId properties with residual state', [generateArbQuestion(jsverify.sampler(jsverify.nat, 10)()), jsverify.bool], test5.bind(this));
 
         //TODO the check answer tests should be rethought
-        test('user inputs correct answer with no residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test6.bind(this));
-        test('user inputs correct answer with residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test7.bind(this));
-        test('user inputs incorrect answer with no residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test8.bind(this));
-        test('user inputs incorrect answer with residual state', [generateArbQuestion(jsc.sampler(jsc.nat, 10)())], test9.bind(this));
+        test('user inputs correct answer with no residual state', [generateArbQuestion(jsverify.sampler(jsverify.nat, 10)())], test6.bind(this));
+        test('user inputs correct answer with residual state', [generateArbQuestion(jsverify.sampler(jsverify.nat, 10)())], test7.bind(this));
+        test('user inputs incorrect answer with no residual state', [generateArbQuestion(jsverify.sampler(jsverify.nat, 10)())], test8.bind(this));
+        test('user inputs incorrect answer with residual state', [generateArbQuestion(jsverify.sampler(jsverify.nat, 10)())], test9.bind(this));
 
         async function test1(rawArbQuestion: JSVerify.Arbitrary<Question>) {
             const arbQuestion = prepareArbQuestion(rawArbQuestion);

@@ -85,6 +85,7 @@ export class PrendusViewQuestion extends HTMLElement {
     set question(val) {
         //TODO set this on the global state store
         this._question = val;
+        this._questionId = null; //TODO bad
         this.questionInfoChanged();
     }
 
@@ -95,6 +96,7 @@ export class PrendusViewQuestion extends HTMLElement {
 
     set questionId(val) {
         //TODO set this on the global state store
+        this._question = null; //TODO bad
         this._questionId = val;
         this.questionInfoChanged();
     }
@@ -116,11 +118,8 @@ export class PrendusViewQuestion extends HTMLElement {
                     componentId: this.componentId,
                     props: {
                         componentType: PRENDUS_VIEW_QUESTION,
-                        question: {
-                            text: '',
-                            code: ''
-                        },
-                        questionId: '',
+                        question: null,
+                        questionId: null,
                         solutionButtonText: 'Solution',
                         showSolution: false,
                         showEmbedCode: false,
@@ -129,10 +128,6 @@ export class PrendusViewQuestion extends HTMLElement {
                 };
             }
         }, this.userToken);
-    }
-
-    getQuestionDefined(builtQuestion) {
-        return builtQuestion ? builtQuestion.html === '' ? null : builtQuestion.html : null;
     }
 
     async showEmbedCodeClick() {

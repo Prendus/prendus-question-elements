@@ -1,10 +1,9 @@
-import {arbAST} from '../assessml/test-utilities';
-import {AST, ASTObject, Variable} from '../assessml/assessml.d';
-import {compileToAssessML} from '../assessml/assessml';
+import {arbAST} from 'assessml/test-utilities.ts';
+import {AST, ASTObject, Variable} from 'assessml/assessml.d';
+import {compileToAssessML} from 'assessml';
 import {CodeInfo} from './prendus-question-elements.d';
-import {shuffleArray} from '../prendus-shared/services/utilities-service';
-
-const jsc = require('jsverify');
+import {shuffleArray} from 'prendus-shared/services/utilities-service.ts';
+import jsverify from 'jsverify-es-module';
 
 export function generateArbQuestion(numEquivalentVars: number) {
     const _arbAST = getArbAST(arbAST, numEquivalentVars);
@@ -15,7 +14,7 @@ export function generateArbQuestion(numEquivalentVars: number) {
             codeInfo: arbAST.ast.reduce((result: CodeInfo, astObject: ASTObject, index: number) => {
                 if (astObject.type === 'CHECK' || astObject.type === 'RADIO') {
                     const arrayName = astObject.type === 'CHECK' ? 'userChecks' : 'userRadios';
-                    const resolvedBool = jsc.sampler(jsc.bool, 1)();
+                    const resolvedBool = jsverify.sampler(jsverify.bool, 1)();
                     const checked = astObject.type === 'CHECK' ? resolvedBool : result.oneRadioHasBeenSetToTrue ? false : resolvedBool;
 
                     return {
@@ -31,7 +30,7 @@ export function generateArbQuestion(numEquivalentVars: number) {
 
                 if (astObject.type === 'ESSAY' || astObject.type === 'INPUT') {
                     const arrayName = astObject.type === 'ESSAY' ? 'userEssays' : 'userInputs';
-                    const value = encodeURIComponent(jsc.sampler(jsc.string, 1000000)());
+                    const value = encodeURIComponent(jsverify.sampler(jsverify.string, 1000000)());
                     return {
                         ...result,
                         code: `${result.code} ${astObject.varName} === '${value.replace(/\\/g, '\\\\').replace(/'/g, '\\\'')}' &&`,
@@ -44,8 +43,8 @@ export function generateArbQuestion(numEquivalentVars: number) {
 
                 if (astObject.type === 'VARIABLE') {
                     const varName = astObject.varName;
-                    const min = jsc.sampler(jsc.integer, 1000000)();
-                    const max = jsc.sampler(jsc.integer, 1000000)();
+                    const min = jsverify.sampler(jsverify.integer, 1000000)();
+                    const max = jsverify.sampler(jsverify.integer, 1000000)();
                     const precision = 5; //TODO make this real
 
                     //TODO the code below was once checking variables for us, but now that variables can be strings, it needs to be reworked...also, is this the best way to be testing the variables? Perhaps variables should have their own tests

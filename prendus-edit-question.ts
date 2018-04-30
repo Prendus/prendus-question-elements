@@ -2,20 +2,20 @@ import {
     createUUID,
     navigate,
     asyncReduce
-} from '../prendus-shared/services/utilities-service';
-import {Question} from './prendus-question-elements.d';
-import {GQLRequest} from '../prendus-shared/services/graphql-service';
-import {User} from './prendus-question-elements.d';
+} from 'prendus-shared/services/utilities-service.ts';
 import {
+    Question,
+    User,
     UserCheck,
     UserRadio,
     UserInput
 } from './prendus-question-elements.d';
+import {GQLRequest} from 'prendus-shared/services/graphql-service.ts';
 import {
     parse,
     getAstObjects,
     compileToAssessML
-} from '../assessml/assessml';
+} from 'assessml';
 import {
     AST,
     Input,
@@ -25,7 +25,7 @@ import {
     Essay,
     Code,
     ASTObject
-} from '../assessml/assessml.d';
+} from 'assessml/assessml.d';
 import {
     insertEssayIntoCode,
     insertCodeIntoCode,
@@ -46,10 +46,20 @@ import {
     subscribe,
     extendSchema,
     addIsTypeOf
-} from '../graphsm/graphsm';
+} from 'graphsm';
 import {
     loadQuestion
 } from './services/shared-service';
+import './state/init-state-management.ts';
+import {render, html} from 'lit-html/lib/lit-extended.js';
+import './prendus-view-question';
+import 'wysiwyg-e';
+import esprima from 'esprima-es-module';
+import '@polymer/paper-button';
+import '@polymer/paper-tooltip';
+import '@polymer/iron-icon';
+import '@polymer/iron-icons';
+import '@polymer/iron-pages';
 
 const PRENDUS_EDIT_QUESTION = 'PrendusEditQuestion';
 extendSchema(`
@@ -75,12 +85,10 @@ addIsTypeOf('ComponentState', PRENDUS_EDIT_QUESTION, (value: any) => {
     return value.componentType === PRENDUS_EDIT_QUESTION;
 });
 
-class PrendusEditQuestion extends Polymer.Element {
+class PrendusEditQuestion extends HTMLElement {
     componentId: string;
-    _question: Question;
-    _questionId: string;
-    question: Question;
-    questionId: string;
+    _question: Question | null;
+    _questionId: string | null;
     userToken: string;
     user: User;
     loaded: boolean;
@@ -90,62 +98,133 @@ class PrendusEditQuestion extends Polymer.Element {
     userRadiosFromCode: UserRadio[];
     userChecksFromCode: UserCheck[];
     userInputsFromCode: UserInput[];
+    shadowRoot: ShadowRoot;
+    multipleChoiceTool: boolean;
+    multipleSelectTool: boolean;
+    fillInTheBlankTool: boolean;
+    essayTool: boolean;
+    codeTool: boolean;
+    variableTool: boolean;
+    mathTool: boolean;
+    imageTool: boolean;
+    graphTool: boolean;
+    resetTool: boolean;
 
-    static get is() { return 'prendus-edit-question'; }
-    static get properties() {
-        return {
-            question: {
-                type: Object,
-                observer: 'questionInfoChanged'
-            },
-            questionId: {
-                type: String,
-                observer: 'questionInfoChanged'
-            },
-            noSave: {
-                type: Boolean
-            },
-            user: {
-                type: Object
-            },
-            userToken: {
-                type: String
-            },
-            multipleChoiceTool: {
-                type: Boolean
-            },
-            multipleSelectTool: {
-                type: Boolean
-            },
-            fillInTheBlankTool: {
-                type: Boolean
-            },
-            essayTool: {
-                type: Boolean
-            },
-            codeTool: {
-                type: Boolean
-            },
-            variableTool: {
-                type: Boolean
-            },
-            mathTool: {
-                type: Boolean
-            },
-            imageTool: {
-                type: Boolean
-            },
-            graphTool: {
-                type: Boolean
-            },
-            resetTool: {
-                type: Boolean
-            }
-        };
+    static get observedAttributes() {
+        return [
+            'no-save',
+            'user-token',
+            'multiple-choice-tool',
+            'multiple-select-tool',
+            'fill-in-the-blank-tool',
+            'essay-tool',
+            'code-tool',
+            'variable-tool',
+            'math-tool',
+            'image-tool',
+            'graph-tool',
+            'reset-tool'
+        ];
+    }
+
+    attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+        if (name === 'no-save') {
+            this.noSave = newValue === 'false' ? false : true;
+            return;
+        }
+
+        if (name === 'user-token') {
+            this.userToken = newValue;
+            return;
+        }
+
+        if (name === 'multiple-choice-tool') {
+            this.multipleChoiceTool = newValue === 'false' ? false : true;
+            return;
+        }
+
+        if (name === 'multiple-select-tool') {
+            this.multipleSelectTool = newValue === 'false' ? false : true;
+            return;
+        }
+
+        if (name === 'fill-in-the-blank-tool') {
+            this.fillInTheBlankTool = newValue === 'false' ? false : true;
+            return;
+        }
+
+        if (name === 'essay-tool') {
+            this.essayTool = newValue === 'false' ? false : true;
+            return;
+        }
+
+        if (name === 'code-tool') {
+            this.codeTool = newValue === 'false' ? false : true;
+            return;
+        }
+
+        if (name === 'variable-tool') {
+            this.variableTool = newValue === 'false' ? false : true;
+            return;
+        }
+
+        if (name === 'math-tool') {
+            this.mathTool = newValue === 'false' ? false : true;
+            return;
+        }
+
+        if (name === 'image-tool') {
+            this.imageTool = newValue === 'false' ? false : true;
+            return;
+        }
+
+        if (name === 'graph-tool') {
+            this.graphTool = newValue === 'false' ? false : true;
+            return;
+        }
+
+        if (name === 'reset-tool') {
+            this.resetTool = newValue === 'false' ? false : true;
+            return;
+        }
+    }
+
+    get question(): Question | null {
+        //TODO return this from the global state store
+        return this._question;
+    }
+
+    set question(val) {
+        if (val === this.question) {
+            return;
+        }
+
+        //TODO set this on the global state store
+        this._question = val;
+        this._questionId = null; //TODO bad
+        this.questionInfoChanged();
+    }
+
+    get questionId(): string | null {
+        //TODO return this from the global state store
+        return this._questionId;
+    }
+
+    set questionId(val) {
+        if (val === this.questionId) {
+            return;
+        }
+
+        //TODO set this on the global state store
+        this._question = null; //TODO bad
+        this._questionId = val;
+        this.questionInfoChanged();
     }
 
     constructor() {
         super();
+
+        this.attachShadow({mode: 'open'});
 
         this.componentId = createUUID();
         subscribe(this.render.bind(this));
@@ -160,11 +239,8 @@ class PrendusEditQuestion extends Polymer.Element {
                     props: {
                         componentType: PRENDUS_EDIT_QUESTION,
                         loaded: true,
-                        question: {
-                            text: '',
-                            code: ''
-                        },
-                        questionId: '',
+                        question: null,
+                        questionId: null,
                         selected: 0,
                         saving: false,
                         noSave: false,
@@ -177,15 +253,13 @@ class PrendusEditQuestion extends Polymer.Element {
     }
 
     connectedCallback() {
-        super.connectedCallback();
-
-        setTimeout(() => { //TODO fix this...it would be nice to be able to set the font-size officially through the ace editor web component, and then we wouldn't have to hack. The timeout is to ensure the current task on the event loop completes and the dom template is stamped because of the loaded property before accessing the dom
-            this.shadowRoot.querySelector('#codeEditor').shadowRoot.querySelector('#juicy-ace-editor-container').style = 'font-size: calc(40px - 1vw)';
-            this.shadowRoot.querySelector('#codeEditor').shadowRoot.querySelector('.ace_gutter').style = 'background: #2a9af2';
-        }, 2000);
+        // setTimeout(() => { //TODO fix this...it would be nice to be able to set the font-size officially through the ace editor web component, and then we wouldn't have to hack. The timeout is to ensure the current task on the event loop completes and the dom template is stamped because of the loaded property before accessing the dom
+        //     this.shadowRoot.querySelector('#codeEditor').shadowRoot.querySelector('#juicy-ace-editor-container').style = 'font-size: calc(40px - 1vw)';
+        //     this.shadowRoot.querySelector('#codeEditor').shadowRoot.querySelector('.ace_gutter').style = 'background: #2a9af2';
+        // }, 2000);
     }
 
-    async questionInfoChanged(newValue: any, oldValue: any) {
+    async questionInfoChanged() {
         if (!this.question && !this.questionId) {
             return;
         }
@@ -434,10 +508,6 @@ class PrendusEditQuestion extends Polymer.Element {
     //         });
     //     }
     // }
-
-    getSavingText(saving: boolean) {
-        return saving ? 'Saving...' : 'Saved';
-    }
 
     async switchEditorClick() {
         await execute(`
@@ -1144,14 +1214,6 @@ class PrendusEditQuestion extends Polymer.Element {
         }, this.usertoken);
     }
 
-    getAllowedTagNames() {
-        return [
-            'br',
-			'p',
-			'span'
-        ];
-    }
-
     async resetTextAndCode() {
         await execute(`
             mutation resetTextAndCode($componentId: String!, $props: Any) {
@@ -1208,10 +1270,96 @@ class PrendusEditQuestion extends Polymer.Element {
             this.userChecksFromCode = componentState.userChecksFromCode;
             this.userInputsFromCode = componentState.userInputsFromCode;
         }
+
+        render(html`
+            <style>
+                .previewContainer {
+                    box-shadow: 0px 0px 3px grey;
+                    padding: 25px;
+                    margin-top: 25px;
+                }
+
+                .editorContainer {
+                    position: relative;
+                }
+
+                .editor {
+                    width: 100%;
+                    height: 50vh;
+                    box-shadow: 0px 0px 3px grey;
+                    margin: 0 auto;
+                }
+
+                .switchEditorToJavaScriptIcon {
+                    position: absolute;
+                    right: -5px;
+                    top: 40px;
+                    cursor: pointer;
+                    z-index: 1;
+                }
+
+                .switchEditorToAssessMLIcon {
+                    position: absolute;
+                    right: -5px;
+                    top: 0px;
+                    cursor: pointer;
+                    z-index: 1;
+                    background-color: grey;
+                    color: white;
+                }
+
+                #textEditor {
+                    --wysiwyg-font: Ubuntu;
+                    font-size: calc(40px - 1vw);
+                }
+
+                .savingText {
+                    color: grey;
+                    position: absolute;
+                    right: 20px;
+                    bottom: 15px;
+                }
+            </style>
+
+            <iron-pages selected="${this.selected}">
+                <div class="editorContainer">
+                    <paper-button id="switchEditorToJavaScriptIcon" class="switchEditorToJavaScriptIcon" onclick="${() => this.switchEditorClick()}">
+                        <iron-icon icon="icons:tab"></iron-icon>
+                    </paper-button>
+
+                    <paper-tooltip for="switchEditorToJavaScriptIcon" offset="5">
+                        <span>JavaScript</span>
+                    </paper-tooltip>
+
+                    <wysiwyg-e id="textEditor" value="${this._question ? this._question.text : ''}" class="editor" on-value-changed="${() => this.textEditorChanged()}">
+                    </wysiwyg-e>
+
+                    <div class="savingText">${this.saving ? 'Saving...' : 'Saved'}</div>
+                </div>
+
+                <div class="editorContainer">
+                    <paper-button id="switchEditorToAssessMLIcon" class="switchEditorToAssessMLIcon" onclick="${() => this.switchEditorClick()}">
+                        <iron-icon icon="icons:tab"></iron-icon>
+                    </paper-button>
+
+                    <paper-tooltip for="switchEditorToAssessMLIcon" offset="5">
+                        <span>AssessML</span>
+                    </paper-tooltip>
+
+                    <div>${this._question ? this._question.code : ''}</div>
+
+                    <div class="savingText">${this.saving ? 'Saving...' : 'Saved'}</div>
+                </div>
+            </iron-pages>
+
+            <div class="previewContainer">
+                <prendus-view-question question="${this._question}"></prendus-view-question>
+            </div>
+        `, this.shadowRoot);
     }
 }
 
-window.customElements.define(PrendusEditQuestion.is, PrendusEditQuestion);
+window.customElements.define('prendus-edit-question', PrendusEditQuestion);
 
 let currentTimeoutId: any;
 function debounce(func: () => any, delay: number) {

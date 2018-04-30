@@ -1,5 +1,11 @@
+import {html, render} from 'lit-html/lib/lit-extended.js';
+
 class PrendusCodeTool extends WysiwygTool {
-    static get is() { return 'prendus-code-tool'; }
+    constructor() {
+        super();
+
+        this.attachShadow({ mode: 'open' });
+    }
 
     connectedCallback() {
         super.connectedCallback();
@@ -16,6 +22,12 @@ class PrendusCodeTool extends WysiwygTool {
             bubbles: false
         }));
     }
+
+    render() {
+        render(html`
+            
+        `, this.shadowRoot);
+    }
 }
 
-window.customElements.define(PrendusCodeTool.is, PrendusCodeTool);
+window.customElements.define('prendus-code-tool', PrendusCodeTool);

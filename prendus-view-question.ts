@@ -83,6 +83,10 @@ export class PrendusViewQuestion extends HTMLElement {
     }
 
     set question(val) {
+        if (val === this.question) {
+            return;
+        }
+
         //TODO set this on the global state store
         this._question = val;
         this._questionId = null; //TODO bad
@@ -95,6 +99,10 @@ export class PrendusViewQuestion extends HTMLElement {
     }
 
     set questionId(val) {
+        if (val === this.questionId) {
+            return;
+        }
+
         //TODO set this on the global state store
         this._question = null; //TODO bad
         this._questionId = val;
@@ -289,8 +297,8 @@ export class PrendusViewQuestion extends HTMLElement {
     render(state) {
         const componentState = state.components[this.componentId];
         if (componentState) {
-            this._question = componentState.question;
-            this._questionId = componentState.questionId;
+            // this._question = componentState.question;
+            // this._questionId = componentState.questionId;
             this.loaded = componentState.loaded;
             this.builtQuestion = componentState.builtQuestion;
             this.showSolution = componentState.showSolution;

@@ -60,6 +60,7 @@ import '@polymer/paper-tooltip';
 import '@polymer/iron-icon';
 import '@polymer/iron-icons';
 import '@polymer/iron-pages';
+import './text-editor-tools/prendus-code-tool';
 
 const PRENDUS_EDIT_QUESTION = 'PrendusEditQuestion';
 extendSchema(`
@@ -1332,6 +1333,16 @@ class PrendusEditQuestion extends HTMLElement {
                     </paper-tooltip>
 
                     <wysiwyg-e id="textEditor" value="${this._question ? this._question.text : ''}" class="editor" on-value-changed="${() => this.textEditorChanged()}">
+                        ${this.multipleChoiceTool ? html`<prendus-multiple-choice-tool id="prendus-multiple-choice-tool" on-insert-radio="${(e: CustomEvent) => this.insertRadio(e)}" userRadios="${this.userRadiosFromCode}" on-radio-correct-changed="${(e: CustomEvent) => this.radioCorrectChanged(e)}" on-radio-content-changed="${(e: CustomEvent) => this.radioContentChanged(e)}" on-question-stem-changed="${(e: CustomEvent) => this.insertQuestionStem(e)}" question="${this._question}"></prendus-multiple-choice-tool>` : ''}
+                        ${this.multipleSelectTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
+                        ${this.fillInTheBlankTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
+                        ${this.essayTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
+                        ${this.codeTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
+                        ${this.variableTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
+                        ${this.mathTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
+                        ${this.imageTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
+                        ${this.graphTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
+                        ${this.resetTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
                     </wysiwyg-e>
 
                     <div class="savingText">${this.saving ? 'Saving...' : 'Saved'}</div>

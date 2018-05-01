@@ -12,7 +12,7 @@ class PrendusEditQuestionTest extends HTMLElement {
         // prendusEditQuestion.setAttribute('multiple-select-tool', '');
         // prendusEditQuestion.setAttribute('fill-in-the-blank-tool', '');
         // prendusEditQuestion.setAttribute('essay-tool', '');
-        // prendusEditQuestion.setAttribute('code-tool', '');
+        prendusEditQuestion.setAttribute('code-tool', '');
         // prendusEditQuestion.setAttribute('variable-tool', '');
         // prendusEditQuestion.setAttribute('math-tool', '');
         // prendusEditQuestion.setAttribute('image-tool', '');

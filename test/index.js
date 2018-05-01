@@ -7,7 +7,7 @@ import './prendus-edit-question-test.ts';
 
 window.document.body.innerHTML = `
     <prendus-edit-question-test></prendus-edit-question-test>
-    <test-runner>
+    <!--<test-runner>
         <prendus-view-question-test></prendus-view-question-test>
-    </test-runner>
+    </test-runner>-->
 `;

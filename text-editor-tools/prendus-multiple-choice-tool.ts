@@ -9,7 +9,8 @@ import '@polymer/iron-icons';
 import '@polymer/paper-tooltip';
 import '@polymer/paper-dialog';
 import '@polymer/paper-input';
-import '@polymer/polymer/lib/elements/dom-repeat.js';
+import '@polymer/paper-toggle-button';
+import '@polymer/paper-dialog-scrollable';
 
 class PrendusMultipleChoiceTool extends WysiwygTool {
     userRadios: UserRadio[];
@@ -22,10 +23,6 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
     }
 
     set question(val: Question) {
-        // if (val === this.question) {
-        //     return;
-        // }
-
         this._question = val;
         this.render();
     }
@@ -73,10 +70,10 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
     }
 
     radioCorrectChanged(e: any) {
-        const toggle = this.shadowRoot.querySelector(`#${e.model.item.varName}-toggle`);
+        const toggle = this.shadowRoot.querySelector(`#${e.detail.varName}-toggle`);
         const userRadio: UserRadio = {
             type: 'USER_RADIO',
-            varName: e.model.item.varName,
+            varName: e.detail.varName,
             checked: toggle ? toggle.checked : false
         };
 
@@ -88,9 +85,9 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
     }
 
     radioContentChanged(e: any) {
-        const input = this.shadowRoot.querySelector(`#${e.model.item.varName}-input`);
+        const input = this.shadowRoot.querySelector(`#${e.detail.varName}-input`);
         const radioContentToChange = {
-            varName: e.model.item.varName,
+            varName: e.detail.varName,
             content: parse(input.value, () => 5, () => '', () => [], () => []) //TODO hook up the correct functions to get good values for variables and such
         };
 
@@ -143,12 +140,28 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
                     ${this.userRadios ? this.userRadios.map((userRadio) => {
                         return html`
                             <div style="display: flex">
-                                <paper-input id="${userRadio.varName}-input" type="text" value="${this.getCompiledContent(userRadio.content)}" oninput="${(e: any) => this.radioContentChanged(e)}"></paper-input>
+                                <paper-input id="${userRadio.varName}-input" type="text" value="${this.getCompiledContent(userRadio.content)}" oninput="${(e: any) => {
+                                    this.radioContentChanged({
+                                        ...e,
+                                        detail: {
+                                            ...e.detail,
+                                            varName: userRadio.varName
+                                        }
+                                    })
+                                }}"></paper-input>
                                 <div>Correct:</div>
-                                <paper-toggle-button id="${userRadio.varName}-toggle" checked="${userRadio.checked}" on-checked-changed="${(e: any) => this.radioCorrectChanged(e)}"></paper-toggle-button>
+                                <paper-toggle-button id="${userRadio.varName}-toggle" checked="${userRadio.checked}" on-checked-changed="${(e: any) => {
+                                    this.radioCorrectChanged({
+                                        ...e,
+                                        detail: {
+                                            ...e.detail,
+                                            varName: userRadio.varName
+                                        }
+                                    })
+                                }}"></paper-toggle-button>
                             </div>
                         `;
-                    }).join('') : ''}
+                    }) : ''}
                 </paper-dialog-scrollable>
 
                 <div style="display: flex">

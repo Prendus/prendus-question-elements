@@ -16,7 +16,7 @@ class PrendusEditQuestionTest extends HTMLElement {
         // prendusEditQuestion.setAttribute('variable-tool', '');
         // prendusEditQuestion.setAttribute('math-tool', '');
         // prendusEditQuestion.setAttribute('image-tool', '');
-        // prendusEditQuestion.setAttribute('graph-tool', '');
+        prendusEditQuestion.setAttribute('graph-tool', '');
         // prendusEditQuestion.setAttribute('reset-tool', '');
 
         prendusEditQuestion.question = {

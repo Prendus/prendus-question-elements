@@ -63,6 +63,7 @@ import '@polymer/iron-pages';
 import './text-editor-tools/prendus-code-tool';
 import './text-editor-tools/prendus-essay-tool';
 import './text-editor-tools/prendus-multiple-choice-tool';
+import './text-editor-tools/prendus-graph-tool';
 import 'juicy-ace-editor';
 import 'ace-builds/src-noconflict/mode-javascript.js';
 
@@ -1345,7 +1346,7 @@ class PrendusEditQuestion extends HTMLElement {
                         ${this.variableTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
                         ${this.mathTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
                         ${this.imageTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
-                        ${this.graphTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
+                        ${this.graphTool ? html`<prendus-graph-tool id="prendus-graph-tool" on-insert-graph="${(e: CustomEvent) => this.insertGraph(e)}"></prendus-graph-tool>` : ''}
                         ${this.resetTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
                     </wysiwyg-e>
 

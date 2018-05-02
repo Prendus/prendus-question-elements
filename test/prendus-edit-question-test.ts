@@ -8,7 +8,7 @@ class PrendusEditQuestionTest extends HTMLElement {
 
         const prendusEditQuestion = document.createElement('prendus-edit-question');
         // prendusEditQuestion.noSave = true;
-        // prendusEditQuestion.setAttribute('multiple-choice-tool', '');
+        prendusEditQuestion.setAttribute('multiple-choice-tool', '');
         // prendusEditQuestion.setAttribute('multiple-select-tool', '');
         // prendusEditQuestion.setAttribute('fill-in-the-blank-tool', '');
         // prendusEditQuestion.setAttribute('essay-tool', '');

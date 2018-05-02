@@ -349,7 +349,7 @@ export class PrendusViewQuestion extends HTMLElement {
                     ${this.showSolution ? html`<div onclick="${() => this.showSolutionClick()}" class="checkButton">${this.solutionButtonText}</div>` : ''}
                 </div>
 
-                <paper-toast id="checkAnswerResponseToast" text="Hello" duration="1500" fitInto="${this}" horizontal-align="right"></paper-toast>
+                <paper-toast id="checkAnswerResponseToast" text="${this.checkAnswerResponse}" duration="1500" fitInto="${this}" horizontal-align="right"></paper-toast>
             </div>
 
             <div class="questionPreviewPlaceholder" hidden="${this.builtQuestion}">

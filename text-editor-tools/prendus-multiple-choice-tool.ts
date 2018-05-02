@@ -1,23 +1,43 @@
-import {UserRadio} from '../prendus-question-elements.d';
-import {compileToAssessML, parse} from '../../assessml/assessml';
-import {ASTObject} from '../../assessml/assessml.d';
+import {UserRadio, Question} from '../prendus-question-elements.d';
+import {compileToAssessML, parse} from 'assessml';
+import {ASTObject} from 'assessml/assessml.d';
+import {WysiwygTool} from 'wysiwyg-e/wysiwyg-tool.js';
+import {html, render} from 'lit-html/lib/lit-extended.js';
+import '@polymer/paper-button';
+import '@polymer/iron-icon';
+import '@polymer/iron-icons';
+import '@polymer/paper-tooltip';
+import '@polymer/paper-dialog';
+import '@polymer/paper-input';
+import '@polymer/polymer/lib/elements/dom-repeat.js';
 
 class PrendusMultipleChoiceTool extends WysiwygTool {
     userRadios: UserRadio[];
+    shadowRoot: ShadowRoot;
+    tooltipPosition: number;
+    _question: Question;
 
-    static get is() { return 'prendus-multiple-choice-tool'; }
-
-    connectedCallback() {
-        super.connectedCallback();
-
-        this._setCommand('insertText');
+    get question(): Question {
+        return this._question;
     }
 
-    execCommand() {
-        if (this.disabled || !this.range0) {
-            return;
-        }
+    set question(val: Question) {
+        // if (val === this.question) {
+        //     return;
+        // }
 
+        this._question = val;
+        this.render();
+    }
+
+    constructor() {
+        super();
+
+        this.attachShadow({ mode: 'open' });
+        this.render();
+    }
+
+    executeTool() {
         this.shadowRoot.querySelector('#radioDialog').open();
     }
 
@@ -103,6 +123,46 @@ class PrendusMultipleChoiceTool extends WysiwygTool {
         //TODO the .replace(/&nbsp;/g, ' ') might be handled better by truly understanding why the text editor is using html encoding
         return (assessMLAST.ast[0] && assessMLAST.ast[0].type === 'CONTENT' ? assessMLAST.ast[0].content : '').replace(/<p>|<\/p>|<br>/g, '').replace(/&nbsp;/g, ' ');
     }
+
+    render() {
+        render(html`
+            <paper-button id="button" onclick="${() => this.executeTool()}">
+                <iron-icon icon="icons:radio-button-checked"></iron-icon>
+            </paper-button>
+
+            <paper-tooltip id="tooltip" for="button" position="${this.tooltipPosition}" offset="5">
+    			<span>Multiple choice</span>
+    		</paper-tooltip>
+
+            <paper-dialog id="radioDialog" on-click="radioDialogClick">
+                <div style="display: flex">
+                    <paper-input id="questionStemInput" type="text" label="Question" autofocus oninput="${() => this.questionStemChanged()}" value="${this.question ? this.getQuestionStem(this.question) : ''}"></paper-input>
+                </div>
+
+                <paper-dialog-scrollable>
+                    ${this.userRadios ? this.userRadios.map((userRadio) => {
+                        return html`
+                            <div style="display: flex">
+                                <paper-input id="${userRadio.varName}-input" type="text" value="${this.getCompiledContent(userRadio.content)}" oninput="${(e: any) => this.radioContentChanged(e)}"></paper-input>
+                                <div>Correct:</div>
+                                <paper-toggle-button id="${userRadio.varName}-toggle" checked="${userRadio.checked}" on-checked-changed="${(e: any) => this.radioCorrectChanged(e)}"></paper-toggle-button>
+                            </div>
+                        `;
+                    }).join('') : ''}
+                </paper-dialog-scrollable>
+
+                <div style="display: flex">
+                    <paper-input id="optionInput" type="text" label="Multiple choice option" onkeydown="${(e: KeyboardEvent) => this.checkForEnter(e)}"></paper-input>
+                    <paper-button style="margin-top: 8%; margin-left: .5vw" onclick="${() => this.addOptionClick()}" raised>Add</paper-button>
+                </div>
+
+                <div style="display: flex">
+                    <paper-button style="margin-left: auto" raised onclick="${() => this.doneClick()}">Done</paper-button>
+                </div>
+
+            </paper-dialog>
+        `, this.shadowRoot);
+    }
 }
 
-window.customElements.define(PrendusMultipleChoiceTool.is, PrendusMultipleChoiceTool);
+window.customElements.define('prendus-multiple-choice-tool', PrendusMultipleChoiceTool);

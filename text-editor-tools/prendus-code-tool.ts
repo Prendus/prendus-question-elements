@@ -16,7 +16,7 @@ class PrendusCodeTool extends WysiwygTool {
         this.render();
     }
 
-    insertCode() {
+    executeTool() {
         this.dispatchEvent(new CustomEvent('insert-code', {
             bubbles: false
         }));
@@ -24,7 +24,7 @@ class PrendusCodeTool extends WysiwygTool {
 
     render() {
         render(html`
-            <paper-button id="button" onclick="${() => this.insertCode()}">
+            <paper-button id="button" onclick="${() => this.executeTool()}">
                 <iron-icon icon="icons:code"></iron-icon>
             </paper-button>
 

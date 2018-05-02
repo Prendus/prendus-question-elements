@@ -61,6 +61,9 @@ import '@polymer/iron-icon';
 import '@polymer/iron-icons';
 import '@polymer/iron-pages';
 import './text-editor-tools/prendus-code-tool';
+import './text-editor-tools/prendus-multiple-choice-tool';
+import 'juicy-ace-editor';
+import 'ace-builds/src-noconflict/mode-javascript.js';
 
 const PRENDUS_EDIT_QUESTION = 'PrendusEditQuestion';
 extendSchema(`
@@ -254,10 +257,10 @@ class PrendusEditQuestion extends HTMLElement {
     }
 
     connectedCallback() {
-        // setTimeout(() => { //TODO fix this...it would be nice to be able to set the font-size officially through the ace editor web component, and then we wouldn't have to hack. The timeout is to ensure the current task on the event loop completes and the dom template is stamped because of the loaded property before accessing the dom
-        //     this.shadowRoot.querySelector('#codeEditor').shadowRoot.querySelector('#juicy-ace-editor-container').style = 'font-size: calc(40px - 1vw)';
-        //     this.shadowRoot.querySelector('#codeEditor').shadowRoot.querySelector('.ace_gutter').style = 'background: #2a9af2';
-        // }, 2000);
+        setTimeout(() => { //TODO fix this...it would be nice to be able to set the font-size officially through the ace editor web component, and then we wouldn't have to hack. The timeout is to ensure the current task on the event loop completes and the dom template is stamped because of the loaded property before accessing the dom
+            this.shadowRoot.querySelector('#codeEditor').shadowRoot.querySelector('#juicy-ace-editor-container').style = 'font-size: calc(40px - 1vw)';
+            this.shadowRoot.querySelector('#codeEditor').shadowRoot.querySelector('.ace_gutter').style = 'background: #2a9af2';
+        }, 2000);
     }
 
     async questionInfoChanged() {
@@ -1357,7 +1360,7 @@ class PrendusEditQuestion extends HTMLElement {
                         <span>AssessML</span>
                     </paper-tooltip>
 
-                    <div>${this._question ? this._question.code : ''}</div>
+                    <juicy-ace-editor id="codeEditor" class="editor" value="${this._question ? this._question.code : ''}" onchange="${() => this.codeEditorChanged()}"></juicy-ace-editor>
 
                     <div class="savingText">${this.saving ? 'Saving...' : 'Saved'}</div>
                 </div>

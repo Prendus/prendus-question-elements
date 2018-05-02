@@ -1,17 +1,38 @@
-class PrendusResetTool extends WysiwygTool {
-    static get is() { return 'prendus-reset-tool'; }
+import {html, render} from 'lit-html/lib/lit-extended.js';
+import {WysiwygTool} from 'wysiwyg-e/wysiwyg-tool.js';
+import {createStore} from 'redux';
+import '@polymer/paper-button';
+import '@polymer/paper-tooltip';
+import '@polymer/iron-icon';
+import '@polymer/iron-icons';
+import '@polymer/paper-dialog';
 
-    connectedCallback() {
-        super.connectedCallback();
-        this._setCommand('insertText'); //TODO for some reason I have to set this command or else the tool will be disabled
+interface State {
+
+}
+
+interface Action {
+    type: string;
+}
+
+const InitialState: State = {};
+const RootReducer = (state: State = InitialState, action: Action): State => state;
+const Store = createStore(RootReducer);
+
+class PrendusResetTool extends (<new () => HTMLElement> WysiwygTool) {
+    tooltipPosition: number; //TODO remove this once we have types for WysiwygTool
+
+    constructor() {
+        super();
+
+        this.attachShadow({ mode: 'open' });
+
+        Store.subscribe(() => render(this.render(Store.getState()), this.shadowRoot || this));
+        Store.dispatch({ type: 'DEFAULT_ACTION' });
     }
 
-    execCommand() {
-        if (this.disabled || !this.range0) {
-            return;
-        }
-
-        this.shadowRoot.querySelector('#sureDialog').open();
+    executeTool() {
+        (<any> (this.shadowRoot || this).querySelector('#sureDialog')).open();
     }
 
     sureDialogClick(e: Event) {
@@ -20,12 +41,34 @@ class PrendusResetTool extends WysiwygTool {
 
     yesClick() {
         this.dispatchEvent(new CustomEvent('reset-text-and-code'));
-        this.shadowRoot.querySelector('#sureDialog').close();
+        (<any> (this.shadowRoot || this).querySelector('#sureDialog')).close();
     }
 
     noClick() {
-        this.shadowRoot.querySelector('#sureDialog').close();
+        (<any> (this.shadowRoot || this).querySelector('#sureDialog')).close();
+    }
+
+    render(state: State) {
+        return html`
+            <paper-button id="button" onclick="${() => this.executeTool()}">
+                <iron-icon icon="icons:autorenew"></iron-icon>
+            </paper-button>
+
+            <paper-tooltip id="tooltip" for="button" position="${this.tooltipPosition}" offset="5">
+                <span>Reset text and code</span>
+            </paper-tooltip>
+
+            <paper-dialog id="sureDialog" onclick="${(e: Event) => this.sureDialogClick(e)}">
+                <h2>Are you sure you want to reset the text and code?</h2>
+                <div style="display: flex">
+                    <div style="margin-left: auto">
+                        <paper-button onclick="${() => this.noClick()}" dialog-dismiss>No</paper-button>
+                        <paper-button onclick="${() => this.yesClick()}" dialog-confirm raised>Yes</paper-button>
+                    </div>
+                </div>
+            </paper-dialog>
+        `;
     }
 }
 
-window.customElements.define(PrendusResetTool.is, PrendusResetTool);
+window.customElements.define('prendus-reset-tool', PrendusResetTool);

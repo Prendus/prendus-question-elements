@@ -18,18 +18,15 @@ const InitialState: State = {};
 const RootReducer = (state: State = InitialState, action: Action): State => state;
 const Store = createStore(RootReducer);
 
-class PrendusCodeTool extends WysiwygTool {
-    shadowRoot: ShadowRoot;
+class PrendusCodeTool extends (<new () => HTMLElement> WysiwygTool) {
     tooltipPosition: any;
-    attachShadow: any;
-    dispatchEvent: any;
 
     constructor() {
         super();
 
         this.attachShadow({ mode: 'open' });
 
-        Store.subscribe(() => render(this.render(Store.getState()), this.shadowRoot));
+        Store.subscribe(() => render(this.render(Store.getState()), this.shadowRoot || this));
         Store.dispatch({ type: 'DEFAULT_ACTION' });
     }
 

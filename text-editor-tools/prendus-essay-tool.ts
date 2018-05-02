@@ -18,33 +18,29 @@ const InitialState: State = {};
 const RootReducer = (state: State = InitialState, action: Action): State => state;
 const Store = createStore(RootReducer);
 
-class PrendusEssayTool extends WysiwygTool {
+class PrendusEssayTool extends (<new () => HTMLElement> WysiwygTool) {
+    tooltipPosition: number; //TODO remove this once we have types for WysiwygTool
+
     constructor() {
         super();
 
         this.attachShadow({ mode: 'open' });
 
-        Store.subscribe(() => render(this.render(Store.getState()), this.shadowRoot));
+        Store.subscribe(() => render(this.render(Store.getState()), this.shadowRoot || this));
         Store.dispatch({ type: 'DEFAULT_ACTION' });
     }
 
-    execCommand() {
-        if (this.disabled || !this.range0) {
-            return;
-        }
-
-        this.dispatchEvent(new CustomEvent('insert-essay', {
-            bubbles: false
-        }));
+    executeTool() {
+        this.dispatchEvent(new CustomEvent('insert-essay'));
     }
 
     render(state: State) {
         return html`
-            <paper-button id="button" disabled="[[disabled]]">
+            <paper-button id="button" onclick="${() => this.executeTool()}">
                 <iron-icon icon="icons:assignment"></iron-icon>
             </paper-button>
 
-            <paper-tooltip id="tooltip" for="button" position="[[tooltipPosition]]" offset="5">
+            <paper-tooltip id="tooltip" for="button" position="${this.tooltipPosition}" offset="5">
                 <span>Essay</span>
             </paper-tooltip>
         `;

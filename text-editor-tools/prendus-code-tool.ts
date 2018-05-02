@@ -19,7 +19,7 @@ const RootReducer = (state: State = InitialState, action: Action): State => stat
 const Store = createStore(RootReducer);
 
 class PrendusCodeTool extends (<new () => HTMLElement> WysiwygTool) {
-    tooltipPosition: any;
+    tooltipPosition: number; //TODO remove this once we have types for WysiwygTool
 
     constructor() {
         super();
@@ -31,9 +31,7 @@ class PrendusCodeTool extends (<new () => HTMLElement> WysiwygTool) {
     }
 
     executeTool() {
-        this.dispatchEvent(new CustomEvent('insert-code', {
-            bubbles: false
-        }));
+        this.dispatchEvent(new CustomEvent('insert-code'));
     }
 
     render(state: State) {

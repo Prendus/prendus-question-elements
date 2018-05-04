@@ -65,6 +65,7 @@ import './text-editor-tools/prendus-essay-tool';
 import './text-editor-tools/prendus-multiple-choice-tool';
 import './text-editor-tools/prendus-graph-tool';
 import './text-editor-tools/prendus-reset-tool';
+import './text-editor-tools/prendus-variable-tool';
 import 'juicy-ace-editor';
 import 'ace-builds/src-noconflict/mode-javascript.js';
 
@@ -1344,7 +1345,7 @@ class PrendusEditQuestion extends HTMLElement {
                         ${this.fillInTheBlankTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
                         ${this.essayTool ? html`<prendus-essay-tool id="prendus-essay-tool" on-insert-essay="${(e: CustomEvent) => this.insertEssay(e)}"></prendus-essay-tool>` : ''}
                         ${this.codeTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
-                        ${this.variableTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
+                        ${this.variableTool ? html`<prendus-variable-tool id="prendus-variable-tool" on-insert-variable="${(e: CustomEvent) => this.insertVariable(e)}"></prendus-variable-tool>` : ''}
                         ${this.mathTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
                         ${this.imageTool ? html`<prendus-code-tool id="prendus-code-tool" on-insert-code="${(e: CustomEvent) => this.insertCode(e)}"></prendus-code-tool>` : ''}
                         ${this.graphTool ? html`<prendus-graph-tool id="prendus-graph-tool" on-insert-graph="${(e: CustomEvent) => this.insertGraph(e)}"></prendus-graph-tool>` : ''}

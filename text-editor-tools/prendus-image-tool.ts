@@ -1,23 +1,53 @@
-class PrendusImageTool extends WysiwygTool {
-    static get is() { return 'prendus-image-tool'; }
+import {html, render} from 'lit-html/lib/lit-extended.js';
+import {WysiwygTool} from 'wysiwyg-e/wysiwyg-tool.js';
+import {createStore} from 'redux';
+import '@polymer/paper-button';
+import '@polymer/paper-tooltip';
+import '@polymer/iron-icon';
+import '@polymer/iron-icons/image-icons';
 
-    connectedCallback() {
-        super.connectedCallback();
+interface State {
+    showFileInput: boolean;
+}
 
-        this._setCommand('insertImage');
+interface Action {
+    type: string;
+}
+
+const InitialState: State = {
+    showFileInput: true
+};
+const RootReducer = (state: State = InitialState, action: Action): State => {
+    if (action.type === 'TOGGLE_SHOW_FILE_INPUT') {
+        return {
+            ...state,
+            showFileInput: !state.showFileInput
+        };
     }
 
-    execCommand() {
-        if (this.disabled || !this.range0) {
-            return;
-        }
+    return state;
+};
+const Store = createStore(RootReducer);
 
-        this.shadowRoot.querySelector('#imageInput').click();
+class PrendusImageTool extends (<new () => HTMLElement> WysiwygTool) {
+    tooltipPosition: number; //TODO remove this once we have types for WysiwygTool
+
+    constructor() {
+        super();
+
+        this.attachShadow({ mode: 'open' });
+
+        Store.subscribe(() => render(this.render(Store.getState()), this.shadowRoot || this));
+        Store.dispatch({ type: 'DEFAULT_ACTION' });
+    }
+
+    executeTool() {
+        (<any> (this.shadowRoot || this).querySelector('#imageInput')).click();
     }
 
     imageInputChange(e: Event) {
         //TODO validate the file
-        const file = e.target.files[0];
+        const file = (<any> e.target).files[0];
         const reader = new FileReader();
         reader.addEventListener('load', () => {
             this.dispatchEvent(new CustomEvent('insert-image', {
@@ -28,16 +58,30 @@ class PrendusImageTool extends WysiwygTool {
         });
         reader.readAsDataURL(file);
 
-        //TODO this is a temporary fix for the erratic behavior caused by inserting an image
-        //TODO the editor cursor jumps around after inserting an image unless we estroy the input and add it later
-        const imageInputContainer = this.shadowRoot.querySelector('#imageInputContainer');
-        const imageInput = this.shadowRoot.querySelector('#imageInput');
-        imageInputContainer.removeChild(imageInput);
+        Store.dispatch({
+            type: 'TOGGLE_SHOW_FILE_INPUT'
+        });
 
-        setTimeout(() => {
-            imageInputContainer.appendChild(imageInput);
-        }, 1000);
+        Store.dispatch({
+            type: 'TOGGLE_SHOW_FILE_INPUT'
+        });
+    }
+
+    render(state: State) {
+        return html`
+            <paper-button id="button" onclick="${() => this.executeTool()}">
+                <iron-icon icon="image:image"></iron-icon>
+            </paper-button>
+
+            <paper-tooltip id="tooltip" for="button" position="${this.tooltipPosition}" offset="5">
+                <span>Image</span>
+            </paper-tooltip>
+
+            <div id="imageInputContainer">
+                ${state.showFileInput ? html`<input hidden id="imageInput" type="file" accept="image/*" oninput="${(e: Event) => this.imageInputChange(e)}">` : ''}
+            </div>
+        `;
     }
 }
 
-window.customElements.define(PrendusImageTool.is, PrendusImageTool);
+window.customElements.define('prendus-image-tool', PrendusImageTool);

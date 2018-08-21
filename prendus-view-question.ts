@@ -1,7 +1,7 @@
 import DOMPurify from 'dompurify';
 import {html, render} from 'lit-html/lib/lit-extended.js';
 import {unsafeHTML} from 'lit-html/lib/unsafe-html.js';
-import './state/init-state-management.ts';
+import {TemplateResult} from 'lit-html';
 import {
     Question,
     BuiltQuestion,
@@ -9,11 +9,16 @@ import {
     UserVariable,
     UserCheck,
     UserRadio,
-    UserEssay
+    UserEssay,
+    UserImage,
+    UserGraph,
+    UserCode,
+    State
 } from './prendus-question-elements.d';
 import {
     buildQuestion,
-    checkAnswer
+    checkAnswer,
+    getUserASTObjectsFromAnswerAssignment
 } from './services/question-service';
 import {
     createUUID
@@ -21,7 +26,7 @@ import {
 import {
     getAstObjects,
     compileToHTML
-} from 'assessml';
+} from 'assessml/assessml.ts';
 import {
     AST,
     Variable,
@@ -31,151 +36,106 @@ import {
     Check,
     Drag,
     Drop,
-    Image
+    Image,
+    Code,
+    Graph
 } from 'assessml';
-import {
-    execute,
-    subscribe,
-    extendSchema,
-    addIsTypeOf
-} from 'graphsm';
 import {
     loadQuestion
 } from './services/shared-service';
 import '@polymer/paper-toast';
 import 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.8.3/katex.min.js';
+import {Store} from './state/store';
 
-const PRENDUS_VIEW_QUESTION = 'PrendusViewQuestion';
-extendSchema(`
-    type ${PRENDUS_VIEW_QUESTION} implements ComponentState {
-        componentId: String!
-        componentType: String!
-        loaded: Boolean
-        question: Question!
-        questionId: String!
-        builtQuestion: Any
-        showSolution: Boolean!
-        showEmbedCode: Boolean!
-        checkAnswerResponse: String!
-        solutionButtonText: String!
-    }
-`);
-addIsTypeOf('ComponentState', PRENDUS_VIEW_QUESTION, (value: any) => {
-    return value.componentType === PRENDUS_VIEW_QUESTION;
-});
+class PrendusViewQuestion extends HTMLElement {
+    componentId: string; //TODO figure out how to get rid of this mutation
 
-export class PrendusViewQuestion extends HTMLElement {
-    shadowRoot: ShadowRoot;
-    componentId: string;
-    _question: Question;
-    _questionId: string;
-    builtQuestion: BuiltQuestion;
-    userToken: string | null;
-    loaded: boolean;
-    showEmbedCode: boolean;
-    checkAnswerResponse: string;
-    solutionButtonText: 'Solution' | 'Question';
-    showSolution: boolean;
-
-    get question(): Question {
-        //TODO return this from the global state store
-        return this._question;
+    get question(): Question | null | undefined {
+        return Store.getState().components[this.componentId].question;
     }
 
-    set question(val) {
-        if (val === this.question) {
+    set question(question: Question | null | undefined) {
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'question',
+            value: question
+        });
+
+        if (question === null || question === undefined) {
             return;
         }
 
-        //TODO set this on the global state store
-        this._question = val;
-        this._questionId = null; //TODO bad
-        this.questionInfoChanged();
-    }
-
-    get questionId(): string {
-        //TODO return this from the global state store
-        return this._questionId;
-    }
-
-    set questionId(val) {
-        if (val === this.questionId) {
-            return;
-        }
-
-        //TODO set this on the global state store
-        this._question = null; //TODO bad
-        this._questionId = val;
-        this.questionInfoChanged();
+        this.buildQuestion(question);
     }
 
     constructor() {
         super();
 
-        this.attachShadow({mode: 'open'});
-
         this.componentId = createUUID();
-        subscribe(this.render.bind(this));
-        execute(`
-            mutation initialSetup($componentId: String!, $props: Any) {
-                updateComponentState(componentId: $componentId, props: $props)
-            }
-        `, {
-            initialSetup: (previousResult) => {
-                return {
-                    componentId: this.componentId,
-                    props: {
-                        componentType: PRENDUS_VIEW_QUESTION,
-                        question: null,
-                        questionId: null,
-                        solutionButtonText: 'Solution',
-                        showSolution: false,
-                        showEmbedCode: false,
-                        checkAnswerResponse: ''
-                    }
-                };
-            }
-        }, this.userToken);
+        Store.subscribe(() => render(this.render(Store.getState(), this.componentId), this));
     }
 
-    async showEmbedCodeClick() {
-        await execute(`
-            mutation setShowEmbedCode($componentId: String!, $props: Any) {
-                updateComponentState(componentId: $componentId, props: $props)
-            }
-        `, {
-            setShowEmbedCode: (previousResult) => {
-                return {
-                    componentId: this.componentId,
-                    props: {
-                        showEmbedCode: !this.showEmbedCode
-                    }
-                };
-            }
-        }, this.userToken);
+    connectedCallback() {
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'question',
+            value: null
+        });
 
-        //allow the template with the input to be stamped
-        setTimeout(() => {
-            this.shadowRoot.querySelector('#embedInput').select();
-        }, 0);
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'solutionButtonText',
+            value: 'Solution'
+        });
+
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'showSolution',
+            value: false
+        });
+
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'showEmbedCode',
+            value: false
+        });
+
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'checkAnswerResponse',
+            value: ''
+        });
     }
 
-    async questionInfoChanged() {
-        if (!this.question && !this.questionId) {
-            return;
-        }
+    async buildQuestion(question: Question) {
+        const builtQuestion = await buildQuestion(question.assessML, question.javaScript);
+        const showSolution = builtQuestion ? getAstObjects(builtQuestion.ast, 'SOLUTION').length > 0 : false;
+        const userRadiosFromCode = getUserASTObjectsFromAnswerAssignment(question.assessML, question.javaScript, 'RADIO');
+        const userChecksFromCode = getUserASTObjectsFromAnswerAssignment(question.assessML, question.javaScript, 'CHECK');
+        const userInputsFromCode = getUserASTObjectsFromAnswerAssignment(question.assessML, question.javaScript, 'INPUT');
 
-        await loadQuestion(this.componentId, PRENDUS_VIEW_QUESTION, this.question, this.questionId, this.userToken);
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'builtQuestion',
+            value: builtQuestion
+        });
 
-        //TODO this causes issues with the secureEval messaging, probably won't be hard to fix
+        this.dispatchEvent(new CustomEvent('question-built'));
+
+        //TODO this causes issues with the secureEval messaging, probably won't be hard to fix (I think it is fixed, just need to try again)
         //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
         // window.parent.postMessage({
         //     type: 'prendus-view-question-resize',
         //     height: document.body.scrollHeight,
         //     width: document.body.scrollWidth
         // }, '*');
-
-        this.dispatchEvent(new CustomEvent('question-loaded'));
     }
 
     getSanitizedHTML(html: string) {
@@ -187,68 +147,96 @@ export class PrendusViewQuestion extends HTMLElement {
         return sanitizedHTML;
     }
 
-    async checkAnswer() {
-        const astVariables: Variable[] = getAstObjects(this.builtQuestion.ast, 'VARIABLE', ['SOLUTION']);
-        const astInputs: Input[] = getAstObjects(this.builtQuestion.ast, 'INPUT', ['SOLUTION']);
-        const astEssays: Essay[] = getAstObjects(this.builtQuestion.ast, 'ESSAY', ['SOLUTION']);
-        const astCodes: Code[] = getAstObjects(this.builtQuestion.ast, 'CODE', ['SOLUTION']);
-        const astChecks: Check[] = getAstObjects(this.builtQuestion.ast, 'CHECK', ['SOLUTION']);
-        const astRadios: Radio[] = getAstObjects(this.builtQuestion.ast, 'RADIO', ['SOLUTION']);
-        const astDrags: Drag[] = getAstObjects(this.builtQuestion.ast, 'DRAG', ['SOLUTION']);
-        const astDrops: Drop[] = getAstObjects(this.builtQuestion.ast, 'DROP', ['SOLUTION']);
-        const astImages: Image[] = getAstObjects(this.builtQuestion.ast, 'IMAGE', ['SOLUTION']);
-        const astGraphs: Graph[] = getAstObjects(this.builtQuestion.ast, 'GRAPH', ['SOLUTION']);
+    showSolutionClick() {}
 
-        const userVariables: UserVariable[] = astVariables;
-        const userImages: UserImage[] = astImages;
-        const userGraphs: UserGraph[] = astGraphs;
-        const userInputs: UserInput[] = astInputs.map((astInput) => {
-            return {
-                varName: astInput.varName,
-                value: this.shadowRoot.querySelector(`#${astInput.varName}`).textContent
+    async checkAnswer(componentId: string, question: Question, builtQuestion: BuiltQuestion) {
+        const astVariables: Variable[] = getAstObjects(builtQuestion.ast, 'VARIABLE', ['SOLUTION']);
+        const astInputs: Input[] = getAstObjects(builtQuestion.ast, 'INPUT', ['SOLUTION']);
+        const astEssays: Essay[] = getAstObjects(builtQuestion.ast, 'ESSAY', ['SOLUTION']);
+        const astCodes: Code[] = getAstObjects(builtQuestion.ast, 'CODE', ['SOLUTION']);
+        const astChecks: Check[] = getAstObjects(builtQuestion.ast, 'CHECK', ['SOLUTION']);
+        const astRadios: Radio[] = getAstObjects(builtQuestion.ast, 'RADIO', ['SOLUTION']);
+        const astDrags: Drag[] = getAstObjects(builtQuestion.ast, 'DRAG', ['SOLUTION']);
+        const astDrops: Drop[] = getAstObjects(builtQuestion.ast, 'DROP', ['SOLUTION']);
+        const astImages: Image[] = getAstObjects(builtQuestion.ast, 'IMAGE', ['SOLUTION']);
+        const astGraphs: Graph[] = getAstObjects(builtQuestion.ast, 'GRAPH', ['SOLUTION']);
+
+        const userVariables: UserVariable[] = astVariables.map((astVariable: Variable) => {
+            const userVariable: UserVariable = {
+                ...astVariable,
+                type: 'USER_VARIABLE'
             };
+            return userVariable;
         });
-        const userEssays: UserEssay[] = astEssays.map((astEssay) => {
-            return {
-                varName: astEssay.varName,
-                value: this.shadowRoot.querySelector(`#${astEssay.varName}`).value
+        const userImages: UserImage[] = astImages.map((astImage: Image) => {
+            const userImage: UserImage = {
+                ...astImage,
+                type: 'USER_IMAGE'
             };
+            return userImage;
         });
-        const userCodes: UserCode[] = astCodes.map((astCode) => {
-            return {
-                varName: astCode.varName,
-                value: this.shadowRoot.querySelector(`#${astCode.varName}`).value
+        const userGraphs: UserGraph[] = astGraphs.map((astGraph: Graph) => {
+            const userGraph: UserGraph = {
+                ...astGraph,
+                type: 'USER_GRAPH'
             };
+            return userGraph;
         });
-        const userChecks: UserCheck[] = astChecks.map((astCheck) => {
-            return {
-                varName: astCheck.varName,
-                checked: this.shadowRoot.querySelector(`#${astCheck.varName}`).checked
+        const userInputs: UserInput[] = astInputs.map((astInput: Input) => {
+            const input: HTMLInputElement | null = <HTMLInputElement | null> this.querySelector(`#${astInput.varName}`);
+            const userInput: UserInput = {
+                ...astInput,
+                type: 'USER_INPUT',
+                value: input ? input.textContent || '' : `${astInput.varName} was not found`
             };
+            return userInput;
         });
-        const userRadios: UserRadio[] = astRadios.map((astRadio) => {
-            return {
-                varName: astRadio.varName,
-                checked: this.shadowRoot.querySelector(`#${astRadio.varName}`).checked
+        const userEssays: UserEssay[] = astEssays.map((astEssay: Essay) => {
+            const textarea: HTMLTextAreaElement | null = <HTMLTextAreaElement | null> this.querySelector(`#${astEssay.varName}`);
+            const userEssay: UserEssay = {
+                ...astEssay,
+                type: 'USER_ESSAY',
+                value: textarea ? textarea.value : `${astEssay.varName} was not found`
             };
+            return userEssay;
+        });
+        const userCodes: UserCode[] = astCodes.map((astCode: Code) => {
+            //TODO the type here should be the type of the code editor custom element, and change the variable name as well
+            const textarea: HTMLTextAreaElement | null = <HTMLTextAreaElement | null> this.querySelector(`#${astCode.varName}`);
+            const userCode: UserCode = {
+                ...astCode,
+                type: 'USER_CODE',
+                value: textarea ? textarea.value : `${astCode.varName} was not found`
+            };
+            return userCode;
+        });
+        const userChecks: UserCheck[] = astChecks.map((astCheck: Check) => {
+            const check: HTMLInputElement | null = <HTMLInputElement | null> this.querySelector(`#${astCheck.varName}`);
+            const userCheck: UserCheck = {
+                ...astCheck,
+                type: 'USER_CHECK',
+                checked: check ? check.checked : false
+            };
+            return userCheck;
+        });
+        const userRadios: UserRadio[] = astRadios.map((astRadio: Radio) => {
+            const radio: HTMLInputElement | null = <HTMLInputElement | null> this.querySelector(`#${astRadio.varName}`);
+            const userRadio: UserRadio = {
+                ...astRadio,
+                type: 'USER_RADIO',
+                checked: radio ? radio.checked : false
+            };
+            return userRadio;
         });
 
-        const checkAnswerInfo = await checkAnswer(this._question.code, this.builtQuestion.originalVariableValues, userVariables, userInputs, userEssays, userCodes, userChecks, userRadios, userImages, userGraphs);
+        const checkAnswerInfo = await checkAnswer(question.javaScript, builtQuestion.originalVariableValues, userVariables, userInputs, userEssays, userCodes, userChecks, userRadios, userImages, userGraphs);
 
-        await execute(`
-            mutation setCheckAnswerResponse($componentId: String!, $props: Any) {
-                updateComponentState(componentId: $componentId, props: $props)
-            }
-        `, {
-            setCheckAnswerResponse: (previousResult) => {
-                return {
-                    componentId: this.componentId,
-                    props: {
-                        checkAnswerResponse: checkAnswerInfo.answer === true ? 'Correct' : checkAnswerInfo.error ? `This question has errors:\n\n${checkAnswerInfo.error}` : 'Incorrect'
-                    }
-                };
-            }
-        }, this.userToken);
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId,
+            key: 'checkAnswerResponse',
+            value: checkAnswerInfo.answer === true ? 'Correct' : checkAnswerInfo.error ? `This question has errors:\n\n${checkAnswerInfo.error}` : 'Incorrect'
+        });
 
         this.dispatchEvent(new CustomEvent('question-response', {
             detail: {
@@ -261,57 +249,24 @@ export class PrendusViewQuestion extends HTMLElement {
             }
         }));
 
-        this.shadowRoot.querySelector('#checkAnswerResponseToast').open();
+        const checkAnswerResponseToast: any = this.querySelector('#checkAnswerResponseToast');
+        if (checkAnswerResponseToast) {
+            checkAnswerResponseToast.open();
+        }
     }
 
-    async showSolutionClick() {
-        await execute(`
-            mutation setSolutionTemplateInfo($componentId: String!, $props: Any) {
-                updateComponentState(componentId: $componentId, props: $props)
-            }
-        `, {
-            setSolutionTemplateInfo: (previousResult) => {
-                const solutionTemplate = <HTMLTemplateElement> this.shadowRoot.querySelector('#solution1');
-                const props = solutionTemplate ? {
-                    builtQuestion: {
-                        ...this.builtQuestion,
-                        html: `${solutionTemplate.innerHTML}<template>${this._question.text}</template>`
-                    },
-                    solutionButtonText: 'Question'
-                } : {
-                    builtQuestion: {
-                        ...this.builtQuestion,
-                        html: compileToHTML(this.builtQuestion.ast, () => NaN, () => '')
-                    },
-                    solutionButtonText: 'Solution'
-                };
-
-                return {
-                    componentId: this.componentId,
-                    props
-                };
-            }
-        }, this.userToken);
-    }
-
-    render(state) {
+    render(state: State, componentId: string): TemplateResult {
         const componentState = state.components[this.componentId];
-        if (componentState) {
-            // this._question = componentState.question;
-            // this._questionId = componentState.questionId;
-            this.loaded = componentState.loaded;
-            this.builtQuestion = componentState.builtQuestion;
-            this.showSolution = componentState.showSolution;
-            this.showEmbedCode = componentState.showEmbedCode;
-            this.checkAnswerResponse = componentState.checkAnswerResponse;
-            this.solutionButtonText = componentState.solutionButtonText;
+
+        if (componentState === null || componentState === undefined) {
+            return html`No question set`;
         }
 
-        const mathRenderedHTML = this.getSanitizedHTML(this.builtQuestion ? this.builtQuestion.html : '').replace(/\$\$.*\$\$/g, (replacement) => {
+        const mathRenderedHTML = this.getSanitizedHTML(componentState.builtQuestion ? componentState.builtQuestion.html : '').replace(/\$\$.*\$\$/g, (replacement: string) => {
             return window.katex.renderToString(replacement.replace(/\$/g, ''));
         });
 
-        render(html`
+        return html`
             <style>
                 .mainContainer {
                     position: relative;
@@ -339,37 +294,76 @@ export class PrendusViewQuestion extends HTMLElement {
                 }
             </style>
 
-            <div class="mainContainer" hidden="${!this.builtQuestion}">
+            <div class="mainContainer" hidden="${!componentState.builtQuestion}">
                 <div id="contentDiv">
                     ${unsafeHTML(mathRenderedHTML)}
                 </div>
 
                 <div class="bottomButtons">
-                    <div onclick="${() => this.checkAnswer()}" class="checkButton">Check</div>
-                    ${this.showSolution ? html`<div onclick="${() => this.showSolutionClick()}" class="checkButton">${this.solutionButtonText}</div>` : ''}
+                    <div onclick="${() => this.checkAnswer(componentId, componentState.question, componentState.builtQuestion)}" class="checkButton">Check</div>
+                    ${componentState.showSolution ? html`<div onclick="${() => this.showSolutionClick()}" class="checkButton">${componentState.solutionButtonText}</div>` : ''}
                 </div>
 
-                <paper-toast id="checkAnswerResponseToast" text="${this.checkAnswerResponse}" duration="1500" fitInto="${this}" horizontal-align="right"></paper-toast>
+                <paper-toast id="checkAnswerResponseToast" text="${componentState.checkAnswerResponse}" duration="1500" fitInto="${this}" horizontal-align="right"></paper-toast>
             </div>
 
-            <div class="questionPreviewPlaceholder" hidden="${this.builtQuestion}">
+            <div class="questionPreviewPlaceholder" hidden="${componentState.builtQuestion}">
                 Question preview will appear here
             </div>
-        `, this.shadowRoot);
+        `;
     }
 }
 
 window.customElements.define('prendus-view-question', PrendusViewQuestion);
 
-async function createNotFoundQuestion(questionId: string) {
-    const notFoundQuestion = {
-        id: questionId,
-        text: 'This question does not exist',
-        code: 'answer = false;'
-    };
+// async showEmbedCodeClick() {
+//     await execute(`
+//         mutation setShowEmbedCode($componentId: String!, $props: Any) {
+//             updateComponentState(componentId: $componentId, props: $props)
+//         }
+//     `, {
+//         setShowEmbedCode: (previousResult) => {
+//             return {
+//                 componentId: this.componentId,
+//                 props: {
+//                     showEmbedCode: !this.showEmbedCode
+//                 }
+//             };
+//         }
+//     }, this.userToken);
+//
+//     //allow the template with the input to be stamped
+//     setTimeout(() => {
+//         this.querySelector('#embedInput').select();
+//     }, 0);
+// }
 
-    return {
-        question: notFoundQuestion,
-        builtQuestion: await buildQuestion(notFoundQuestion.text, notFoundQuestion.code)
-    };
-}
+// async showSolutionClick() {
+    // await execute(`
+    //     mutation setSolutionTemplateInfo($componentId: String!, $props: Any) {
+    //         updateComponentState(componentId: $componentId, props: $props)
+    //     }
+    // `, {
+    //     setSolutionTemplateInfo: (previousResult) => {
+    //         const solutionTemplate = <HTMLTemplateElement> this.querySelector('#solution1');
+    //         const props = solutionTemplate ? {
+    //             builtQuestion: {
+    //                 ...this.builtQuestion,
+    //                 html: `${solutionTemplate.innerHTML}<template>${this._question.text}</template>`
+    //             },
+    //             solutionButtonText: 'Question'
+    //         } : {
+    //             builtQuestion: {
+    //                 ...this.builtQuestion,
+    //                 html: compileToHTML(this.builtQuestion.ast, () => NaN, () => '')
+    //             },
+    //             solutionButtonText: 'Solution'
+    //         };
+    //
+    //         return {
+    //             componentId: this.componentId,
+    //             props
+    //         };
+    //     }
+    // }, this.userToken);
+// }

@@ -1,11 +1,11 @@
-import {AST} from '../assessml/assessml.d';
+import {AST, ASTObject} from 'assessml';
 
 export interface Action {
     readonly type: string;
 }
 
-export interface SetPropertyAction {
-    readonly type: 'SET_PROPERTY';
+export interface SetGlobalPropertyAction {
+    readonly type: 'SET_GLOBAL_PROPERTY';
     readonly key: string;
     readonly value: any;
 }
@@ -24,49 +24,31 @@ export interface DefaultAction {
 export interface BuiltQuestion {
     readonly html: string;
     readonly ast: AST;
+    readonly originalVariableValues: string[];
 }
 
-export type GQLMutateErrorCallback = (error: any) => void;
-
-export type GQLQueryDataCallback = (key: string, value: any) => void;
-
-export type GQLQueryErrorCallback = (error: any) => void;
-
-export type GQLSubscribeCallback = (data: any) => void;
-
 export interface Question {
-    readonly id: string;
-    readonly createdAt: Date;
-    readonly updatedAt: Date;
-    readonly text: string;
-    readonly code: string;
-    readonly quiz: Quiz | null;
-    readonly author: User;
-    readonly license: string;
-    readonly discipline: Discipline;
-    readonly subject: Subject;
-    readonly concept: Concept
-    readonly resource: string;
-    readonly explanation: string;
-    readonly answerComments: {};
+    readonly assessML: string;
+    readonly javaScript: string;
 }
 
 export type Reducer = (state: State, action: Action) => State;
 
-export interface State {
-    readonly components: {
-        readonly [componentId: string]: any;
-    };
+export interface PrendusViewQuestionState {
+    readonly componentId: string;
+    readonly loaded: boolean;
+    readonly question: Question;
+    readonly builtQuestion: BuiltQuestion;
+    readonly showSolution: boolean;
+    readonly showEmbedCode: boolean;
+    readonly checkAnswerResponse: string;
+    readonly solutionButtonText: string;
 }
 
-export interface User {
-    readonly id: string;
-    readonly createdAt: Date;
-    readonly updatedAt: Date;
-    readonly courses: Course[];
-    readonly assignments: Assignment[];
-    readonly quizzes: Quiz[];
-    readonly questions: Question[];
+export interface State {
+    readonly components: {
+        readonly [componentId: string]: PrendusViewQuestionState;
+    };
 }
 
 export type UserASTObject = UserVariable | UserInput | UserEssay | UserCheck | UserRadio;
@@ -74,7 +56,13 @@ export type UserASTObject = UserVariable | UserInput | UserEssay | UserCheck | U
 export interface UserVariable {
     readonly type: 'USER_VARIABLE';
     readonly varName: string;
-    readonly value: number;
+    readonly value: number | string;
+}
+
+export interface UserImage {
+    readonly type: 'USER_IMAGE';
+    readonly varName: string;
+    readonly src: string;
 }
 
 export interface UserInput {
@@ -92,13 +80,27 @@ export interface UserEssay {
 export interface UserCheck {
     readonly type: 'USER_CHECK';
     readonly varName: string;
+    readonly content: ASTObject[];
     readonly checked: boolean;
 }
 
 export interface UserRadio {
     readonly type: 'USER_RADIO';
     readonly varName: string;
+    readonly content: ASTObject[];
     readonly checked: boolean;
+}
+
+export interface UserGraph {
+    readonly type: 'USER_GRAPH';
+    readonly varName: string;
+    readonly equations: string[];
+}
+
+export interface UserCode {
+    readonly type: 'USER_CODE';
+    readonly varName: string;
+    readonly value: string;
 }
 
 export interface QuestionScaffold {

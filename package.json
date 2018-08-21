@@ -3,18 +3,15 @@
   "version": "0.15.2",
   "description": "Fully embeddable custom HTML elements for Prendus questions.",
   "scripts": {
-    "test": "npm run link && xvfb-run -a electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --auto-run",
-    "test-window": "npm run link && electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --window",
-    "test-auto": "npm run link && electron --enable-logging node_modules/scram-engine/main.js --entry-file test/index.html --auto-run",
-    "link": "npm link && npm link prendus-question-elements",
-    "test-guesswork": "guesswork chromium firefox --entry test/index.js",
-    "test-guesswork-manual": "guesswork --entry test/index.js"
+    "test": "guesswork chromium firefox --entry test/index.js",
+    "test-manual": "guesswork --entry test/index.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Prendus/prendus-question-elements.git"
   },
   "typings": "prendus-question-elements.d.ts",
+  "main": "index.js",
   "author": "Jordan Last <jordan.michael.last@gmail.com>",
   "license": "MIT",
   "bugs": {
@@ -23,6 +20,7 @@
   "homepage": "https://github.com/Prendus/prendus-question-elements#readme",
   "dependencies": {
     "@polymer/iron-icon": "^3.0.0-pre.21",
+    "@polymer/iron-icons": "^3.0.0-pre.21",
     "@polymer/iron-pages": "^3.0.0-pre.21",
     "@polymer/paper-button": "^3.0.0-pre.21",
     "@polymer/paper-dialog": "^3.0.0-pre.21",
@@ -50,6 +48,7 @@
     "@webcomponents/custom-elements": "^1.1.0",
     "@webcomponents/shadydom": "^1.0.14",
     "deep-equal-es-module": "0.0.0",
-    "guesswork": "^0.11.2"
+    "guesswork": "^0.11.2",
+    "zwitterion": "^0.27.0"
   }
 }

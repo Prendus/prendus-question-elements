@@ -1,21 +1,43 @@
-import {UserInput} from '../prendus-question-elements.d';
+import {UserInput, Question} from '../prendus-question-elements.d';
 import {getUserASTObjectValue} from '../services/question-service';
+import {html, render} from 'lit-html/lib/lit-extended.js';
+import {WysiwygTool} from 'wysiwyg-e/wysiwyg-tool.js';
+import {createStore} from 'redux';
+import '@polymer/paper-button';
+import '@polymer/paper-tooltip';
+import '@polymer/iron-icon';
+import '@polymer/iron-icons';
+import '@polymer/paper-dialog';
+import '@polymer/paper-dialog-scrollable';
 
-class PrendusFillInTheBlankTool extends WysiwygTool {
-    static get is() { return 'prendus-fill-in-the-blank-tool'; }
+interface State {
+    userInputs: UserInput[];
+}
 
-    connectedCallback() {
-        super.connectedCallback();
+interface Action {
+    type: string;
+}
 
-        this._setCommand('insertText');
+const InitialState: State = {
+    userInputs: []
+};
+const RootReducer = (state: State = InitialState, action: Action): State => state;
+const Store = createStore(RootReducer);
+
+class PrendusFillInTheBlankTool extends (<new () => HTMLElement> WysiwygTool) {
+    tooltipPosition: number; //TODO remove this once we have types for WysiwygTool
+
+    constructor() {
+        super();
+
+        this.attachShadow({ mode: 'open' });
+
+        Store.subscribe(() => render(this.render(Store.getState()), this.shadowRoot || this));
+        Store.dispatch({ type: 'DEFAULT_ACTION' });
     }
 
-    execCommand() {
-        if (this.disabled || !this.range0) {
-            return;
-        }
-
-        this.shadowRoot.querySelector('#inputDialog').open();
+    executeTool() {
+        (<any> (this.shadowRoot || this).querySelector('#inputDialog')).open();
     }
 
     inputDialogClick(e: Event) {
@@ -23,7 +45,7 @@ class PrendusFillInTheBlankTool extends WysiwygTool {
     }
 
     doneClick() {
-        this.shadowRoot.querySelector('#inputDialog').close();
+        (<any> (this.shadowRoot || this).querySelector('#inputDialog')).close();
     }
 
     addBlankAnswerClick() {
@@ -66,6 +88,10 @@ class PrendusFillInTheBlankTool extends WysiwygTool {
     getInputAnswer(userInput: UserInput) {
         return getUserASTObjectValue(this.question.code, userInput);
     }
+
+    render(state: State) {
+        return html``;
+    }
 }
 
-window.customElements.define(PrendusFillInTheBlankTool.is, PrendusFillInTheBlankTool);
+window.customElements.define('prendus-fill-in-the-blank-tool', PrendusFillInTheBlankTool);

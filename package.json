@@ -31,7 +31,7 @@
     "juicy-ace-editor": "^2.0.5",
     "prendus-shared": "^0.3.2",
     "redux-store-element": "^1.3.0",
-    "secure-eval": "^0.3.2",
+    "secure-eval": "^0.3.3",
     "ubuntu-fontface": "^0.1.13"
   },
   "devDependencies": {

@@ -300,7 +300,7 @@ class PrendusViewQuestion extends HTMLElement {
                 </div>
 
                 <div class="bottomButtons">
-                    <div onclick="${() => this.checkAnswer(componentId, componentState.question, componentState.builtQuestion)}" class="checkButton">Check</div>
+                    <div onclick="${() => this.checkAnswer(componentId, componentState.question, componentState.builtQuestion)}" class="checkButton">Submit</div>
                     ${componentState.showSolution ? html`<div onclick="${() => this.showSolutionClick()}" class="checkButton">${componentState.solutionButtonText}</div>` : ''}
                 </div>
 

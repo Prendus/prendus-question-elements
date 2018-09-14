@@ -1,6 +1,6 @@
 import {parse, compileToHTML, getAstObjects, generateRandomInteger} from 'assessml';
-import {asyncMap, asyncReduce} from '../node_modules/prendus-shared/services/utilities-service';
-import {secureEval} from '../node_modules/secure-eval/secure-eval';
+import {asyncMap, asyncReduce} from 'prendus-shared/services/utilities-service.ts';
+import {secureEval} from 'secure-eval/secure-eval.ts';
 import {
     AST,
     ASTObject,

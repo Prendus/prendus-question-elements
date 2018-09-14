@@ -3,7 +3,7 @@
   "version": "0.15.2",
   "description": "Fully embeddable custom HTML elements for Prendus questions.",
   "scripts": {
-    "test": "guesswork chromium firefox --entry test/index.js",
+    "test": "npm link && npm link prendus-question-elements && guesswork chromium firefox --entry test/index.js",
     "test-manual": "guesswork --entry test/index.js"
   },
   "repository": {

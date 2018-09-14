@@ -95,7 +95,7 @@ class PrendusViewQuestion extends HTMLElement {
             type: 'SET_COMPONENT_PROPERTY',
             componentId: this.componentId,
             key: 'showSolution',
-            value: false
+            value: true
         });
 
         Store.dispatch({
@@ -147,7 +147,54 @@ class PrendusViewQuestion extends HTMLElement {
         return sanitizedHTML;
     }
 
-    showSolutionClick() {}
+    showSolutionClick(componentState) {
+        const solutionTemplate = <HTMLTemplateElement> this.querySelector('#solution1');
+
+        if (solutionTemplate) {
+            const builtQuestion = {
+                ...componentState.builtQuestion,
+                html: `${solutionTemplate.innerHTML}<template>${componentState.question.text}</template>`
+            };
+
+            const solutionButtonText = 'Question';
+
+            Store.dispatch({
+                type: 'SET_COMPONENT_PROPERTY',
+                componentId: this.componentId,
+                key: 'builtQuestion',
+                value: builtQuestion
+            });
+
+            Store.dispatch({
+                type: 'SET_COMPONENT_PROPERTY',
+                componentId: this.componentId,
+                key: 'solutionButtonText',
+                value: solutionButtonText
+            });
+        }
+        else {
+            const builtQuestion = {
+                ...componentState.builtQuestion,
+                html: compileToHTML(componentState.builtQuestion.ast, () => NaN, () => '')
+            };
+
+            const solutionButtonText = 'Solution';
+
+            Store.dispatch({
+                type: 'SET_COMPONENT_PROPERTY',
+                componentId: this.componentId,
+                key: 'builtQuestion',
+                value: builtQuestion
+            });
+
+            Store.dispatch({
+                type: 'SET_COMPONENT_PROPERTY',
+                componentId: this.componentId,
+                key: 'solutionButtonText',
+                value: solutionButtonText
+            });
+        }
+    }
 
     async checkAnswer(componentId: string, question: Question, builtQuestion: BuiltQuestion) {
         const astVariables: Variable[] = getAstObjects(builtQuestion.ast, 'VARIABLE', ['SOLUTION']);
@@ -303,7 +350,7 @@ class PrendusViewQuestion extends HTMLElement {
 
                 <div class="bottomButtons">
                     <div onclick="${() => this.checkAnswer(componentId, componentState.question, componentState.builtQuestion)}" class="checkButton">Submit</div>
-                    ${componentState.showSolution ? html`<div onclick="${() => this.showSolutionClick()}" class="checkButton">${componentState.solutionButtonText}</div>` : ''}
+                    ${componentState.showSolution ? html`<div onclick="${() => this.showSolutionClick(componentState)}" class="checkButton">${componentState.solutionButtonText}</div>` : ''}
                 </div>
 
                 <paper-toast id="checkAnswerResponseToast" text="${componentState.checkAnswerResponse}" duration="1500" fitInto="${this}" horizontal-align="right"></paper-toast>

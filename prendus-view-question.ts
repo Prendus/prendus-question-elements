@@ -231,12 +231,12 @@ class PrendusViewQuestion extends HTMLElement {
 
         const checkAnswerInfo = await checkAnswer(question.javaScript, builtQuestion.originalVariableValues, userVariables, userInputs, userEssays, userCodes, userChecks, userRadios, userImages, userGraphs);
 
-        Store.dispatch({
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId,
-            key: 'checkAnswerResponse',
-            value: checkAnswerInfo.answer === true ? 'Correct' : checkAnswerInfo.error ? `This question has errors:\n\n${checkAnswerInfo.error}` : 'Incorrect'
-        });
+        // Store.dispatch({
+        //     type: 'SET_COMPONENT_PROPERTY',
+        //     componentId,
+        //     key: 'checkAnswerResponse',
+        //     value: checkAnswerInfo.answer === true ? 'Correct' : checkAnswerInfo.error ? `This question has errors:\n\n${checkAnswerInfo.error}` : 'Incorrect'
+        // });
 
         this.dispatchEvent(new CustomEvent('question-response', {
             detail: {
@@ -251,6 +251,8 @@ class PrendusViewQuestion extends HTMLElement {
 
         const checkAnswerResponseToast: any = this.querySelector('#checkAnswerResponseToast');
         if (checkAnswerResponseToast) {
+            const checkAnswerResponse = checkAnswerInfo.answer === true ? 'Correct' : checkAnswerInfo.error ? `This question has errors:\n\n${checkAnswerInfo.error}` : 'Incorrect';
+            checkAnswerResponseToast.text = checkAnswerResponse;
             checkAnswerResponseToast.open();
         }
     }

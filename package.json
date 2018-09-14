@@ -49,6 +49,7 @@
     "@webcomponents/shadydom": "^1.0.14",
     "deep-equal-es-module": "0.0.0",
     "guesswork": "^0.11.2",
+    "jsverify-es-module": "0.0.2",
     "zwitterion": "^0.27.0"
   }
 }

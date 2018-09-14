@@ -8,7 +8,7 @@ import '@polymer/iron-icon';
 import '@polymer/iron-icons';
 import '@polymer/paper-tooltip';
 import '@polymer/paper-dialog';
-import '@polymer/paper-input';
+// import '@polymer/paper-input';
 import '@polymer/paper-toggle-button';
 import '@polymer/paper-dialog-scrollable';
 

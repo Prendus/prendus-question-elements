@@ -111,6 +111,8 @@ class PrendusViewQuestion extends HTMLElement {
             key: 'checkAnswerResponse',
             value: ''
         });
+
+        this.dispatchEvent(new CustomEvent('ready'));
     }
 
     async buildQuestion(question: Question) {

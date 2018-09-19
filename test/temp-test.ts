@@ -6,8 +6,16 @@ class TempTest extends HTMLElement {
         document.body.appendChild(prendusViewQuestion);
 
         prendusViewQuestion.question = {
-            assessML: '[input1] [var1] [radio1]sdaf[radio1]\n[radio2]sdaf[radio2] [solution1]hello[solution1]',
-            javaScript: 'answer = input1 === \'hello\''
+            assessML: `
+                [markdown1]
+                    \`\`\`javascript
+                        const monkey = 5;
+                        const pupppy = 6;
+                    \`\`\`
+                    * hello
+                [markdown1]
+            `,
+            javaScript: 'answer = true'
         };
     }
 }

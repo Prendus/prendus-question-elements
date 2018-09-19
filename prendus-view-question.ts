@@ -44,6 +44,7 @@ import {
     loadQuestion
 } from './services/shared-service';
 import '@polymer/paper-toast';
+import '@polymer/marked-element';
 import 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.8.3/katex.min.js';
 import {Store} from './state/store';
 
@@ -143,7 +144,7 @@ class PrendusViewQuestion extends HTMLElement {
     getSanitizedHTML(html: string) {
         const sanitizedHTML = DOMPurify.sanitize(html, {
             ADD_ATTR: ['contenteditable', 'fontsize', 'data'],
-            ADD_TAGS: ['juicy-ace-editor', 'function-plot'],
+            ADD_TAGS: ['juicy-ace-editor', 'function-plot', 'marked-element', 'script'],
             SANITIZE_DOM: false // This allows DOMPurify.sanitize to be called multiple times in succession without changing the output (it was removing ids before)
         });
         return sanitizedHTML;

@@ -517,6 +517,7 @@ export async function checkAnswer(code: string, originalVariableValues, userVari
 
     const codeToEval = `
         let answer;
+        let autoPostMessage = true;
         ${userVariablesString}
         ${userInputsString}
         ${userEssaysString}
@@ -527,9 +528,11 @@ export async function checkAnswer(code: string, originalVariableValues, userVari
         ${userGraphsString}
         ${codeReplacedVariables}
 
-        postMessage({
-            answer
-        });
+        if (autoPostMessage === true) {
+            postMessage({
+                answer
+            });
+        }
     `;
 
     return await secureEval(codeToEval);

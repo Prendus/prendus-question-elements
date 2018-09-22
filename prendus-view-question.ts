@@ -289,22 +289,23 @@ class PrendusViewQuestion extends HTMLElement {
         //     value: checkAnswerInfo.answer === true ? 'Correct' : checkAnswerInfo.error ? `This question has errors:\n\n${checkAnswerInfo.error}` : 'Incorrect'
         // });
 
-        this.dispatchEvent(new CustomEvent('question-response', {
-            detail: {
-                userVariables,
-                userInputs,
-                userEssays,
-                userChecks,
-                userRadios,
-                userCodes
-            }
-        }));
-
         const checkAnswerResponseToast: any = this.querySelector('#checkAnswerResponseToast');
         if (checkAnswerResponseToast) {
             const checkAnswerResponse = checkAnswerInfo.answer === true ? 'Correct' : checkAnswerInfo.error ? `This question has errors:\n\n${checkAnswerInfo.error}` : 'Incorrect';
             checkAnswerResponseToast.text = checkAnswerResponse;
             checkAnswerResponseToast.open();
+
+            this.dispatchEvent(new CustomEvent('question-response', {
+                detail: {
+                    userVariables,
+                    userInputs,
+                    userEssays,
+                    userChecks,
+                    userRadios,
+                    userCodes,
+                    checkAnswerResponse
+                }
+            }));
         }
     }
 

@@ -4,6 +4,12 @@
 import 'ace-builds/src-noconflict/ace.js';
 
 class JuicyAceEditor extends HTMLElement {
+    editor: any;
+
+    get value() {
+        return this.editor.getValue();
+    }
+
     connectedCallback() {
         this.innerHTML = `
             <style>
@@ -23,7 +29,8 @@ class JuicyAceEditor extends HTMLElement {
                 <div id="${this.id}-editor"></div>
             </div>
         `;
-        ace.edit(`${this.id}-editor`);
+
+        this.editor = ace.edit(`${this.id}-editor`);
     }
 }
 

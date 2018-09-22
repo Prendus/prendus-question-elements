@@ -1,7 +1,8 @@
 //TODO The only reason this is called juicy-ace-editor is so that I don't have to update the code tag in assessml
 //TODO Change the name of this element eventually and then update assessml
 
-import 'ace-builds/src-noconflict/ace.js';
+import 'ace-builds/src-min-noconflict/ace.js';
+import 'ace-builds/src-min-noconflict/mode-javascript.js';
 
 class JuicyAceEditor extends HTMLElement {
     editor: any;
@@ -31,6 +32,8 @@ class JuicyAceEditor extends HTMLElement {
         `;
 
         this.editor = ace.edit(`${this.id}-editor`);
+        this.editor.session.setUseWorker(false);
+        this.editor.session.setMode('ace/mode/javascript');
     }
 }
 

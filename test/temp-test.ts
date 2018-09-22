@@ -7,7 +7,7 @@ class TempTest extends HTMLElement {
 
         prendusViewQuestion.question = {
             assessML: `
-                hello there [code1] [code2]
+                hello there [code1] [code2] [input1]
                 [solution1]
                     <code-sample>
                         <template>
@@ -17,7 +17,15 @@ class TempTest extends HTMLElement {
                     </code-sample>
                 [solution1]
             `,
-            javaScript: 'answer = true'
+            javaScript: `
+                if (code1) {
+                    eval(code1);
+                    answer = monkey === true;
+                }
+                else {
+                    answer = false;
+                }
+            `
         };
     }
 }

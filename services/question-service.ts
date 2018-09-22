@@ -1,6 +1,7 @@
 import {parse, compileToHTML, getAstObjects, generateRandomInteger} from 'assessml';
 import {asyncMap, asyncReduce} from 'prendus-shared/services/utilities-service.ts';
-import {secureEval} from 'secure-eval/secure-eval.ts';
+// import {secureEval} from 'secure-eval/secure-eval.ts';
+import {insecureEval} from './insecure-eval';
 import {
     AST,
     ASTObject,
@@ -71,7 +72,7 @@ export async function buildQuestion(text: string, code: string): Promise<{
         const astRadiosString = createUserRadiosString(astRadios);
         const astGraphsString = createUserGraphsString(astGraphs);
 
-        const originalVariableValues = await secureEval(`
+        const originalVariableValues = await insecureEval(`
             let answer = true;
             ${astVariablesString}
             ${astImagesString}
@@ -442,7 +443,7 @@ export async function getPropertyValue(jsAst: Program, amlAst: AST, varName: str
             return `${result}let ${astImage.varName} = {};`;
         }, '');
 
-        return (await secureEval(`
+        return (await insecureEval(`
             let answer;
             ${userVariablesString}
             ${defineUserImagesString}
@@ -467,7 +468,7 @@ export async function getAssignmentValue(jsAst: Program, amlAst: AST, varName: s
         const astVariables: Variable[] = <Variable[]> getAstObjects(amlAst, 'VARIABLE');
         const userVariablesString = createUserVariablesString(astVariables);
 
-        return (await secureEval(`
+        return (await insecureEval(`
             ${userVariablesString}
             ${escodegen.generate(jsAst)}
 
@@ -535,7 +536,7 @@ export async function checkAnswer(code: string, originalVariableValues, userVari
         }
     `;
 
-    return await secureEval(codeToEval);
+    return await insecureEval(codeToEval);
 }
 
 function createUserVariablesString(userVariables: UserVariable[] | Variable[]) {

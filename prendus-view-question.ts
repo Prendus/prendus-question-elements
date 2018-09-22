@@ -45,8 +45,9 @@ import {
 } from './services/shared-service';
 import '@polymer/paper-toast';
 import '@kuscamara/code-sample';
-import 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.8.3/katex.min.js';
+// import 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.8.3/katex.min.js';
 import {Store} from './state/store';
+import './juicy-ace-editor';
 
 class PrendusViewQuestion extends HTMLElement {
     componentId: string; //TODO figure out how to get rid of this mutation

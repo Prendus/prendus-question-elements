@@ -43,7 +43,6 @@ import {
 import {
     loadQuestion
 } from './services/shared-service';
-import '@polymer/paper-toast';
 import '@kuscamara/code-sample';
 // import 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.8.3/katex.min.js';
 import {Store} from './state/store';
@@ -281,34 +280,19 @@ class PrendusViewQuestion extends HTMLElement {
         });
 
         const checkAnswerInfo = await checkAnswer(question.javaScript, builtQuestion.originalVariableValues, userVariables, userInputs, userEssays, userCodes, userChecks, userRadios, userImages, userGraphs);
+        const checkAnswerResponse = checkAnswerInfo.answer === true ? 'Correct' : checkAnswerInfo.error ? `This question has errors:\n\n${checkAnswerInfo.error}` : 'Incorrect';
 
-        //TODO uncomment this and get rid of the weird stuff below
-        //TODO the only reason we have this commented out was to get around an old lit-html bug that seems to be fixed
-        // Store.dispatch({
-        //     type: 'SET_COMPONENT_PROPERTY',
-        //     componentId,
-        //     key: 'checkAnswerResponse',
-        //     value: checkAnswerInfo.answer === true ? 'Correct' : checkAnswerInfo.error ? `This question has errors:\n\n${checkAnswerInfo.error}` : 'Incorrect'
-        // });
-
-        const checkAnswerResponseToast: any = this.querySelector('#checkAnswerResponseToast');
-        if (checkAnswerResponseToast) {
-            const checkAnswerResponse = checkAnswerInfo.answer === true ? 'Correct' : checkAnswerInfo.error ? `This question has errors:\n\n${checkAnswerInfo.error}` : 'Incorrect';
-            checkAnswerResponseToast.text = checkAnswerResponse;
-            checkAnswerResponseToast.open();
-
-            this.dispatchEvent(new CustomEvent('question-response', {
-                detail: {
-                    userVariables,
-                    userInputs,
-                    userEssays,
-                    userChecks,
-                    userRadios,
-                    userCodes,
-                    checkAnswerResponse
-                }
-            }));
-        }
+        this.dispatchEvent(new CustomEvent('question-response', {
+            detail: {
+                userVariables,
+                userInputs,
+                userEssays,
+                userChecks,
+                userRadios,
+                userCodes,
+                checkAnswerResponse
+            }
+        }));
     }
 
     render(state: State, componentId: string): TemplateResult {
@@ -344,10 +328,6 @@ class PrendusViewQuestion extends HTMLElement {
                 .checkButton {
                     flex: 1;
                 }
-
-                #checkAnswerResponseToast {
-                    z-index: 1000;
-                }
             </style>
 
             <div class="mainContainer" ?hidden=${!componentState.builtQuestion}>
@@ -359,8 +339,6 @@ class PrendusViewQuestion extends HTMLElement {
                     <div @click=${() => this.checkAnswer(componentId, componentState.question, componentState.builtQuestion)} class="checkButton">Submit</div>
                     ${componentState.showSolution ? html`<div @click=${() => this.showSolutionClick(componentState)} class="checkButton">${componentState.solutionButtonText}</div>` : ''}
                 </div>
-
-                <paper-toast id="checkAnswerResponseToast" text="${componentState.checkAnswerResponse}" duration="1500" fitInto="${this}" horizontal-align="right"></paper-toast>
             </div>
 
             <div class="questionPreviewPlaceholder" ?hidden=${componentState.builtQuestion}>

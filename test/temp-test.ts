@@ -8,6 +8,27 @@ class TempTest extends HTMLElement {
         prendusViewQuestion.question = {
             assessML: `
                 hello there [code1] [code2] [input1]
+                <p>f
+                </p>
+                <p>f
+                </p>
+                <p>f
+                </p>
+                <p>f
+                </p>
+                <p>f
+                </p>
+                <p>f
+                </p>
+                <p>f
+                </p>
+                <p>f
+                </p>
+                <p>f
+                </p>
+                <p>f
+                </p>
+
                 [solution1]
                     <code-sample>
                         <template>

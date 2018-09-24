@@ -3,10 +3,12 @@ import './process.js';
 // import '../node_modules/@webcomponents/custom-elements/custom-elements.min.js';
 // import '../node_modules/guesswork/test-runner.ts';
 import './temp-test.ts';
+// import './other-test.js';
 // import './prendus-edit-question-test.ts';
 // import 'prendus-question-elements';
 
 window.document.body.innerHTML = `
+    <other-test></other-test>
     <temp-test></temp-test>
     <!--<prendus-edit-question-test></prendus-edit-question-test>-->
     <!--<test-runner>

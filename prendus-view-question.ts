@@ -1,6 +1,6 @@
 import DOMPurify from 'dompurify';
-import {html, render} from 'lit-html/lib/lit-extended.js';
-import {unsafeHTML} from 'lit-html/lib/unsafe-html.js';
+import {html, render} from 'lit-html';
+import {unsafeHTML} from 'lit-html/directives/unsafe-html.js';
 import {TemplateResult} from 'lit-html';
 import {
     Question,
@@ -282,6 +282,8 @@ class PrendusViewQuestion extends HTMLElement {
 
         const checkAnswerInfo = await checkAnswer(question.javaScript, builtQuestion.originalVariableValues, userVariables, userInputs, userEssays, userCodes, userChecks, userRadios, userImages, userGraphs);
 
+        //TODO uncomment this and get rid of the weird stuff below
+        //TODO the only reason we have this commented out was to get around an old lit-html bug that seems to be fixed
         // Store.dispatch({
         //     type: 'SET_COMPONENT_PROPERTY',
         //     componentId,
@@ -348,20 +350,20 @@ class PrendusViewQuestion extends HTMLElement {
                 }
             </style>
 
-            <div class="mainContainer" hidden="${!componentState.builtQuestion}">
+            <div class="mainContainer" ?hidden=${!componentState.builtQuestion}>
                 <div id="contentDiv">
                     ${unsafeHTML(mathRenderedHTML)}
                 </div>
 
                 <div class="bottomButtons">
-                    <div onclick="${() => this.checkAnswer(componentId, componentState.question, componentState.builtQuestion)}" class="checkButton">Submit</div>
-                    ${componentState.showSolution ? html`<div onclick="${() => this.showSolutionClick(componentState)}" class="checkButton">${componentState.solutionButtonText}</div>` : ''}
+                    <div @click=${() => this.checkAnswer(componentId, componentState.question, componentState.builtQuestion)} class="checkButton">Submit</div>
+                    ${componentState.showSolution ? html`<div @click=${() => this.showSolutionClick(componentState)} class="checkButton">${componentState.solutionButtonText}</div>` : ''}
                 </div>
 
                 <paper-toast id="checkAnswerResponseToast" text="${componentState.checkAnswerResponse}" duration="1500" fitInto="${this}" horizontal-align="right"></paper-toast>
             </div>
 
-            <div class="questionPreviewPlaceholder" hidden="${componentState.builtQuestion}">
+            <div class="questionPreviewPlaceholder" ?hidden=${componentState.builtQuestion}>
                 Question preview will appear here
             </div>
         `;

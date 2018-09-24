@@ -40,9 +40,6 @@ import {
     Code,
     Graph
 } from 'assessml';
-import {
-    loadQuestion
-} from './services/shared-service';
 import '@kuscamara/code-sample';
 // import 'https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.8.3/katex.min.js';
 import {Store} from './state/store';

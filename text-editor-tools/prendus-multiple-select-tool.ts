@@ -1,6 +1,6 @@
-import {UserCheck} from '../prendus-question-elements.d';
-import {compileToAssessML, parse} from '../../assessml/assessml';
-import {ASTObject} from '../../assessml/assessml.d';
+// import {UserCheck} from '../prendus-question-elements.d';
+// import {compileToAssessML, parse} from '../../assessml/assessml';
+// import {ASTObject} from '../../assessml/assessml.d';
 
 class PrendusMultipleSelectTool extends WysiwygTool {
     userChecks: UserCheck[];

@@ -1,14 +1,14 @@
-import {UserInput, Question} from '../prendus-question-elements.d';
-import {getUserASTObjectValue} from '../services/question-service';
-import {html, render} from 'lit-html/lib/lit-extended.js';
-import {WysiwygTool} from 'wysiwyg-e/wysiwyg-tool.js';
-import {createStore} from 'redux';
-import '@polymer/paper-button';
-import '@polymer/paper-tooltip';
-import '@polymer/iron-icon';
-import '@polymer/iron-icons';
-import '@polymer/paper-dialog';
-import '@polymer/paper-dialog-scrollable';
+// import {UserInput, Question} from '../prendus-question-elements.d';
+// import {getUserASTObjectValue} from '../services/question-service';
+// import {html, render} from 'lit-html/lib/lit-extended.js';
+// import {WysiwygTool} from 'wysiwyg-e/wysiwyg-tool.js';
+// import {createStore} from 'redux';
+// import '@polymer/paper-button';
+// import '@polymer/paper-tooltip';
+// import '@polymer/iron-icon';
+// import '@polymer/iron-icons';
+// import '@polymer/paper-dialog';
+// import '@polymer/paper-dialog-scrollable';
 
 interface State {
     userInputs: UserInput[];

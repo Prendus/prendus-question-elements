@@ -1,16 +1,16 @@
-import {UserRadio, Question} from '../prendus-question-elements.d';
-import {compileToAssessML, parse} from 'assessml';
-import {ASTObject} from 'assessml/assessml.d';
-import {WysiwygTool} from 'wysiwyg-e/wysiwyg-tool.js';
-import {html, render} from 'lit-html/lib/lit-extended.js';
-import '@polymer/paper-button';
-import '@polymer/iron-icon';
-import '@polymer/iron-icons';
-import '@polymer/paper-tooltip';
-import '@polymer/paper-dialog';
-// import '@polymer/paper-input';
-import '@polymer/paper-toggle-button';
-import '@polymer/paper-dialog-scrollable';
+// import {UserRadio, Question} from '../prendus-question-elements.d';
+// import {compileToAssessML, parse} from 'assessml';
+// import {ASTObject} from 'assessml/assessml.d';
+// import {WysiwygTool} from 'wysiwyg-e/wysiwyg-tool.js';
+// import {html, render} from 'lit-html/lib/lit-extended.js';
+// import '@polymer/paper-button';
+// import '@polymer/iron-icon';
+// import '@polymer/iron-icons';
+// import '@polymer/paper-tooltip';
+// import '@polymer/paper-dialog';
+// // import '@polymer/paper-input';
+// import '@polymer/paper-toggle-button';
+// import '@polymer/paper-dialog-scrollable';
 
 class PrendusMultipleChoiceTool extends WysiwygTool {
     userRadios: UserRadio[];

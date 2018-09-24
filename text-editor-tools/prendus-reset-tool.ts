@@ -1,11 +1,11 @@
-import {html, render} from 'lit-html/lib/lit-extended.js';
-import {WysiwygTool} from 'wysiwyg-e/wysiwyg-tool.js';
-import {createStore} from 'redux';
-import '@polymer/paper-button';
-import '@polymer/paper-tooltip';
-import '@polymer/iron-icon';
-import '@polymer/iron-icons';
-import '@polymer/paper-dialog';
+// import {html, render} from 'lit-html/lib/lit-extended.js';
+// import {WysiwygTool} from 'wysiwyg-e/wysiwyg-tool.js';
+// import {createStore} from 'redux';
+// import '@polymer/paper-button';
+// import '@polymer/paper-tooltip';
+// import '@polymer/iron-icon';
+// import '@polymer/iron-icons';
+// import '@polymer/paper-dialog';
 
 interface State {
 

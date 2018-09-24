@@ -1,5 +1,5 @@
-import {createUUID} from '../../prendus-shared/services/utilities-service';
-import {extendSchema, execute, subscribe} from '../../graphsm/graphsm';
+// import {createUUID} from '../../prendus-shared/services/utilities-service';
+// import {extendSchema, execute, subscribe} from '../../graphsm/graphsm';
 
 const PRENDUS_MATH_TOOL = 'PrendusMathTool';
 extendSchema(`

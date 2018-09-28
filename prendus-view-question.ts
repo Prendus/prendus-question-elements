@@ -318,12 +318,18 @@ class PrendusViewQuestion extends HTMLElement {
                     display: flex;
                     flex-direction: row;
                     text-align: center;
-                    cursor: pointer;
                     color: grey;
                 }
 
-                .checkButton {
-                    flex: 1;
+                .submitButton {
+                    cursor: pointer;
+                    margin-left: 5vw;
+                }
+
+                .questionSolutionButton {
+                    cursor: pointer;
+                    margin-right: 5vw;
+                    margin-left: auto;
                 }
             </style>
 
@@ -333,8 +339,8 @@ class PrendusViewQuestion extends HTMLElement {
                 </div>
 
                 <div class="bottomButtons">
-                    <div @click=${() => this.checkAnswer(componentId, componentState.question, componentState.builtQuestion)} class="checkButton">Submit</div>
-                    ${componentState.showSolution ? html`<div @click=${() => this.showSolutionClick(componentState)} class="checkButton">${componentState.solutionButtonText}</div>` : ''}
+                    <div ?hidden=${componentState.solutionButtonText === 'Question'} @click=${() => this.checkAnswer(componentId, componentState.question, componentState.builtQuestion)} class="submitButton">Submit</div>
+                    ${componentState.showSolution ? html`<div @click=${() => this.showSolutionClick(componentState)} class="questionSolutionButton">${componentState.solutionButtonText}</div>` : ''}
                 </div>
             </div>
 

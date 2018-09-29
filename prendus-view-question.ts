@@ -196,7 +196,11 @@ class PrendusViewQuestion extends HTMLElement {
         }
     }
 
-    async checkAnswer(componentId: string, question: Question, builtQuestion: BuiltQuestion) {
+    async checkAnswer() {
+        const componentState = Store.getState().components[this.componentId];
+        const question = componentState.question;
+        const builtQuestion = componentState.builtQuestion;
+
         const astVariables: Variable[] = getAstObjects(builtQuestion.ast, 'VARIABLE', ['SOLUTION']);
         const astInputs: Input[] = getAstObjects(builtQuestion.ast, 'INPUT', ['SOLUTION']);
         const astEssays: Essay[] = getAstObjects(builtQuestion.ast, 'ESSAY', ['SOLUTION']);
@@ -321,11 +325,6 @@ class PrendusViewQuestion extends HTMLElement {
                     color: grey;
                 }
 
-                .submitButton {
-                    cursor: pointer;
-                    margin-left: 5vw;
-                }
-
                 .questionSolutionButton {
                     cursor: pointer;
                     margin-right: 5vw;
@@ -339,7 +338,6 @@ class PrendusViewQuestion extends HTMLElement {
                 </div>
 
                 <div class="bottomButtons">
-                    <div ?hidden=${componentState.solutionButtonText === 'Question'} @click=${() => this.checkAnswer(componentId, componentState.question, componentState.builtQuestion)} class="submitButton">Submit</div>
                     ${componentState.showSolution ? html`<div @click=${() => this.showSolutionClick(componentState)} class="questionSolutionButton">${componentState.solutionButtonText}</div>` : ''}
                 </div>
             </div>

@@ -67,6 +67,10 @@ class PrendusViewQuestion extends HTMLElement {
         this.buildQuestion(question);
     }
 
+    get solutionButtonText() {
+        return Store.getState().components[this.componentId];
+    }
+
     constructor() {
         super();
 
@@ -320,13 +324,6 @@ class PrendusViewQuestion extends HTMLElement {
                     text-align: center;
                 }
 
-                .bottomButtons {
-                    display: flex;
-                    flex-direction: row;
-                    text-align: center;
-                    color: grey;
-                }
-
                 .questionSolutionButton {
                     cursor: pointer;
                     margin-right: 5vw;
@@ -337,10 +334,6 @@ class PrendusViewQuestion extends HTMLElement {
             <div class="mainContainer" ?hidden=${!componentState.builtQuestion}>
                 <div id="contentDiv">
                     ${unsafeHTML(mathRenderedHTML)}
-                </div>
-
-                <div class="bottomButtons">
-                    ${componentState.showSolution ? html`<div @click=${() => this.showSolutionClick(componentState)} class="questionSolutionButton">${componentState.solutionButtonText}</div>` : ''}
                 </div>
             </div>
 

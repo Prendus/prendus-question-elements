@@ -147,7 +147,9 @@ class PrendusViewQuestion extends HTMLElement {
         return sanitizedHTML;
     }
 
-    showSolutionClick(componentState) {
+    showSolutionClick() {
+        const componentState = Store.getState().components[this.componentId];
+
         const solutionTemplate = <HTMLTemplateElement> this.querySelector('#solution1');
 
         if (solutionTemplate) {

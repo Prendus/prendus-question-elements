@@ -48,11 +48,22 @@ import './juicy-ace-editor';
 class PrendusViewQuestion extends HTMLElement {
     componentId: string; //TODO figure out how to get rid of this mutation
 
+    get previousQuestion(): Question | null | undefined {
+        return Store.getState().components[this.componentId].previousQuestion;
+    }
+
     get question(): Question | null | undefined {
         return Store.getState().components[this.componentId].question;
     }
 
     set question(question: Question | null | undefined) {
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'previousQuestion',
+            value: this.question
+        });
+
         Store.dispatch({
             type: 'SET_COMPONENT_PROPERTY',
             componentId: this.componentId,
@@ -114,7 +125,7 @@ class PrendusViewQuestion extends HTMLElement {
             value: ''
         });
 
-        this.dispatchEvent(new CustomEvent('ready'));
+        this.dispatchEvent(new CustomEvent('initial-load'));
     }
 
     async buildQuestion(question: Question) {
@@ -132,6 +143,19 @@ class PrendusViewQuestion extends HTMLElement {
         });
 
         this.dispatchEvent(new CustomEvent('question-built'));
+
+        if (!this.previousQuestion) {
+            this.dispatchEvent(new CustomEvent('question-changed'));
+        }
+
+        if (
+            this.question && 
+            this.previousQuestion &&
+            this.question.assessML !== this.previousQuestion.assessML &&
+            this.question.javaScript !== this.previousQuestion.javaScript    
+        ) {
+            this.dispatchEvent(new CustomEvent('question-changed'));
+        }
 
         //TODO this causes issues with the secureEval messaging, probably won't be hard to fix (I think it is fixed, just need to try again)
         //this is so that if the question is being viewed from within an iframe, the iframe can resize itself

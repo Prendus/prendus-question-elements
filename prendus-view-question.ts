@@ -48,15 +48,17 @@ import './juicy-ace-editor';
 class PrendusViewQuestion extends HTMLElement {
     componentId: string; //TODO figure out how to get rid of this mutation
 
-    get previousQuestion(): Question | null | undefined {
-        return Store.getState().components[this.componentId].previousQuestion;
+    get previousQuestion(): Question | null {
+        const componentState = Store.getState().components[this.componentId];
+        return componentState ? componentState.previousQuestion : null;
     }
 
-    get question(): Question | null | undefined {
-        return Store.getState().components[this.componentId].question;
+    get question(): Question | null {
+        const componentState = Store.getState().components[this.componentId];
+        return componentState ? componentState.question : null;
     }
 
-    set question(question: Question | null | undefined) {
+    set question(question: Question | null) {
         Store.dispatch({
             type: 'SET_COMPONENT_PROPERTY',
             componentId: this.componentId,

@@ -48,9 +48,14 @@ import './juicy-ace-editor';
 class PrendusViewQuestion extends HTMLElement {
     componentId: string; //TODO figure out how to get rid of this mutation
 
-    get previousQuestion(): Question | null {
+    get previousBuiltQuestion(): any {
         const componentState = Store.getState().components[this.componentId];
-        return componentState ? componentState.previousQuestion : null;
+        return componentState ? componentState.previousBuiltQuestion : null;
+    }
+
+    get builtQuestion(): any {
+        const componentState = Store.getState().components[this.componentId];
+        return componentState ? componentState.builtQuestion : null;
     }
 
     get question(): Question | null {
@@ -59,13 +64,6 @@ class PrendusViewQuestion extends HTMLElement {
     }
 
     set question(question: Question | null) {
-        Store.dispatch({
-            type: 'SET_COMPONENT_PROPERTY',
-            componentId: this.componentId,
-            key: 'previousQuestion',
-            value: this.question
-        });
-
         Store.dispatch({
             type: 'SET_COMPONENT_PROPERTY',
             componentId: this.componentId,
@@ -126,11 +124,16 @@ class PrendusViewQuestion extends HTMLElement {
             key: 'checkAnswerResponse',
             value: ''
         });
-
-        this.dispatchEvent(new CustomEvent('initial-load'));
     }
 
     async buildQuestion(question: Question) {
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'previousBuiltQuestion',
+            value: this.builtQuestion
+        });
+
         const builtQuestion = await buildQuestion(question.assessML, question.javaScript);
         const showSolution = builtQuestion ? getAstObjects(builtQuestion.ast, 'SOLUTION').length > 0 : false;
         const userRadiosFromCode = getUserASTObjectsFromAnswerAssignment(question.assessML, question.javaScript, 'RADIO');
@@ -146,15 +149,13 @@ class PrendusViewQuestion extends HTMLElement {
 
         this.dispatchEvent(new CustomEvent('question-built'));
 
-        if (!this.previousQuestion) {
+        if (!this.previousBuiltQuestion) {
             this.dispatchEvent(new CustomEvent('question-changed'));
         }
 
         if (
-            this.question && 
-            this.previousQuestion &&
-            this.question.assessML !== this.previousQuestion.assessML &&
-            this.question.javaScript !== this.previousQuestion.javaScript    
+            this.previousBuiltQuestion &&
+            builtQuestion.html !== this.previousBuiltQuestion.html
         ) {
             this.dispatchEvent(new CustomEvent('question-changed'));
         }

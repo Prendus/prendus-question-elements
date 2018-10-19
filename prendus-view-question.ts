@@ -226,6 +226,8 @@ class PrendusViewQuestion extends HTMLElement {
                 key: 'solutionButtonText',
                 value: solutionButtonText
             });
+
+            this.dispatchEvent(new CustomEvent('question-built'));
         }
         else {
             const builtQuestion = {
@@ -248,6 +250,8 @@ class PrendusViewQuestion extends HTMLElement {
                 key: 'solutionButtonText',
                 value: solutionButtonText
             });
+
+            this.dispatchEvent(new CustomEvent('question-built'));
         }
     }
 

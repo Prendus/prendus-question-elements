@@ -127,6 +127,8 @@ class PrendusViewQuestion extends HTMLElement {
     }
 
     async buildQuestion(question: Question) {
+        const componentState = Store.getState().components[this.componentId];
+
         Store.dispatch({
             type: 'SET_COMPONENT_PROPERTY',
             componentId: this.componentId,
@@ -158,6 +160,11 @@ class PrendusViewQuestion extends HTMLElement {
             builtQuestion.html !== this.previousBuiltQuestion.html
         ) {
             this.dispatchEvent(new CustomEvent('question-changed'));
+        }
+        else {
+            if (componentState.showingSolution) {
+                this.showSolutionClick();
+            }
         }
 
         //TODO this causes issues with the secureEval messaging, probably won't be hard to fix (I think it is fixed, just need to try again)
@@ -204,6 +211,13 @@ class PrendusViewQuestion extends HTMLElement {
                 key: 'solutionButtonText',
                 value: solutionButtonText
             });
+
+            Store.dispatch({
+                type: 'SET_COMPONENT_PROPERTY',
+                componentId: this.componentId,
+                key: 'showingSolution',
+                value: true
+            });
         }
         else {
             const builtQuestion = {
@@ -225,6 +239,13 @@ class PrendusViewQuestion extends HTMLElement {
                 componentId: this.componentId,
                 key: 'solutionButtonText',
                 value: solutionButtonText
+            });
+
+            Store.dispatch({
+                type: 'SET_COMPONENT_PROPERTY',
+                componentId: this.componentId,
+                key: 'showingSolution',
+                value: false
             });
         }
     }

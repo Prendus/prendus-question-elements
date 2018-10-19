@@ -58,6 +58,11 @@ class PrendusViewQuestion extends HTMLElement {
         return componentState ? componentState.builtQuestion : null;
     }
 
+    get previousQuestion() {
+        const componentState = Store.getState().components[this.componentId];
+        return componentState ? componentState.previousQuestion : null;
+    }
+
     get question(): Question | null {
         const componentState = Store.getState().components[this.componentId];
         return componentState ? componentState.question : null;
@@ -67,11 +72,26 @@ class PrendusViewQuestion extends HTMLElement {
         Store.dispatch({
             type: 'SET_COMPONENT_PROPERTY',
             componentId: this.componentId,
+            key: 'previousQuestion',
+            value: this.question
+        });
+
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
             key: 'question',
             value: question
         });
 
-        if (question === null || question === undefined) {
+        if (
+            question === null ||
+            question === undefined ||
+            (
+                this.previousQuestion && 
+                question.assessML === this.previousQuestion.assessML &&
+                question.javaScript === this.previousQuestion.javaScript
+            )
+        ) {
             return;
         }
 
@@ -161,11 +181,6 @@ class PrendusViewQuestion extends HTMLElement {
         ) {
             this.dispatchEvent(new CustomEvent('question-changed'));
         }
-        else {
-            if (componentState.showingSolution) {
-                this.showSolutionClick();
-            }
-        }
 
         //TODO this causes issues with the secureEval messaging, probably won't be hard to fix (I think it is fixed, just need to try again)
         //this is so that if the question is being viewed from within an iframe, the iframe can resize itself
@@ -211,13 +226,6 @@ class PrendusViewQuestion extends HTMLElement {
                 key: 'solutionButtonText',
                 value: solutionButtonText
             });
-
-            Store.dispatch({
-                type: 'SET_COMPONENT_PROPERTY',
-                componentId: this.componentId,
-                key: 'showingSolution',
-                value: true
-            });
         }
         else {
             const builtQuestion = {
@@ -239,13 +247,6 @@ class PrendusViewQuestion extends HTMLElement {
                 componentId: this.componentId,
                 key: 'solutionButtonText',
                 value: solutionButtonText
-            });
-
-            Store.dispatch({
-                type: 'SET_COMPONENT_PROPERTY',
-                componentId: this.componentId,
-                key: 'showingSolution',
-                value: false
             });
         }
     }

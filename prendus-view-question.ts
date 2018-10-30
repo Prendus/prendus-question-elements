@@ -48,6 +48,13 @@ import './juicy-ace-editor';
 class PrendusViewQuestion extends HTMLElement {
     componentId: string; //TODO figure out how to get rid of this mutation
 
+    //TODO all of this should be done through Redux
+    userInputs: UserInput[] = [];
+    userEssays: UserEssay[] = [];
+    userCodes: UserCode[] = [];
+    userChecks: UserCheck[] = [];
+    userRadios: UserRadio[] = [];
+
     get previousBuiltQuestion(): any {
         const componentState = Store.getState().components[this.componentId];
         return componentState ? componentState.previousBuiltQuestion : null;
@@ -246,6 +253,27 @@ class PrendusViewQuestion extends HTMLElement {
             value: builtQuestion
         });
 
+        //TODO it would be nice to do this declaratively
+        this.userInputs.forEach((userInput: UserInput) => {
+            this.querySelector(`#${userInput.varName}`).textContent = userInput.value;
+        });
+
+        this.userEssays.forEach((userEssay: UserEssay) => {
+            this.querySelector(`#${userEssay.varName}`).value = userEssay.value;
+        });
+
+        this.userCodes.forEach((userCode: UserCode) => {
+            this.querySelector(`#${userCode.varName}`).value = userCode.value;
+        });
+
+        this.userChecks.forEach((userCheck: UserCheck) => {
+            this.querySelector(`#${userCheck.varName}`).checked = userCheck.checked;
+        });
+
+        this.userRadios.forEach((userRadio: UserRadio) => {
+            this.querySelector(`#${userRadio.varName}`).checked = userRadio.checked;
+        });
+
         this.dispatchEvent(new CustomEvent('question-built'));
     }
 
@@ -265,9 +293,71 @@ class PrendusViewQuestion extends HTMLElement {
         });
 
         const componentState = Store.getState().components[this.componentId];
+
+        const builtQuestion = componentState.builtQuestion;
+
+        //TODO it would be nice to do this declaratively
+        //TODO this code is repeated from checkAnswer
+        const astInputs: Input[] = getAstObjects(builtQuestion.ast, 'INPUT', ['SOLUTION']);
+        const astEssays: Essay[] = getAstObjects(builtQuestion.ast, 'ESSAY', ['SOLUTION']);
+        const astCodes: Code[] = getAstObjects(builtQuestion.ast, 'CODE', ['SOLUTION']);
+        const astChecks: Check[] = getAstObjects(builtQuestion.ast, 'CHECK', ['SOLUTION']);
+        const astRadios: Radio[] = getAstObjects(builtQuestion.ast, 'RADIO', ['SOLUTION']);
+
+        this.userInputs = astInputs.map((astInput: Input) => {
+            const input: HTMLInputElement | null = <HTMLInputElement | null> this.querySelector(`#${astInput.varName}`);
+            const userInput: UserInput = {
+                ...astInput,
+                type: 'USER_INPUT',
+                value: input ? input.textContent || '' : `${astInput.varName} was not found`
+            };
+            return userInput;
+        });
+
+        this.userEssays = astEssays.map((astEssay: Essay) => {
+            const textarea: HTMLTextAreaElement | null = <HTMLTextAreaElement | null> this.querySelector(`#${astEssay.varName}`);
+            const userEssay: UserEssay = {
+                ...astEssay,
+                type: 'USER_ESSAY',
+                value: textarea ? textarea.value : `${astEssay.varName} was not found`
+            };
+            return userEssay;
+        });
+
+        this.userCodes = astCodes.map((astCode: Code) => {
+            //TODO the type here should be the type of the code editor custom element, and change the variable name as well
+            const textarea: HTMLTextAreaElement | null = <HTMLTextAreaElement | null> this.querySelector(`#${astCode.varName}`);
+            const userCode: UserCode = {
+                ...astCode,
+                type: 'USER_CODE',
+                value: textarea ? textarea.value : `${astCode.varName} was not found`
+            };
+            return userCode;
+        });
+
+        this.userChecks = astChecks.map((astCheck: Check) => {
+            const check: HTMLInputElement | null = <HTMLInputElement | null> this.querySelector(`#${astCheck.varName}`);
+            const userCheck: UserCheck = {
+                ...astCheck,
+                type: 'USER_CHECK',
+                checked: check ? check.checked : false
+            };
+            return userCheck;
+        });
+
+        this.userRadios = astRadios.map((astRadio: Radio) => {
+            const radio: HTMLInputElement | null = <HTMLInputElement | null> this.querySelector(`#${astRadio.varName}`);
+            const userRadio: UserRadio = {
+                ...astRadio,
+                type: 'USER_RADIO',
+                checked: radio ? radio.checked : false
+            };
+            return userRadio;
+        });
+
         const solutionTemplate = <HTMLTemplateElement> this.querySelector('#solution1');
 
-        const builtQuestion = {
+        const newBuiltQuestion = {
             ...componentState.builtQuestion,
             html: solutionTemplate.innerHTML
         };
@@ -276,7 +366,7 @@ class PrendusViewQuestion extends HTMLElement {
             type: 'SET_COMPONENT_PROPERTY',
             componentId: this.componentId,
             key: 'builtQuestion',
-            value: builtQuestion
+            value: newBuiltQuestion
         });
 
         this.dispatchEvent(new CustomEvent('question-built'));

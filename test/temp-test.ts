@@ -26,7 +26,7 @@ class TempTest extends HTMLElement {
 
         prendusViewQuestion.question = {
             assessML: `
-                What is 5 + 5?
+                What is 5 + 5?[code1][input1][input2][essay1][check1]Yes[check1][radio1]Hello[radio1]
                 [solution1]
                     The answer is 10
                 [solution1]

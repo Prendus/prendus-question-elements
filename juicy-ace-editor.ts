@@ -11,6 +11,10 @@ class JuicyAceEditor extends HTMLElement {
         return this.editor.getValue();
     }
 
+    set value(val) {
+        this.editor.setValue(val, 1);
+    }
+
     connectedCallback() {
         this.innerHTML = `
             <style>

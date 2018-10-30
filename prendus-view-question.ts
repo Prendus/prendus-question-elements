@@ -193,7 +193,7 @@ class PrendusViewQuestion extends HTMLElement {
 
     getSanitizedHTML(html: string) {
         const sanitizedHTML = DOMPurify.sanitize(html, {
-            ADD_ATTR: ['contenteditable', 'fontsize', 'data'],
+            ADD_ATTR: ['contenteditable', 'fontsize', 'data', 'copy-clipboard-button', 'target'],
             ADD_TAGS: ['juicy-ace-editor', 'function-plot', 'code-sample'],
             SANITIZE_DOM: false // This allows DOMPurify.sanitize to be called multiple times in succession without changing the output (it was removing ids before)
         });

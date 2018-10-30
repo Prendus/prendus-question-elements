@@ -68,6 +68,16 @@ class PrendusViewQuestion extends HTMLElement {
         return componentState ? componentState.question : null;
     }
 
+    get showingSolution(): boolean {
+        const componentState = Store.getState().components[this.componentId];
+        return componentState ? componentState.showingSolution : false;
+    }
+
+    get showingExercise(): boolean {
+        const componentState = Store.getState().components[this.componentId];
+        return componentState ? componentState.showingExercise : false;
+    }
+
     set question(question: Question | null) {
         Store.dispatch({
             type: 'SET_COMPONENT_PROPERTY',
@@ -98,10 +108,6 @@ class PrendusViewQuestion extends HTMLElement {
         this.buildQuestion(question);
     }
 
-    get solutionButtonText() {
-        return Store.getState().components[this.componentId];
-    }
-
     constructor() {
         super();
 
@@ -127,8 +133,15 @@ class PrendusViewQuestion extends HTMLElement {
         Store.dispatch({
             type: 'SET_COMPONENT_PROPERTY',
             componentId: this.componentId,
-            key: 'showSolution',
+            key: 'showingExercise',
             value: true
+        });
+
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'showingSolution',
+            value: false
         });
 
         Store.dispatch({
@@ -200,59 +213,73 @@ class PrendusViewQuestion extends HTMLElement {
         return sanitizedHTML;
     }
 
-    showSolutionClick() {
+    //TODO when we show the solution, we need to save the state of all of the user inputs, then put them back when the user is done seeing the solution
+    //TODO perhaps we should keep all of the state of the user inputs in Redux...we'll need to attach listeners somehow
+    //TODO we should probably just attach listeners imperatively when building the question...yes
+
+    showExercise() {
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'showingExercise',
+            value: true
+        });
+
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'showingSolution',
+            value: false
+        });
+
         const componentState = Store.getState().components[this.componentId];
 
+        const builtQuestion = {
+            ...componentState.builtQuestion,
+            html: compileToHTML(componentState.builtQuestion.ast, () => NaN, () => '')
+        };
+
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'builtQuestion',
+            value: builtQuestion
+        });
+
+        this.dispatchEvent(new CustomEvent('question-built'));
+    }
+
+    showSolution() {
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'showingSolution',
+            value: true
+        });
+
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'showingExercise',
+            value: false
+        });
+
+        const componentState = Store.getState().components[this.componentId];
         const solutionTemplate = <HTMLTemplateElement> this.querySelector('#solution1');
 
-        if (solutionTemplate) {
-            const builtQuestion = {
-                ...componentState.builtQuestion,
-                html: `${solutionTemplate.innerHTML}<template>${componentState.question.text}</template>`
-            };
+        const builtQuestion = {
+            ...componentState.builtQuestion,
+            html: solutionTemplate.innerHTML
+        };
 
-            const solutionButtonText = 'Question';
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'builtQuestion',
+            value: builtQuestion
+        });
 
-            Store.dispatch({
-                type: 'SET_COMPONENT_PROPERTY',
-                componentId: this.componentId,
-                key: 'builtQuestion',
-                value: builtQuestion
-            });
-
-            Store.dispatch({
-                type: 'SET_COMPONENT_PROPERTY',
-                componentId: this.componentId,
-                key: 'solutionButtonText',
-                value: solutionButtonText
-            });
-
-            this.dispatchEvent(new CustomEvent('question-built'));
-        }
-        else {
-            const builtQuestion = {
-                ...componentState.builtQuestion,
-                html: compileToHTML(componentState.builtQuestion.ast, () => NaN, () => '')
-            };
-
-            const solutionButtonText = 'Solution';
-
-            Store.dispatch({
-                type: 'SET_COMPONENT_PROPERTY',
-                componentId: this.componentId,
-                key: 'builtQuestion',
-                value: builtQuestion
-            });
-
-            Store.dispatch({
-                type: 'SET_COMPONENT_PROPERTY',
-                componentId: this.componentId,
-                key: 'solutionButtonText',
-                value: solutionButtonText
-            });
-
-            this.dispatchEvent(new CustomEvent('question-built'));
-        }
+        this.dispatchEvent(new CustomEvent('question-built'));
     }
 
     async checkAnswer() {
@@ -419,34 +446,4 @@ window.customElements.define('prendus-view-question', PrendusViewQuestion);
 //     setTimeout(() => {
 //         this.querySelector('#embedInput').select();
 //     }, 0);
-// }
-
-// async showSolutionClick() {
-    // await execute(`
-    //     mutation setSolutionTemplateInfo($componentId: String!, $props: Any) {
-    //         updateComponentState(componentId: $componentId, props: $props)
-    //     }
-    // `, {
-    //     setSolutionTemplateInfo: (previousResult) => {
-    //         const solutionTemplate = <HTMLTemplateElement> this.querySelector('#solution1');
-    //         const props = solutionTemplate ? {
-    //             builtQuestion: {
-    //                 ...this.builtQuestion,
-    //                 html: `${solutionTemplate.innerHTML}<template>${this._question.text}</template>`
-    //             },
-    //             solutionButtonText: 'Question'
-    //         } : {
-    //             builtQuestion: {
-    //                 ...this.builtQuestion,
-    //                 html: compileToHTML(this.builtQuestion.ast, () => NaN, () => '')
-    //             },
-    //             solutionButtonText: 'Solution'
-    //         };
-    //
-    //         return {
-    //             componentId: this.componentId,
-    //             props
-    //         };
-    //     }
-    // }, this.userToken);
 // }

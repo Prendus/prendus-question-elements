@@ -5,47 +5,34 @@ class TempTest extends HTMLElement {
         const prendusViewQuestion = document.createElement('prendus-view-question');
         document.body.appendChild(prendusViewQuestion);
 
+        const button = document.createElement('button');
+        button.innerHTML = 'Toggle Solution';
+        button.addEventListener('click', () => {
+            console.log('prendusViewQuestion.showingExercise', prendusViewQuestion.showingExercise);
+            console.log('prendusViewQuestion.showingSolution', prendusViewQuestion.showingSolution);
+
+            if (prendusViewQuestion.showingExercise) {
+                prendusViewQuestion.showSolution();
+                return;
+            }
+
+            if (prendusViewQuestion.showingSolution) {
+                prendusViewQuestion.showExercise();
+                return;
+            }
+        });
+
+        document.body.appendChild(button);
+
         prendusViewQuestion.question = {
             assessML: `
-                hello there [code1] [code2] [input1]
-                <p>f
-                </p>
-                <p>f
-                </p>
-                <p>f
-                </p>
-                <p>f
-                </p>
-                <p>f
-                </p>
-                <p>f
-                </p>
-                <p>f
-                </p>
-                <p>f
-                </p>
-                <p>f
-                </p>
-                <p>f
-                </p>
-
+                What is 5 + 5?
                 [solution1]
-                    <code-sample>
-                        <template>
-                            const monkey = 5;
-                            const puppy = 10;
-                        </template>
-                    </code-sample>
+                    The answer is 10
                 [solution1]
             `,
             javaScript: `
-                if (code1) {
-                    eval(code1);
-                    answer = monkey === true;
-                }
-                else {
-                    answer = false;
-                }
+                answer = true;
             `
         };
     }

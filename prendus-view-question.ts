@@ -189,6 +189,20 @@ class PrendusViewQuestion extends HTMLElement {
             value: builtQuestion
         });
 
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'showingExercise',
+            value: true
+        });
+
+        Store.dispatch({
+            type: 'SET_COMPONENT_PROPERTY',
+            componentId: this.componentId,
+            key: 'showingSolution',
+            value: false
+        });
+
         this.dispatchEvent(new CustomEvent('question-built'));
 
         if (!this.previousBuiltQuestion) {
